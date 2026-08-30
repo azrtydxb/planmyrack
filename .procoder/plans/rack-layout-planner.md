@@ -1373,7 +1373,7 @@ Files: `apps/app/app.json`, `apps/app/plugins/withLocalNetwork.js` (config plugi
 `withAndroidManifest` setting `android:usesCleartextTraffic="true"` and referencing the
 network-security config, `withInfoPlist` setting the ATS keys), `apps/app/assets/network_security_config.xml`
 (cleartext permitted for `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16` only),
-`apps/app/eas.json`, `apps/app/assets/icon.png`,
+`apps/app/eas.json`, `apps/app/assets/icon.png` (derived from `assets/brand/app-icon.png`),
 `apps/app/assets/splash.png`, `apps/app/assets/adaptive-icon.png`,
 `apps/app/test/appConfig.test.ts`, `README.md` (run and release instructions),
 `.github/workflows/ci.yml` (typecheck, purity, both test suites).
@@ -1413,7 +1413,7 @@ expect(config.expo.splash.image).toBe('./assets/splash.png')
 })
 })
 
-```text
+````text
       Run `npm test -w planmyrack` — expect FAIL with "Cannot find module '../app.json'" or a
       missing `NSAppTransportSecurity` key.
 - [ ] Fill `app.json` with the iOS `infoPlist` keys, `expo.web.output: 'static'` and the plugin
@@ -1423,6 +1423,33 @@ expect(config.expo.splash.image).toBe('./assets/splash.png')
 - [ ] Run `npx expo prebuild --platform android --no-install` in a scratch directory and confirm
       the generated `AndroidManifest.xml` really carries both attributes — the plugin unit test
       proves the transform, this proves the wiring.
+- [ ] Derive the platform assets from `assets/brand/` (see its README for why each rule exists)
+      and write the failing test `apps/app/test/assets.test.ts` first:
+
+```text
+import { PNG } from 'pngjs'
+const read = (p: string) => PNG.sync.read(readFileSync(join(__dirname, '..', 'assets', p)))
+describe('TestDerivedIconsMeetStoreRules', () => {
+  it('ships an opaque 1024x1024 iOS icon — the App Store rejects alpha', () => {
+    const icon = read('icon.png')
+    expect([icon.width, icon.height]).toEqual([1024, 1024])
+    for (let i = 3; i < icon.data.length; i += 4) expect(icon.data[i]).toBe(255)
+  })
+  it('keeps the adaptive-icon foreground inside the central safe zone', () => {
+    const fg = read('adaptive-icon.png')
+    const margin = Math.floor(fg.width * 0.17)
+    expect(alphaInBorder(fg, margin)).toBe(0)   // launcher mask crops anything out here
+  })
+  it('ships a favicon small enough to read', () => {
+    expect(read('favicon.png').width).toBeLessThanOrEqual(64)
+  })
+})
+````
+
+      Squaring off the baked-in rounded corners, flattening alpha for iOS, padding the adaptive
+      foreground and drawing a simplified favicon mark are all part of this step — a downscale of
+      `favicon-source.png` fails the readability check by inspection, not by assertion.
+
 - [ ] Run `npm run build:web`, serve `apps/app/dist` with the network throttled to offline in
       the browser, and confirm the app loads and local mode still works.
 - [ ] Run `npx eas build --platform ios --profile preview` and
@@ -1445,7 +1472,8 @@ Interfaces produced: `canUseLocalStore(): Promise<{ ok: boolean; reason?: string
 shown in settings for diagnosis.
 
 - [ ] Write the failing test `apps/app/test/failures.test.tsx`, one case per spec failure mode:
-```
+
+````
 
 describe('TestCorruptLocalDatabaseIsReported', () => {
 it('starts empty, says the database could not be read, and offers JSON import', async () => {
@@ -1515,4 +1543,4 @@ Names are consistent across tasks: `Layout`, `Device`, `Link`, `LinkEnd`,
 `updateDevice`, `removeDevice`, `connect`, `disconnect`, `pruneLinks`, `LayoutStore`,
 `StaleRevisionError`, `StoreUnavailableError`, `runStoreContract`, `useLayoutEditor`, `U_PX`.
 
-```
+````
