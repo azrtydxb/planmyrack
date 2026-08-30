@@ -1,6 +1,6 @@
 # Task 4: Placement and movement operations
 
-Status: open
+Status: done
 Created: 2026-08-30
 Plan: .procoder/plans/rack-layout-planner.md (## Task 4: Placement and movement operations)
 Spec: .procoder/specs/rack-layout-planner.md
@@ -18,11 +18,20 @@ Done means the named tests pass, `npm run check:purity` still exits 0, the gate
 
 ## Acceptance criteria
 
-- [ ] Write the failing test `packages/core/test/placement.test.ts`: Run `npm test -w @planmyrack/core` — expect FAIL with "does not provide an export named 'addDevice'".
-- [ ] Implement `errors.ts` and the placement half of `ops.ts`. `moveDevice` resolves the target through `findFreeSlot` against the destination rack and face, and throws `PlacementError` rather than returning a partially applied layout. `updateRack` re-validates every device in the rack against the…
-- [ ] Run `npm test -w @planmyrack/core` — passes.
-- [ ] Run `procoder check`, then commit: `feat(core): device placement, movement and rack edits`.
+- [x] Write the failing test `packages/core/test/placement.test.ts`: Run `npm test -w @planmyrack/core` — expect FAIL with "does not provide an export named 'addDevice'".
+- [x] Implement `errors.ts` and the placement half of `ops.ts`. `moveDevice` resolves the target through `findFreeSlot` against the destination rack and face, and throws `PlacementError` rather than returning a partially applied layout. `updateRack` re-validates every device in the rack against the…
+- [x] Run `npm test -w @planmyrack/core` — passes.
+- [x] Run `procoder check`, then commit: `feat(core): device placement, movement and rack edits`.
 
 ## Evidence
 
-<!-- Command output, test names and the commit sha, recorded as each box is ticked. -->
+- Tests first, then `errors.ts` and `ops.ts`; 24/24 core tests green.
+- `TestDropFindsNearestFreeSlotElseRefuses` (a refused drop leaves the layout untouched; a drop
+  on an occupied slot lands elsewhere and no two devices overlap),
+  `TestMoveDeviceAcrossRackAndFaceKeepsLinks` (cables survive a cross-rack, cross-face move; a
+  move with no room throws and the device keeps its old rack), `TestRemoveRackCascades`,
+  `TestRackShrinkNeverStrands` (refuses a shrink that strands a device, allows one that does not).
+- Only pruneLinks/portCapacity/portLink/otherEnd landed in links.ts here, since ops depends on
+  pruning; connect/disconnect are Task 5. The placement tests build a literal Link rather than
+  leaning on untested code.
+- `npm run typecheck` exit 0, `procoder check` 0 blocking.
