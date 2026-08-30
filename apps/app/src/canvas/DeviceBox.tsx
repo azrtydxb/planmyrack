@@ -69,7 +69,14 @@ export const DeviceBox = memo(function DeviceBox({
       {device.type === 'hooks' ? <Hooks width={rect.width} height={rect.height} /> : null}
       {device.type === 'brush' ? <Brush width={rect.width} /> : null}
 
-      <View style={[styles.label, { width: labelGutter(rect.width) }]} pointerEvents="none">
+      <Pressable
+        accessible
+        accessibilityRole="button"
+        accessibilityLabel={`${device.name}, ${sizeLabel(device.heightU)} at U${device.posU + 1}`}
+        onPress={() => onPress?.(device.id)}
+        onLongPress={() => onLongPress?.(device)}
+        style={[styles.label, { width: labelGutter(rect.width) }]}
+      >
         <Text numberOfLines={1} style={[styles.name, shelf && styles.nameOnLight]}>
           {device.name.toUpperCase()}
         </Text>
@@ -79,7 +86,7 @@ export const DeviceBox = memo(function DeviceBox({
             {meta}
           </Text>
         ) : null}
-      </View>
+      </Pressable>
 
       <PortStrip
         device={device}
@@ -92,10 +99,15 @@ export const DeviceBox = memo(function DeviceBox({
   )
 
   return (
+    /*
+     * accessible={false} on the faceplate matters more than it looks. iOS merges the children of
+     * an accessible view into one element, which turned the whole device into a single button and
+     * hid all 24 of its ports — VoiceOver could never reach a port to wire it. The name area
+     * inside carries the button role instead, leaving each port its own element.
+     */
     <Pressable
       testID={`device-${device.id}`}
-      accessibilityRole="button"
-      accessibilityLabel={`${device.name}, ${sizeLabel(device.heightU)} at U${device.posU + 1}`}
+      accessible={false}
       onPress={() => onPress?.(device.id)}
       onLongPress={() => onLongPress?.(device)}
       style={[
