@@ -1,4 +1,8 @@
-import { act, renderHook } from '@testing-library/react-native'
+import { act, render, renderHook } from '@testing-library/react-native'
+import { Dimensions } from 'react-native'
+import { createMemoryStore } from '@planmyrack/storage'
+import { getByGestureTestId } from 'react-native-gesture-handler/jest-utils'
+import { RackEditorScreen } from '../src/screens/RackEditorScreen'
 import { addDevice, newDevice, newLayout, newRack } from '@planmyrack/core'
 import { U_PX } from '../src/canvas/metrics'
 import { positionFromPoint, useDragPlacement } from '../src/canvas/useDragPlacement'
@@ -111,5 +115,36 @@ describe('TestMoveDeviceAcrossRackAndFaceKeepsLinks — dragged', () => {
     act(() => result.current.drop())
 
     expect(onCommit.mock.calls[0][0].devices[0]).toMatchObject({ face: 'rear' })
+  })
+})
+
+describe('TestDragIsWiredToTheConsole', () => {
+  afterEach(() => jest.restoreAllMocks())
+
+  const seeded = addDevice(
+    newLayout('wired', [newRack({ id: 'R', units: 12 })]),
+    newDevice({ id: 'd1', rackId: 'R', face: 'front', posU: 0, heightU: 1, type: 'switch' }),
+  )
+
+  const mountConsole = () => {
+    jest
+      .spyOn(Dimensions, 'get')
+      .mockReturnValue({ width: 1440, height: 900, scale: 2, fontScale: 2 })
+    render(<RackEditorScreen store={createMemoryStore()} initial={seeded} />)
+  }
+
+  it('hangs a drag gesture on every library row and every placed device', () => {
+    // the placement hook and its tests existed from the start; nothing rendered them, so the app
+    // could not place anything by dragging at all
+    mountConsole()
+    expect(getByGestureTestId('drag-palette-switch-1')).toBeTruthy()
+    expect(getByGestureTestId('drag-catalog-entry-generic-switch')).toBeTruthy()
+    expect(getByGestureTestId('drag-device-d1')).toBeTruthy()
+  })
+
+  it('runs the drag on the JS thread, where the layout lives', () => {
+    mountConsole()
+    // a worklet handler would be a no-op against React state, and the drop would do nothing
+    expect(getByGestureTestId('drag-device-d1').config.runOnJS).toBe(true)
   })
 })

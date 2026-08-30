@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
@@ -26,6 +26,7 @@ import { OfflineBanner } from '../ui/OfflineBanner'
 import { Palette } from '../ui/Palette'
 import { PortPicker } from '../ui/PortPicker'
 import { RackCanvas } from '../canvas/RackCanvas'
+import { useDragPlacement } from '../canvas/useDragPlacement'
 import { RackPager } from '../ui/RackPager'
 import { RackSettings } from '../ui/RackSettings'
 import { RackSummary } from '../ui/RackSummary'
@@ -40,6 +41,7 @@ import { CABLE_COLOURS, colour, font } from '../ui/theme'
 import type { CableType, Device, Face, LinkEnd, LinkKind } from '@planmyrack/core'
 import type { Layout } from '@planmyrack/core'
 import type { LayoutStore } from '@planmyrack/storage'
+import type { CanvasGeometry } from '../canvas/RackCanvas'
 import type { PaletteChoice } from '../ui/Palette'
 import type { TabKey } from '../ui/TabBar'
 
@@ -83,6 +85,7 @@ export function RackEditorScreen({
   const [picking, setPicking] = useState<{ device: Device; port: number; kind: LinkKind } | null>(
     null,
   )
+  const geometry = useRef<CanvasGeometry | null>(null)
   const [editingRack, setEditingRack] = useState(false)
   const [rackError, setRackError] = useState<string | null>(null)
 
@@ -125,6 +128,49 @@ export function RackEditorScreen({
       if (!wide) setTab('racks')
     },
     [activeRack, editor, face, layout.racks, wide],
+  )
+
+  /**
+   * Dragging is the way the spec asks for equipment to be placed: pick a row up, drop it on a
+   * rack face. The same gesture moves a placed device, including to another face or rack.
+   */
+  const placement = useDragPlacement({
+    layout,
+    resolve: (point) => geometry.current?.resolve(point) ?? null,
+    onCommit: (next) => editor.apply(() => next),
+  })
+
+  const toLocal = (screen: { x: number; y: number }) => geometry.current?.toLocal(screen) ?? screen
+
+  const dragFromLibrary = useMemo(
+    () => ({
+      onStart: (choice: PaletteChoice, screen: { x: number; y: number }) => {
+        if (!wide) setTab('racks')
+        placement.startNew(choice.type, choice.heightU, toLocal(screen), {
+          ...(choice.name ? { name: choice.name } : {}),
+          ...(choice.ports === undefined ? {} : { ports: choice.ports }),
+          ...(choice.outlets === undefined ? {} : { outlets: choice.outlets }),
+          ...(choice.watts === undefined ? {} : { watts: choice.watts }),
+          ...(choice.colour ? { colour: choice.colour } : {}),
+        })
+      },
+      onMove: (screen: { x: number; y: number }) => placement.moveTo(toLocal(screen)),
+      onEnd: () => placement.drop(),
+      onCancel: () => placement.cancel(),
+    }),
+    // placement's callbacks are stable; the tab reset depends on the breakpoint
+    [placement, wide],
+  )
+
+  const dragPlaced = useMemo(
+    () => ({
+      onStart: (device: Device, screen: { x: number; y: number }) =>
+        placement.startMove(device, toLocal(screen)),
+      onMove: (screen: { x: number; y: number }) => placement.moveTo(toLocal(screen)),
+      onEnd: () => placement.drop(),
+      onCancel: () => placement.cancel(),
+    }),
+    [placement],
   )
 
   const connectTo = (
@@ -185,6 +231,11 @@ export function RackEditorScreen({
         face={face}
         selectedId={selectedId}
         showCables={showCables}
+        dropHint={placement.drag?.target ?? null}
+        drag={dragPlaced}
+        onGeometry={(next) => {
+          geometry.current = next
+        }}
         onSelect={setSelectedId}
         onPortPress={(device, port, kind) => setPicking({ device, port, kind })}
       />
@@ -284,7 +335,7 @@ export function RackEditorScreen({
       case 'cables':
         return cableSchedule
       case 'library':
-        return <Palette templates={templates} onPick={place} />
+        return <Palette templates={templates} onPick={place} drag={dragFromLibrary} />
       case 'stats':
         return stats
       case 'settings':
@@ -331,7 +382,7 @@ export function RackEditorScreen({
 
         {wide && (roomForBothPanels || tab === 'library') && !(sidePanel && !roomForBothPanels) ? (
           <View testID="library-panel" style={styles.libraryPanel}>
-            <Palette templates={templates} onPick={place} />
+            <Palette templates={templates} onPick={place} drag={dragFromLibrary} />
           </View>
         ) : null}
 

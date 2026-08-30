@@ -4,6 +4,7 @@ import { Rail } from './Rail'
 import { CAP_PX, RACK_INNER_PX, SCALE_PX, U_PX, rackHeightPx } from './metrics'
 import { Mono } from '../ui/primitives'
 import { colour, font, rack as hw } from '../ui/theme'
+import type { DragSource } from './useDragSource'
 import type { Device, Face, Layout, Rack } from '@planmyrack/core'
 
 /** U numbers run outside the rack, counting from 1 at the bottom as a real rack does. */
@@ -32,6 +33,7 @@ export function RackFrame({
   onPortPress,
   onDeviceLongPress,
   onBodyLayout,
+  drag,
 }: {
   rack: Rack
   devices: Device[]
@@ -44,6 +46,7 @@ export function RackFrame({
   onDeviceLongPress?: (device: Device) => void
   /** Reports where the rack body actually landed, so cables can be drawn from measured ports. */
   onBodyLayout?: (rackId: string, origin: { x: number; y: number }) => void
+  drag?: DragSource<Device>
 }) {
   const height = rackHeightPx(rack)
 
@@ -87,6 +90,7 @@ export function RackFrame({
                   onPress={onSelect}
                   onPortPress={onPortPress}
                   onLongPress={onDeviceLongPress}
+                  drag={drag}
                 />
               ))}
             </View>

@@ -113,5 +113,6 @@ forced by real data or a missing door rather than preference.
 | Library (catalogue / saved)                                    | `apps/app/src/ui/Palette.tsx`                                      |
 | Inspector (sheet on phone, panel on tablet/desktop)            | `apps/app/src/ui/Inspector.tsx`, `InspectorHost.tsx`               |
 | Rack settings (name, standard, height, removal)                | `apps/app/src/ui/RackSettings.tsx`                                 |
+| Drag to place and to move                                      | `apps/app/src/canvas/useDragSource.ts`, `useDragPlacement.ts`       |
 | Rack summary bars and tiles                                    | `apps/app/src/ui/RackSummary.tsx`                                  |
 | Phone / tablet / desktop split                                 | `apps/app/src/ui/useBreakpoint.ts`, `screens/RackEditorScreen.tsx` |

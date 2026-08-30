@@ -1,10 +1,13 @@
 import { memo } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { GestureDetector } from 'react-native-gesture-handler'
 import { LinearGradient } from 'expo-linear-gradient'
 import { sizeLabel } from '@planmyrack/core'
 import { PortStrip } from './PortStrip'
 import { deviceRect, labelGutter } from './metrics'
+import { useDragSource } from './useDragSource'
 import { colour, font, radius, rack as hw } from '../ui/theme'
+import type { DragSource } from './useDragSource'
 import type { Device, Layout, Rack } from '@planmyrack/core'
 
 /** Types that are hardware faceplates rather than passive panels. */
@@ -78,6 +81,7 @@ export const DeviceBox = memo(function DeviceBox({
   onPress,
   onPortPress,
   onLongPress,
+  drag,
 }: {
   device: Device
   rack: Rack
@@ -86,7 +90,9 @@ export const DeviceBox = memo(function DeviceBox({
   onPress?: (id: string) => void
   onPortPress?: (device: Device, port: number, kind: 'network' | 'power') => void
   onLongPress?: (device: Device) => void
+  drag?: DragSource<Device>
 }) {
+  const dragGesture = useDragSource(device, drag, `drag-device-${device.id}`)
   const rect = deviceRect(rack, device)
   const flat = FLAT[device.type]
   const shelf = device.type === 'shelf'
@@ -144,31 +150,33 @@ export const DeviceBox = memo(function DeviceBox({
      * hid all 24 of its ports — VoiceOver could never reach a port to wire it. The name area
      * inside carries the button role instead, leaving each port its own element.
      */
-    <Pressable
-      testID={`device-${device.id}`}
-      accessible={false}
-      onPress={() => onPress?.(device.id)}
-      onLongPress={() => onLongPress?.(device)}
-      style={[
-        styles.box,
-        { top: rect.top, height: rect.height, width: rect.width },
-        selected && styles.selected,
-      ]}
-    >
-      {shelf ? (
-        <LinearGradient colors={[hw.shelfTop, hw.shelfBottom]} style={styles.fill}>
-          {body}
-        </LinearGradient>
-      ) : flat ? (
-        <View style={[styles.fill, { backgroundColor: flat }]}>{body}</View>
-      ) : (
-        <LinearGradient colors={[hw.faceTop, hw.faceBottom]} style={styles.fill}>
-          {body}
-        </LinearGradient>
-      )}
-      {/* the device colour reads as a status bar down the left edge of the faceplate */}
-      <View style={[styles.stripe, { backgroundColor: device.colour }]} pointerEvents="none" />
-    </Pressable>
+    <GestureDetector gesture={dragGesture}>
+      <Pressable
+        testID={`device-${device.id}`}
+        accessible={false}
+        onPress={() => onPress?.(device.id)}
+        onLongPress={() => onLongPress?.(device)}
+        style={[
+          styles.box,
+          { top: rect.top, height: rect.height, width: rect.width },
+          selected && styles.selected,
+        ]}
+      >
+        {shelf ? (
+          <LinearGradient colors={[hw.shelfTop, hw.shelfBottom]} style={styles.fill}>
+            {body}
+          </LinearGradient>
+        ) : flat ? (
+          <View style={[styles.fill, { backgroundColor: flat }]}>{body}</View>
+        ) : (
+          <LinearGradient colors={[hw.faceTop, hw.faceBottom]} style={styles.fill}>
+            {body}
+          </LinearGradient>
+        )}
+        {/* the device colour reads as a status bar down the left edge of the faceplate */}
+        <View style={[styles.stripe, { backgroundColor: device.colour }]} pointerEvents="none" />
+      </Pressable>
+    </GestureDetector>
   )
 })
 

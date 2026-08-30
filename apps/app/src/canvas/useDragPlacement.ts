@@ -8,7 +8,7 @@ import {
   snapHalfU,
 } from '@planmyrack/core'
 import { U_PX } from './metrics'
-import type { Device, DeviceType, Face, Layout, Rack } from '@planmyrack/core'
+import type { Device, DeviceType, Face, Layout, NewDeviceInput, Rack } from '@planmyrack/core'
 
 export interface Point {
   x: number
@@ -35,6 +35,8 @@ export interface DragState {
   heightU: number
   type: DeviceType
   deviceId?: string
+  /** Name, ports, colour and the rest of the library row being dragged. */
+  template?: Partial<NewDeviceInput>
   at: Point
   target: DragTarget | null
 }
@@ -94,8 +96,15 @@ export function useDragPlacement({
   )
 
   const startNew = useCallback(
-    (type: DeviceType, heightU: number, at: Point) => {
-      const state: DragState = { kind: 'new', type, heightU, at, target: null }
+    (type: DeviceType, heightU: number, at: Point, template?: Partial<NewDeviceInput>) => {
+      const state: DragState = {
+        kind: 'new',
+        type,
+        heightU,
+        at,
+        target: null,
+        ...(template ? { template } : {}),
+      }
       set({ ...state, target: targetFor(state, at) })
     },
     [set, targetFor],
@@ -139,7 +148,14 @@ export function useDragPlacement({
         onCommit(
           addDevice(
             layout,
-            newDevice({ rackId, face, posU, heightU: current.heightU, type: current.type }),
+            newDevice({
+              ...current.template,
+              rackId,
+              face,
+              posU,
+              heightU: current.heightU,
+              type: current.type,
+            }),
           ),
         )
       }

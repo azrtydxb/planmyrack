@@ -1,13 +1,25 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { ScrollView, StyleSheet, View } from 'react-native'
 import { RackFrame } from './RackFrame'
 import { CableOverlay } from './CableOverlay'
 import { DotGrid } from './DotGrid'
 import { CAP_PX, RACK_INNER_PX, RAIL_PX, SCALE_PX, rackHeightPx } from './metrics'
-import { bodyOrigins } from './origins'
+import { bodyOrigins, rackUnder } from './origins'
 import type { Origin } from './origins'
 import { colour } from '../ui/theme'
+import type { DragSource } from './useDragSource'
+import type { Point, RackHit } from './useDragPlacement'
 import type { Device, Face, Layout } from '@planmyrack/core'
+
+/**
+ * What a drag needs from the canvas: where the pointer is in canvas space, and which rack body
+ * sits under it. Screen coordinates are the only thing a gesture on another component (a library
+ * row) and a gesture on a rack have in common.
+ */
+export interface CanvasGeometry {
+  toLocal(screen: Point): Point
+  resolve(local: Point): RackHit | null
+}
 
 const GAP = 28
 
@@ -20,6 +32,8 @@ export function RackCanvas({
   onSelect,
   onPortPress,
   onDeviceLongPress,
+  onGeometry,
+  drag,
 }: {
   layout: Layout
   face: Face
@@ -29,8 +43,15 @@ export function RackCanvas({
   onSelect?: (id: string) => void
   onPortPress?: (device: Device, port: number, kind: 'network' | 'power') => void
   onDeviceLongPress?: (device: Device) => void
+  onGeometry?: (geometry: CanvasGeometry) => void
+  drag?: DragSource<Device>
 }) {
   const [viewport, setViewport] = useState({ width: 0, height: 0 })
+  const stage = useRef<View | null>(null)
+  // Where the stage sits on screen, and how far the canvas is scrolled: together they turn a
+  // finger position anywhere on screen into a point in canvas space.
+  const stageOrigin = useRef<Point>({ x: 0, y: 0 })
+  const scrollX = useRef(0)
   /**
    * Where each rack body actually sits, measured rather than computed. Deriving it from padding
    * and rail widths drifted whenever the surrounding layout changed — a rack caption wider than
@@ -49,6 +70,26 @@ export function RackCanvas({
   const noteFrame = useCallback(note(setFrames), [])
   const noteBody = useCallback(note(setBodies), [])
   const offsets = bodyOrigins(frames, bodies)
+
+  const toLocal = useCallback(
+    (screen: Point): Point => ({
+      x: screen.x - stageOrigin.current.x + scrollX.current,
+      y: screen.y - stageOrigin.current.y,
+    }),
+    [],
+  )
+
+  const resolve = useCallback(
+    (local: Point): RackHit | null => {
+      const hit = rackUnder(layout.racks, offsets, local)
+      return hit ? { rack: hit.rack, face, topY: hit.topY } : null
+    },
+    [face, layout.racks, offsets],
+  )
+
+  useEffect(() => {
+    onGeometry?.({ toLocal, resolve })
+  }, [onGeometry, resolve, toLocal])
   const contentHeight = 32 + CAP_PX * 2 + Math.max(0, ...layout.racks.map(rackHeightPx))
   const contentWidth =
     32 +
@@ -66,6 +107,10 @@ export function RackCanvas({
       horizontal
       style={styles.canvas}
       contentContainerStyle={styles.content}
+      scrollEventThrottle={16}
+      onScroll={(event) => {
+        scrollX.current = event.nativeEvent.contentOffset.x
+      }}
       onLayout={(event) => {
         const { width: w, height: h } = event.nativeEvent.layout
         setViewport((current) =>
@@ -73,7 +118,16 @@ export function RackCanvas({
         )
       }}
     >
-      <View testID="canvas-content" style={[styles.stage, { width, height }]}>
+      <View
+        testID="canvas-content"
+        ref={stage}
+        onLayout={() =>
+          stage.current?.measureInWindow((x, y) => {
+            stageOrigin.current = { x, y }
+          })
+        }
+        style={[styles.stage, { width, height }]}
+      >
         <DotGrid width={width} height={height} />
         <View style={styles.row}>
           {layout.racks.map((rack) => (
@@ -88,6 +142,7 @@ export function RackCanvas({
                 onSelect={onSelect}
                 onPortPress={onPortPress}
                 onDeviceLongPress={onDeviceLongPress}
+                drag={drag}
                 onBodyLayout={noteBody}
               />
             </View>

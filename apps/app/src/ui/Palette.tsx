@@ -1,12 +1,15 @@
 import { useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
+import { GestureDetector } from 'react-native-gesture-handler'
 import { DEVICE_TYPES, sizeLabel } from '@planmyrack/core'
 import { BUNDLED_CATALOG, catalogByVendor } from '@planmyrack/catalog'
+import { useDragSource } from '../canvas/useDragSource'
 import { Mono, Segmented } from './primitives'
 import { TOUCH, colour, font, radius, rack as hw } from './theme'
 import type { DeviceType } from '@planmyrack/core'
 import type { CatalogEntry } from '@planmyrack/catalog'
+import type { DragSource } from '../canvas/useDragSource'
 import type { Template } from '@planmyrack/storage'
 
 export interface PaletteChoice {
@@ -86,6 +89,41 @@ function Stepper({
   )
 }
 
+/** One of the plain size chips — the same drag source as a catalogue row. */
+function SizeChip({
+  label,
+  accent,
+  choice,
+  drag,
+  onPress,
+}: {
+  label: string
+  accent: string
+  choice: PaletteChoice
+  drag?: DragSource<PaletteChoice>
+  onPress: () => void
+}) {
+  const gesture = useDragSource(choice, drag, `drag-palette-${choice.type}-${choice.heightU}`)
+  return (
+    <GestureDetector gesture={gesture}>
+      <Pressable
+        testID={`palette-${choice.type}-${choice.heightU}`}
+        accessibilityRole="button"
+        accessibilityLabel={`${label} ${sizeLabel(choice.heightU)}`}
+        onPress={onPress}
+        style={[styles.sizeChip, { borderLeftColor: accent }]}
+      >
+        <Mono size={7} tone={colour.icon}>
+          {sizeLabel(choice.heightU)}
+        </Mono>
+        <Text numberOfLines={1} style={styles.sizeName}>
+          {label}
+        </Text>
+      </Pressable>
+    </GestureDetector>
+  )
+}
+
 function Row({
   name,
   meta,
@@ -94,6 +132,8 @@ function Row({
   testID,
   onPress,
   stepper,
+  choice,
+  drag,
 }: {
   name: string
   meta: string
@@ -102,29 +142,34 @@ function Row({
   testID: string
   onPress: () => void
   stepper?: ReactNode
+  choice: PaletteChoice
+  drag?: DragSource<PaletteChoice>
 }) {
+  const gesture = useDragSource(choice, drag, `drag-${testID}`)
   return (
-    <View style={styles.row}>
-      <Thumb ports={ports} />
-      <View style={styles.rowText}>
-        <Text numberOfLines={1} style={styles.rowName}>
-          {name}
-        </Text>
-        <Mono size={7.5} tone={colour.muted} weight="medium">
-          {meta}
-        </Mono>
-        {stepper}
+    <GestureDetector gesture={gesture}>
+      <View style={styles.row}>
+        <Thumb ports={ports} />
+        <View style={styles.rowText}>
+          <Text numberOfLines={1} style={styles.rowName}>
+            {name}
+          </Text>
+          <Mono size={7.5} tone={colour.muted} weight="medium">
+            {meta}
+          </Mono>
+          {stepper}
+        </View>
+        <Pressable
+          testID={testID}
+          accessibilityRole="button"
+          accessibilityLabel={name}
+          onPress={onPress}
+          style={[styles.add, { borderColor: accent }]}
+        >
+          <Text style={[styles.addGlyph, { color: accent }]}>+</Text>
+        </Pressable>
       </View>
-      <Pressable
-        testID={testID}
-        accessibilityRole="button"
-        accessibilityLabel={name}
-        onPress={onPress}
-        style={[styles.add, { borderColor: accent }]}
-      >
-        <Text style={[styles.addGlyph, { color: accent }]}>+</Text>
-      </Pressable>
-    </View>
+    </GestureDetector>
   )
 }
 
@@ -132,9 +177,12 @@ function Row({
 export function Palette({
   templates = [],
   onPick,
+  drag,
 }: {
   templates?: Template[]
   onPick: (choice: PaletteChoice) => void
+  /** Set by the console so a row can be dragged onto a rack instead of tapped. */
+  drag?: DragSource<PaletteChoice>
 }) {
   const [tab, setTab] = useState<'catalogue' | 'saved'>('catalogue')
   const [query, setQuery] = useState('')
@@ -142,6 +190,16 @@ export function Palette({
   const [counts, setCounts] = useState<Record<string, number>>({})
   const vendors = useMemo(() => [...catalogByVendor(BUNDLED_CATALOG).entries()], [])
   const match = (text: string) => text.toLowerCase().includes(query.trim().toLowerCase())
+
+  const templateChoice = (template: Template): PaletteChoice => ({
+    type: template.type,
+    heightU: template.heightU,
+    name: template.name,
+    ports: template.ports,
+    outlets: template.outlets,
+    watts: template.watts,
+    colour: template.colour,
+  })
 
   const entryChoice = (entry: CatalogEntry): PaletteChoice => ({
     type: entry.type,
@@ -202,17 +260,9 @@ export function Palette({
                     ]
                       .filter(Boolean)
                       .join(' · ')}
-                    onPress={() =>
-                      onPick({
-                        type: template.type,
-                        heightU: template.heightU,
-                        name: template.name,
-                        ports: template.ports,
-                        outlets: template.outlets,
-                        watts: template.watts,
-                        colour: template.colour,
-                      })
-                    }
+                    choice={templateChoice(template)}
+                    drag={drag}
+                    onPress={() => onPick(templateChoice(template))}
                   />
                 ))}
             </View>
@@ -228,21 +278,14 @@ export function Palette({
                   spec.sizes
                     .filter(() => match(spec.label))
                     .map((size) => (
-                      <Pressable
+                      <SizeChip
                         key={`${spec.type}-${size}`}
-                        testID={`palette-${spec.type}-${size}`}
-                        accessibilityRole="button"
-                        accessibilityLabel={`${spec.label} ${sizeLabel(size)}`}
+                        label={spec.label}
+                        accent={spec.defaultColour}
+                        choice={{ type: spec.type, heightU: size }}
+                        drag={drag}
                         onPress={() => onPick({ type: spec.type, heightU: size })}
-                        style={[styles.sizeChip, { borderLeftColor: spec.defaultColour }]}
-                      >
-                        <Mono size={7} tone={colour.icon}>
-                          {sizeLabel(size)}
-                        </Mono>
-                        <Text numberOfLines={1} style={styles.sizeName}>
-                          {spec.label}
-                        </Text>
-                      </Pressable>
+                      />
                     )),
                 )}
               </View>
@@ -298,6 +341,8 @@ export function Palette({
                             />
                           ) : undefined
                         }
+                        choice={entryChoice(chosen)}
+                        drag={drag}
                         onPress={() => onPick(entryChoice(chosen))}
                       />
                     )
