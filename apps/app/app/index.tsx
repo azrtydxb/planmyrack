@@ -1,13 +1,15 @@
 import { useRouter } from 'expo-router'
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
+import { ActivityIndicator, StyleSheet, View } from 'react-native'
 import { FirstRunScreen } from '../src/screens/FirstRunScreen'
 import { LayoutsScreen } from '../src/screens/LayoutsScreen'
 import { useStoreContext } from '../src/storage/StoreProvider'
 import { shareText } from '../src/export/files'
-import { colour, font } from '../src/ui/theme'
+import { StorageProblem } from '../src/ui/StorageProblem'
+import { classifyStorageError } from '../src/storage/capabilities'
+import { colour } from '../src/ui/theme'
 
 export default function Index() {
-  const { store, mode, ready, problem, setMode } = useStoreContext()
+  const { store, mode, ready, problem, setMode, retry } = useStoreContext()
   const router = useRouter()
 
   if (!ready) {
@@ -23,7 +25,11 @@ export default function Index() {
   if (problem) {
     return (
       <View style={styles.centre}>
-        <Text style={styles.problem}>{problem}</Text>
+        <StorageProblem
+          problem={classifyStorageError(new Error(problem))}
+          onRetry={retry}
+          onSwitchMode={() => void setMode({ kind: 'local' })}
+        />
       </View>
     )
   }
@@ -45,5 +51,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: colour.appBg,
   },
-  problem: { fontFamily: font.ui, color: colour.danger, padding: 20, textAlign: 'center' },
 })

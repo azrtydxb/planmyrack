@@ -38,7 +38,14 @@ export async function canUseLocalStore(): Promise<Capability> {
   return { ok: true }
 }
 
-export type StorageProblemKind = 'corrupt' | 'unsupported' | 'full' | 'permission'
+export type StorageProblemKind = 'corrupt' | 'unsupported' | 'full' | 'permission' | 'busy'
+
+/**
+ * The database on this device is held by one page at a time. A second tab does not fail to open
+ * it — it waits forever, which on screen is an endless spinner and no explanation.
+ */
+export const STORE_BUSY_MESSAGE =
+  'PlanMyRack is already open in another tab. Layouts kept on this device can only be opened by one tab at a time — close the other one and retry.'
 
 export interface StorageProblem {
   kind: StorageProblemKind
@@ -48,6 +55,7 @@ export interface StorageProblem {
 const FULL = /disk (is )?full|quota|SQLITE_FULL|no space/i
 const CORRUPT = /not a database|malformed|corrupt|SQLITE_CORRUPT|file is encrypted/i
 const PERMISSION = /NSLocalNetworkDenied|local network|permission denied/i
+const BUSY = /already open in another tab/i
 
 /** Turns a raw driver or network error into something the user can act on. */
 export function classifyStorageError(error: Error): StorageProblem {
@@ -65,6 +73,7 @@ export function classifyStorageError(error: Error): StorageProblem {
       detail: 'There is no room left to save. Export this layout to JSON before you lose it.',
     }
   }
+  if (BUSY.test(message)) return { kind: 'busy', detail: STORE_BUSY_MESSAGE }
   if (PERMISSION.test(message)) {
     return {
       kind: 'permission',

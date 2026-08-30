@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react'
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
+import { ActivityIndicator, StyleSheet, View } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { RackEditorScreen } from '../../src/screens/RackEditorScreen'
 import { useStoreContext } from '../../src/storage/StoreProvider'
-import { colour, font } from '../../src/ui/theme'
+import { StorageProblem } from '../../src/ui/StorageProblem'
+import { classifyStorageError } from '../../src/storage/capabilities'
+import { colour } from '../../src/ui/theme'
 import type { Layout } from '@planmyrack/core'
 
 export default function RackRoute() {
   const { id } = useLocalSearchParams<{ id: string }>()
-  const { store, mode, setMode } = useStoreContext()
+  const { store, mode, setMode, problem, retry } = useStoreContext()
   const router = useRouter()
   const [layout, setLayout] = useState<Layout | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -25,10 +27,14 @@ export default function RackRoute() {
     }
   }, [id, store])
 
-  if (error) {
+  // Without this the route sat on a spinner whenever the store could not be opened at all.
+  if (problem || error) {
     return (
       <View style={styles.centre}>
-        <Text style={styles.error}>{error}</Text>
+        <StorageProblem
+          problem={classifyStorageError(new Error(problem ?? error!))}
+          onRetry={retry}
+        />
       </View>
     )
   }
@@ -62,5 +68,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: colour.appBg,
   },
-  error: { fontFamily: font.ui, color: colour.danger, padding: 20, textAlign: 'center' },
 })

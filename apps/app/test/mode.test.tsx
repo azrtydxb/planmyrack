@@ -1,5 +1,9 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native'
+import { Text } from 'react-native'
 import { createMemoryStore } from '@planmyrack/storage'
+import { StoreProvider, useStoreContext } from '../src/storage/StoreProvider'
+import { STORE_BUSY_MESSAGE, classifyStorageError } from '../src/storage/capabilities'
+import { StorageProblem } from '../src/ui/StorageProblem'
 import { FirstRunScreen } from '../src/screens/FirstRunScreen'
 import { SettingsScreen } from '../src/screens/SettingsScreen'
 import { loadMode, saveMode } from '../src/storage/settings'
@@ -12,6 +16,15 @@ jest.mock('@planmyrack/storage', () => {
 })
 const { probeServer } = jest.requireMock('@planmyrack/storage') as {
   probeServer: jest.Mock
+}
+
+/** Renders whatever the provider is offering, so a test can assert on it. */
+function Probe() {
+  const { store, problem, retry } = useStoreContext()
+  if (problem) {
+    return <StorageProblem problem={classifyStorageError(new Error(problem))} onRetry={retry} />
+  }
+  return <Text>{store ? 'store ready' : 'opening'}</Text>
 }
 
 const seedStore = async (name: string): Promise<LayoutStore> => {
@@ -62,6 +75,44 @@ describe('TestModeChooserAndHealthProbe', () => {
 
     fireEvent.press(screen.getByRole('button', { name: 'Use this server' }))
     expect(onChoose).toHaveBeenCalledWith({ kind: 'server', url: 'http://rack:8787' })
+  })
+})
+
+describe('TestSecondTabSaysWhyInsteadOfSpinning', () => {
+  it('reports the database as held elsewhere when it will not open', async () => {
+    // expo-sqlite's OPFS driver does not reject while another tab holds the database — it waits,
+    // and the app showed a spinner for ever with nothing to say
+    const held = () => new Promise<LayoutStore>(() => {})
+    await saveMode({ kind: 'local' })
+
+    render(
+      <StoreProvider makeLocalStore={held} localOpenTimeoutMs={20}>
+        <Probe />
+      </StoreProvider>,
+    )
+
+    await screen.findByText(STORE_BUSY_MESSAGE)
+    expect(screen.getByTestId('storage-problem-busy')).toBeTruthy()
+  })
+
+  it('opens the store again when the other tab has gone', async () => {
+    await saveMode({ kind: 'local' })
+    let attempts = 0
+    const openOnRetry = async () => {
+      attempts += 1
+      if (attempts === 1) return new Promise<LayoutStore>(() => {})
+      return createMemoryStore()
+    }
+
+    render(
+      <StoreProvider makeLocalStore={openOnRetry} localOpenTimeoutMs={20}>
+        <Probe />
+      </StoreProvider>,
+    )
+    await screen.findByText(STORE_BUSY_MESSAGE)
+
+    fireEvent.press(screen.getByRole('button', { name: 'Retry' }))
+    await screen.findByText('store ready')
   })
 })
 
