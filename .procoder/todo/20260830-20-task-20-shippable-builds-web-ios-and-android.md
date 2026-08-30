@@ -25,7 +25,7 @@ Done means the named tests pass, `npm run check:purity` still exits 0, the gate
 
 ## Acceptance criteria
 
-- [ ] Write the failing test `apps/app/test/appConfig.test.ts`: `text Run `npm test -w planmyrack` — expect FAIL with "Cannot find module '../app.json'" or a missing `NSAppTransportSecurity` key.
+- [ ] Write the failing test `apps/app/test/appConfig.test.ts`: `text Run `npm test -w planmyrack`— expect FAIL with "Cannot find module '../app.json'" or a missing`NSAppTransportSecurity` key.
 - [ ] Fill `app.json` with the iOS `infoPlist` keys, `expo.web.output: 'static'` and the plugin registration; write `plugins/withLocalNetwork.js` (exporting `__applyAndroid` for the test) and `assets/network_security_config.xml`; add `eas.json` with `development`, `preview` and `production` profiles,…
 - [ ] Run `npx expo prebuild --platform android --no-install` in a scratch directory and confirm the generated `AndroidManifest.xml` really carries both attributes — the plugin unit test proves the transform, this proves the wiring.
 - [ ] Derive the platform assets from `assets/brand/` (see its README for why each rule exists) and write the failing test `apps/app/test/assets.test.ts` first: ` Squaring off the baked-in rounded corners, flattening alpha for iOS, padding the adaptive foreground and drawing a simplified favicon mark…

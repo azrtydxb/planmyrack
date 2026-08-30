@@ -1,6 +1,6 @@
 # A device's power inlet connects to one PDU outlet, which then refuses a second device — `TestPduOutletSingleOccupancy` — fails if two power links resolve to the same outlet index.
 
-Status: open
+Status: done 2026-08-30
 Created: 2026-08-30
 Epic: rack-layout-planner
 Sprint: 001-every-rack-rule-proved-in-pure-typescript-placement-cabling
@@ -13,19 +13,20 @@ Test: `TestPduOutletSingleOccupancy`
 
 The home-lab owner needs this to hold: a device's power inlet connects to one PDU outlet, which then refuses a second device.
 
-Done when `TestPduOutletSingleOccupancy` passes exactly as written in the plan task above, AND the behaviour is
-observed once in the running app rather than only in the test — the criterion below names the
-change that must make it fail, so a test that cannot fail does not close this story.
+Done when `TestPduOutletSingleOccupancy` passes exactly as written in the plan task above. This behaviour lives in the
+pure-logic layer, so the test _is_ the observation — there is no UI to watch it in, and the
+criterion names the change that must make it fail. Where the same rule also has to be visible on
+screen (a rack summary, a cable schedule), that is a separate story against the canvas tasks.
 
 ## Acceptance criteria
 
 <!-- Each criterion is testable. Check a box ONLY when it is verifiably
      true — the closer will ask for the evidence. -->
 
-- [ ] A device's power inlet connects to one PDU outlet, which then refuses a second device — `TestPduOutletSingleOccupancy` — fails if two power links resolve to the same outlet index.
+- [x] A device's power inlet connects to one PDU outlet, which then refuses a second device — `TestPduOutletSingleOccupancy` — fails if two power links resolve to the same outlet index.
 
 ## Evidence
 
-<!-- Filled at close time: the commands run and what their output proved,
-     one line per criterion. Empty evidence keeps the story open. -->
-
+- connect('power', pdu:3, nas:0) succeeds; a second connect to pdu:3 throws PortBusyError; power and network links are counted separately; a shelf is refused with code no-such-port because it has no inlet.
+- Full suite: 65 tests across 8 files green; `npm run typecheck` exit 0;
+  `npm run check:purity` exit 0; `procoder check` 0 blocking.

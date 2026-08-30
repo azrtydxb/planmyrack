@@ -34,7 +34,7 @@ Done means the named tests pass, `npm run check:purity` still exits 0, the gate
   than the plan's: "Failed to load url ../scripts/check-purity.mjs ... Does the file exist?"
   — same cause, different phrasing.
 - `scripts/check-purity.mjs` implemented; `npm test` → `Test Files 1 passed (1) · Tests 2
-  passed (2)`.
+passed (2)`.
 - The gate proved to fail in both directions, which is the point of it:
   `npm run check:purity` → "no platform imports in packages", exit 0;
   `node scripts/check-purity.mjs tests/fixtures/impure` →

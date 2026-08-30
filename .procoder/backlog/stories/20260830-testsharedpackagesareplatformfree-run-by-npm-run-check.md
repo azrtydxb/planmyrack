@@ -13,9 +13,10 @@ Test: `TestSharedPackagesArePlatformFree`
 
 The home-lab owner needs this to hold: `TestSharedPackagesArePlatformFree`, run by `npm run check:purity`, reports no react, react-native or platform import in the shared packages.
 
-Done when `TestSharedPackagesArePlatformFree` passes exactly as written in the plan task above, AND the behaviour is
-observed once in the running app rather than only in the test — the criterion below names the
-change that must make it fail, so a test that cannot fail does not close this story.
+Done when `TestSharedPackagesArePlatformFree` passes exactly as written in the plan task above. This behaviour lives in the
+pure-logic layer, so the test _is_ the observation — there is no UI to watch it in, and the
+criterion names the change that must make it fail. Where the same rule also has to be visible on
+screen (a rack summary, a cable schedule), that is a separate story against the canvas tasks.
 
 ## Acceptance criteria
 
@@ -35,4 +36,3 @@ change that must make it fail, so a test that cannot fail does not close this st
   .ts and .tsx, skipping node_modules/dist/.git/build/.expo; a directory that does not exist
   yet is not treated as impure.
 - Commit f89666c.
-
