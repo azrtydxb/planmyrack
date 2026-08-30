@@ -1,5 +1,5 @@
 import { newDevice } from './factories.ts'
-import type { Device, DeviceType, Face } from './types.ts'
+import type { Device, DeviceType, Face, Faceplate } from './types.ts'
 
 /**
  * A device saved for reuse. Deliberately not a Device: position, rack and face belong to where it
@@ -16,6 +16,10 @@ export interface DeviceTemplate {
   weightKg: number
   depthMm: number
   colour: string
+  /** Kept so a saved NAS comes back with its drive bays rather than as a blank plate. */
+  faceplate?: Faceplate
+  bays?: number
+  sfp?: number
 }
 
 export const templateFromDevice = (device: Device, id = ''): DeviceTemplate => ({
@@ -29,6 +33,9 @@ export const templateFromDevice = (device: Device, id = ''): DeviceTemplate => (
   weightKg: device.weightKg,
   depthMm: device.depthMm,
   colour: device.colour,
+  ...(device.faceplate ? { faceplate: device.faceplate } : {}),
+  ...(device.bays === undefined ? {} : { bays: device.bays }),
+  ...(device.sfp === undefined ? {} : { sfp: device.sfp }),
 })
 
 export const deviceFromTemplate = (
@@ -46,4 +53,7 @@ export const deviceFromTemplate = (
     weightKg: template.weightKg,
     depthMm: template.depthMm,
     colour: template.colour,
+    ...(template.faceplate ? { faceplate: template.faceplate } : {}),
+    ...(template.bays === undefined ? {} : { bays: template.bays }),
+    ...(template.sfp === undefined ? {} : { sfp: template.sfp }),
   })

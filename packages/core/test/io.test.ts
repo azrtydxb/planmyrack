@@ -88,6 +88,34 @@ describe('TestImportRejectsBadSchema', () => {
   })
 })
 
+describe('TestImportRejectsImpossibleGeometry', () => {
+  it('refuses a device that sits above the top of its rack', () => {
+    const doc = JSON.parse(exportJson(seeded))
+    doc.devices[1].posU = 11
+    expect(() => importJson(JSON.stringify(doc))).toThrow(/above the top of its rack/)
+  })
+
+  it('refuses a cable plugged into a port the device does not have', () => {
+    // such a file rendered fine and then lost the cable the first time anyone edited a device
+    const doc = JSON.parse(exportJson(seeded))
+    doc.links[0].b.port = 99
+    expect(() => importJson(JSON.stringify(doc))).toThrow(/does not have one/)
+  })
+
+  it('refuses a power cable drawn from a device that has no outlets', () => {
+    const doc = JSON.parse(exportJson(seeded))
+    doc.links[0].kind = 'power'
+    doc.links[0].cableType = 'power'
+    doc.links[0].a.port = 0
+    doc.links[0].b.port = 0
+    expect(() => importJson(JSON.stringify(doc))).toThrow(/does not have one/)
+  })
+
+  it('accepts a file whose cables all reach real ports', () => {
+    expect(importJson(exportJson(seeded)).links).toHaveLength(1)
+  })
+})
+
 describe('TestCsvColumnsAndRowCounts', () => {
   it('writes the documented headers with one row per device and per cable', () => {
     const parts = partsCsv(seeded).trimEnd().split('\n')

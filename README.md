@@ -1,6 +1,6 @@
 # PlanMyRack
 
-**v0.1.0** — pre-release: spec and plan complete, pure-logic layer under construction.
+**v0.1.0** — the editor works on web, iOS and Android; not yet in the stores.
 
 Plan a 19" or 10" server rack before you buy the gear or drill the holes — on a phone at the
 rack, on a tablet on the sofa, or in a browser at the desk, from one codebase.
@@ -11,12 +11,14 @@ database or on a small server several devices share.
 
 ## Status
 
-Early. The spec and the implementation plan are complete and the pure-logic layer is being
-built; there is no app to run yet.
+The console is usable end to end: racks you can add, rename, resize and remove; equipment
+dragged from the library onto a face in half-unit steps; ports wired port to port; cables, a
+cable schedule, per-rack figures, JSON/CSV/PNG export and print. Layouts live on the device or
+on a small server several devices share.
 
 - Spec: [`.procoder/specs/rack-layout-planner.md`](.procoder/specs/rack-layout-planner.md)
-- Plan: [`.procoder/plans/rack-layout-planner.md`](.procoder/plans/rack-layout-planner.md) — 21 tasks
-- Sprint 001 delivers plan Tasks 1-8: every rack rule as pure TypeScript, no UI, no storage.
+- Plan: [`.procoder/plans/rack-layout-planner.md`](.procoder/plans/rack-layout-planner.md) — 21 tasks, all built
+- Design reference: [`docs/design.md`](docs/design.md), including where the UI departs from it
 
 ## Layout
 
@@ -29,9 +31,6 @@ apps/app           the only UI: Expo React Native, rendered to iOS, Android and 
 assets/brand       logo sources; platform icons are derived from these
 ```
 
-Only `packages/*` and `apps/app` that a task has reached exist on disk; the rest arrive in
-plan order.
-
 ## Commands
 
 | Command                | What it does                                                  |
@@ -39,12 +38,12 @@ plan order.
 | `npm test`             | runs the test suites                                          |
 | `npm run typecheck`    | type-checks the repository                                    |
 | `npm run check:purity` | fails if a shared package imports react, react-native or expo |
-
-| `npm run web` | runs the app in a browser (Expo) |
-| `npm run ios` | runs the app in the iOS simulator |
-| `npm run android` | runs the app on an Android device or emulator |
-| `npm run server` | starts the optional local server on port 8787 |
-| `npm run build:web` | exports the static web build to `apps/app/dist` |
+| `npm run lint`         | eslint over the monorepo                                      |
+| `npm run web`          | runs the app in a browser (Expo)                              |
+| `npm run ios`          | runs the app in the iOS simulator                             |
+| `npm run android`      | runs the app on an Android device or emulator                 |
+| `npm run server`       | starts the optional local server on port 8787                 |
+| `npm run build:web`    | exports the static web build to `apps/app/dist`               |
 
 ## Running the server
 

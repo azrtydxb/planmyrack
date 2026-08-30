@@ -63,6 +63,60 @@ describe('TestStaleSaveRejected — over HTTP', () => {
   })
 })
 
+describe('TestServerRefusesMalformedDocuments', () => {
+  it('refuses a body that is not a layout instead of storing it', async () => {
+    // one bad POST used to poison a row that every later GET handed back
+    const server = await startServer({ port: 0, dbPath: tmpDb() })
+    try {
+      const res = await fetch(`${server.url}/api/layouts`, post({ name: 'No racks here' }))
+      expect(res.status).toBe(400)
+      const listed = await asSummaries(await fetch(`${server.url}/api/layouts`))
+      expect(listed).toHaveLength(0)
+    } finally {
+      await server.close()
+    }
+  })
+
+  it('refuses a device with a negative height', async () => {
+    const server = await startServer({ port: 0, dbPath: tmpDb() })
+    try {
+      const layout = newLayout('Bad geometry') as unknown as Record<string, unknown>
+      layout.devices = [
+        {
+          id: 'd',
+          rackId: 'r',
+          face: 'front',
+          posU: 0,
+          heightU: -1,
+          type: 'server',
+          name: 'x',
+          colour: '#fff',
+          ports: 0,
+          outlets: 0,
+          watts: 0,
+          weightKg: 0,
+          depthMm: 0,
+          notes: '',
+        },
+      ]
+      const res = await fetch(`${server.url}/api/layouts`, post(layout))
+      expect(res.status).toBe(400)
+    } finally {
+      await server.close()
+    }
+  })
+
+  it('refuses a template that is not one', async () => {
+    const server = await startServer({ port: 0, dbPath: tmpDb() })
+    try {
+      const res = await fetch(`${server.url}/api/templates`, post({ name: 'no type' }))
+      expect(res.status).toBe(400)
+    } finally {
+      await server.close()
+    }
+  })
+})
+
 describe('TestHealthEndpoint', () => {
   it('answers ok with a version', async () => {
     const server = await startServer({ port: 0, dbPath: tmpDb() })

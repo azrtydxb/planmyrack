@@ -44,20 +44,31 @@ describe('TestDeviceTypeTableIsConsistent', () => {
   })
 })
 
-describe('TestIdsAreUniqueWithoutCrypto', () => {
+describe('TestIdsAreUniqueWithOrWithoutCrypto', () => {
   it('mints 10000 distinct ids', () => {
     expect(new Set(Array.from({ length: 10_000 }, newId)).size).toBe(10_000)
   })
 
-  it('touches no crypto global', () => {
-    const spy = vi.fn()
+  it('still mints ids where crypto.randomUUID does not exist', () => {
+    // Hermes exposes neither randomUUID nor getRandomValues by default
     const original = Object.getOwnPropertyDescriptor(globalThis, 'crypto')
-    Object.defineProperty(globalThis, 'crypto', {
-      get: spy,
-      configurable: true,
-    })
-    newId()
-    if (original) Object.defineProperty(globalThis, 'crypto', original)
-    expect(spy).not.toHaveBeenCalled()
+    Object.defineProperty(globalThis, 'crypto', { value: undefined, configurable: true })
+    try {
+      expect(new Set(Array.from({ length: 10_000 }, newId)).size).toBe(10_000)
+    } finally {
+      if (original) Object.defineProperty(globalThis, 'crypto', original)
+    }
+  })
+
+  it('prefers crypto.randomUUID when the platform has it', () => {
+    const randomUUID = vi.fn(() => '11111111-2222-3333-4444-555555555555')
+    const original = Object.getOwnPropertyDescriptor(globalThis, 'crypto')
+    Object.defineProperty(globalThis, 'crypto', { value: { randomUUID }, configurable: true })
+    try {
+      expect(newId()).toBe('1111111122223333')
+    } finally {
+      if (original) Object.defineProperty(globalThis, 'crypto', original)
+    }
+    expect(randomUUID).toHaveBeenCalled()
   })
 })

@@ -1,4 +1,5 @@
 import { ImportError } from './errors.ts'
+import { portCapacity } from './links.ts'
 import { layoutSchema } from './schema.ts'
 import { SCHEMA_VERSION } from './types.ts'
 import type { Layout } from './types.ts'
@@ -57,6 +58,31 @@ export function importJson(text: string): Layout {
     (l) => !deviceIds.has(l.a.deviceId) || !deviceIds.has(l.b.deviceId),
   )
   if (dangling) throw new ImportError('a cable points at a device that is not in the file')
+
+  // The geometry the editor maintains has to hold on the way in too. Without these two checks a
+  // file imports and renders happily, then quietly loses cables the first time anyone edits a
+  // device — pruneLinks drops the ones that were never plugged into anything.
+  const racks = new Map(doc.racks.map((r) => [r.id, r]))
+  const stranded = doc.devices.find((d) => d.posU + d.heightU > racks.get(d.rackId)!.units)
+  if (stranded) {
+    throw new ImportError(`device ${stranded.name} sits above the top of its rack`)
+  }
+
+  const byId = new Map(doc.devices.map((d) => [d.id, d]))
+  for (const link of doc.links) {
+    for (const [end, role] of [
+      [link.a, 'supply'],
+      [link.b, 'draw'],
+    ] as const) {
+      const device = byId.get(end.deviceId)!
+      const capacity = portCapacity(device, link.kind, link.kind === 'power' ? role : 'supply')
+      if (end.port < 0 || end.port >= capacity) {
+        throw new ImportError(
+          `a cable is plugged into port ${end.port + 1} of ${device.name}, which does not have one`,
+        )
+      }
+    }
+  }
 
   const now = new Date().toISOString()
   return {

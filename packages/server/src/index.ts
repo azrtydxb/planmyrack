@@ -24,7 +24,8 @@ export async function startServer(
       new Promise<void>((resolve, reject) =>
         server.close((err) => {
           store.close()
-          err ? reject(err) : resolve()
+          if (err) reject(err)
+          else resolve()
         }),
       ),
   }

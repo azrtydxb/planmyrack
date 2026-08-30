@@ -20,6 +20,11 @@ export function useLayoutEditor(store: LayoutStore | null, initial: Layout) {
   const [error, setError] = useState<string | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const dirty = useRef(false)
+  /** One write at a time: a retry that overlaps the debounced save would be refused as stale. */
+  const inFlight = useRef<Promise<void> | null>(null)
+  const queued = useRef(false)
+  /** State updates after unmount are pointless, and the flush save runs past that point. */
+  const alive = useRef(true)
   /**
    * The newest layout INCLUDING the revision the store last handed back. The debounced save reads
    * this rather than the snapshot taken when the edit was made: two quick edits would otherwise
@@ -32,24 +37,45 @@ export function useLayoutEditor(store: LayoutStore | null, initial: Layout) {
   latest.current = layout
 
   const save = useCallback(
-    async (next: Layout) => {
-      if (!store || !next.id) return
-      setSaving('saving')
-      try {
-        const saved = await store.update(next)
-        latest.current = { ...latest.current, revision: saved.revision }
-        setHistory((h) => ({ ...h, present: { ...h.present, revision: saved.revision } }))
-        setSaving('idle')
-        setError(null)
-      } catch (err) {
-        setSaving('error')
-        if (err instanceof StaleRevisionError) setConflict(err.current)
-        setError(
-          err instanceof StaleRevisionError || err instanceof StoreUnavailableError
-            ? err.message
-            : (err as Error).message,
-        )
+    (next: Layout): Promise<void> => {
+      if (!store || !next.id) return Promise.resolve()
+      // Two writes of the same revision cannot both succeed: the second is stale by definition,
+      // and the app would raise a conflict against itself. Queue instead, then save whatever is
+      // newest once the write in flight lands.
+      if (inFlight.current) {
+        queued.current = true
+        return inFlight.current
       }
+
+      const run = (async () => {
+        setSaving('saving')
+        try {
+          const saved = await store.update(next)
+          latest.current = { ...latest.current, revision: saved.revision }
+          if (!alive.current) return
+          setHistory((h) => ({ ...h, present: { ...h.present, revision: saved.revision } }))
+          setSaving('idle')
+          setError(null)
+        } catch (err) {
+          if (!alive.current) return
+          setSaving('error')
+          if (err instanceof StaleRevisionError) setConflict(err.current)
+          setError(
+            err instanceof StaleRevisionError || err instanceof StoreUnavailableError
+              ? err.message
+              : (err as Error).message,
+          )
+        }
+      })().finally(() => {
+        inFlight.current = null
+        if (queued.current) {
+          queued.current = false
+          void save(latest.current)
+        }
+      })
+
+      inFlight.current = run
+      return run
     },
     [store],
   )
@@ -91,6 +117,20 @@ export function useLayoutEditor(store: LayoutStore | null, initial: Layout) {
     }
   }, [layout, save])
 
+  /**
+   * An edit made and then left within the debounce window used to be dropped: the effect above
+   * clears the timer on unmount, and the timer was the only thing that saved.
+   */
+  useEffect(() => {
+    alive.current = true
+    return () => {
+      alive.current = false
+      if (!dirty.current) return
+      dirty.current = false
+      void save(latest.current)
+    }
+  }, [save])
+
   const reload = useCallback(() => {
     if (!conflict) return
     latest.current = conflict
@@ -112,6 +152,13 @@ export function useLayoutEditor(store: LayoutStore | null, initial: Layout) {
     conflict,
     error,
     reload,
-    saveNow: () => save(layout),
+    saveNow: () => {
+      // Retry, not "write again": with nothing pending and nothing failed there is no reason to
+      // spend a revision. Otherwise it replaces the debounced write rather than racing it.
+      if (!dirty.current && saving !== 'error') return Promise.resolve()
+      if (timer.current) clearTimeout(timer.current)
+      dirty.current = false
+      return save(latest.current)
+    },
   }
 }

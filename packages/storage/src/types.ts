@@ -1,4 +1,4 @@
-import type { DeviceType, Layout } from '@planmyrack/core'
+import type { DeviceType, Faceplate, Layout } from '@planmyrack/core'
 
 export interface LayoutSummary {
   id: string
@@ -19,6 +19,9 @@ export interface Template {
   weightKg: number
   depthMm: number
   colour: string
+  faceplate?: Faceplate
+  bays?: number
+  sfp?: number
 }
 
 /**

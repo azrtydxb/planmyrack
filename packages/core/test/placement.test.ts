@@ -8,6 +8,7 @@ import {
   newLayout,
   newRack,
   removeRack,
+  updateDevice,
   updateRack,
 } from '../src/index.ts'
 import type { Layout, Link } from '../src/index.ts'
@@ -104,6 +105,43 @@ describe('TestMoveDeviceAcrossRackAndFaceKeepsLinks', () => {
       PlacementError,
     )
     expect(packed.devices.find((d) => d.id === 'nas')!.rackId).toBe('A')
+  })
+})
+
+describe('TestUpdateDeviceChecksTheRackItMovesTo', () => {
+  it('lands in a free slot of the new rack rather than on top of what is there', () => {
+    const a = newRack({ id: 'A', units: 6 })
+    const b = newRack({ id: 'B', units: 6 })
+    let layout = addRack(newLayout('two', [a]), b)
+    layout = addDevice(
+      layout,
+      newDevice({ id: 'sitting', rackId: 'B', face: 'front', posU: 0, heightU: 2, type: 'server' }),
+    )
+    layout = addDevice(
+      layout,
+      newDevice({ id: 'moving', rackId: 'A', face: 'front', posU: 0, heightU: 2, type: 'server' }),
+    )
+
+    const moved = updateDevice(layout, 'moving', { rackId: 'B' })
+    const placed = moved.devices.find((d) => d.id === 'moving')!
+    expect(placed.rackId).toBe('B')
+    expect(placed.posU).toBeGreaterThanOrEqual(2)
+  })
+
+  it('refuses the move when the new rack is full', () => {
+    const a = newRack({ id: 'A', units: 4 })
+    const b = newRack({ id: 'B', units: 2 })
+    let layout = addRack(newLayout('two', [a]), b)
+    layout = addDevice(
+      layout,
+      newDevice({ id: 'full', rackId: 'B', face: 'front', posU: 0, heightU: 2, type: 'blank' }),
+    )
+    layout = addDevice(
+      layout,
+      newDevice({ id: 'moving', rackId: 'A', face: 'front', posU: 0, heightU: 2, type: 'server' }),
+    )
+
+    expect(() => updateDevice(layout, 'moving', { rackId: 'B' })).toThrow(/no free/)
   })
 })
 

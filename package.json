@@ -18,13 +18,15 @@
     "ios": "npm run ios -w planmyrack",
     "android": "npm run android -w planmyrack",
     "server": "node packages/server/bin/planmyrack-server.mjs",
-    "build:web": "npm run build:web -w planmyrack"
+    "build:web": "npm run build:web -w planmyrack",
+    "lint": "eslint ."
   },
   "devDependencies": {
     "@types/node": "^26.4.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.68.0",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "eslint": "^10.9.1"
   },
   "allowScripts": {
     "esbuild@0.28.2": true

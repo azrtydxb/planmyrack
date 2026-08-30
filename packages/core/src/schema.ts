@@ -70,3 +70,23 @@ export const layoutSchema = z.object({
   devices: z.array(deviceSchema),
   links: z.array(linkSchema),
 })
+
+/**
+ * What a client may POST as a saved template. The id may be absent or empty — the store mints one
+ * either way, which is the contract every adapter is tested against.
+ */
+export const templateSchema = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  type: deviceType,
+  heightU: halfUnit.refine((n) => n > 0, { message: 'must be taller than zero' }),
+  ports: z.number().int().nonnegative(),
+  outlets: z.number().int().nonnegative(),
+  watts: z.number().nonnegative(),
+  weightKg: z.number().nonnegative(),
+  depthMm: z.number().nonnegative(),
+  colour: z.string(),
+  faceplate: z.enum(['plain', 'bays', 'display', 'sfp', 'poe', 'outlets']).optional(),
+  bays: z.number().int().nonnegative().optional(),
+  sfp: z.number().int().nonnegative().optional(),
+})

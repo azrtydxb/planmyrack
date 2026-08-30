@@ -156,6 +156,75 @@ describe('TestOneEditWritesOnce', () => {
   })
 })
 
+describe('TestEditSurvivesLeavingTheEditor', () => {
+  it('writes a pending edit when the editor unmounts inside the debounce window', async () => {
+    const store = createMemoryStore()
+    const saved = await store.create(seeded)
+
+    const { result, unmount } = renderHook(() => useLayoutEditor(store, saved))
+    act(() => result.current.apply((l) => updateDevice(l, 'd1', { name: 'Typed and left' })))
+    // leaving well inside AUTOSAVE_MS: the debounce has not fired yet
+    unmount()
+
+    await waitFor(
+      async () => expect((await store.get(saved.id!)).devices[0]!.name).toBe('Typed and left'),
+      { timeout: 3000 },
+    )
+  })
+})
+
+describe('TestRetryDoesNotConflictWithItself', () => {
+  it('never has two saves of the same revision in flight', async () => {
+    const store = createMemoryStore()
+    const saved = await store.create(seeded)
+    // a slow store is what makes the race visible: the retry used to fire while the debounced
+    // save was still running, and the second write was refused as stale by the app's own first
+    const realUpdate = store.update.bind(store)
+    const update = jest.spyOn(store, 'update').mockImplementation(async (layout) => {
+      await new Promise((resolve) => setTimeout(resolve, 200))
+      return realUpdate(layout)
+    })
+
+    const { result } = renderHook(() => useLayoutEditor(store, saved))
+    act(() => result.current.apply((l) => updateDevice(l, 'd1', { name: 'Retried' })))
+
+    await act(async () => {
+      // inside the write itself: the debounce fired at 600ms and the store takes 200ms
+      await new Promise((resolve) => setTimeout(resolve, 650))
+      result.current.saveNow()
+      result.current.saveNow()
+    })
+
+    await waitFor(() => expect(result.current.saving).toBe('idle'), { timeout: 3000 })
+    expect(result.current.conflict).toBeNull()
+    expect((await store.get(saved.id!)).devices[0]!.name).toBe('Retried')
+    expect(update.mock.calls.map((call) => call[0].revision)).toEqual([1])
+  })
+
+  it('writes an edit made while an earlier save was still in flight', async () => {
+    const store = createMemoryStore()
+    const saved = await store.create(seeded)
+    const realUpdate = store.update.bind(store)
+    jest.spyOn(store, 'update').mockImplementation(async (layout) => {
+      await new Promise((resolve) => setTimeout(resolve, 200))
+      return realUpdate(layout)
+    })
+
+    const { result } = renderHook(() => useLayoutEditor(store, saved))
+    act(() => result.current.apply((l) => updateDevice(l, 'd1', { name: 'First' })))
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 650))
+      result.current.apply((l) => updateDevice(l, 'd1', { name: 'Second' }))
+    })
+
+    await waitFor(
+      async () => expect((await store.get(saved.id!)).devices[0]!.name).toBe('Second'),
+      { timeout: 4000 },
+    )
+    expect(result.current.conflict).toBeNull()
+  })
+})
+
 describe('TestRefusedEditSaysWhy', () => {
   it('surfaces the reason instead of silently doing nothing', async () => {
     // found in the running app: connecting power through the picker did nothing at all, because

@@ -62,7 +62,13 @@ export function updateDevice(layout: Layout, deviceId: string, patch: Partial<De
   next.ports = Math.max(0, Math.min(next.ports, spec.maxPorts))
   next.outlets = Math.max(0, Math.min(next.outlets, spec.maxOutlets))
 
-  if (patch.heightU !== undefined || patch.posU !== undefined || patch.face !== undefined) {
+  // A patch that only moves the device to another rack still has to land somewhere free there.
+  if (
+    patch.heightU !== undefined ||
+    patch.posU !== undefined ||
+    patch.face !== undefined ||
+    patch.rackId !== undefined
+  ) {
     const rack = rackOf(layout, next.rackId)
     const posU = findFreeSlot(layout.devices, rack, next)
     if (posU === null) {
