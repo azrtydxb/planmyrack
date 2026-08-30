@@ -32,7 +32,7 @@ import { useTemplates } from '../state/useTemplates'
 import { shareText } from '../export/files'
 import { exportPng } from '../export/png'
 import { printLayout } from '../export/print'
-import { colour, font } from '../ui/theme'
+import { CABLE_COLOURS, colour, font } from '../ui/theme'
 import type { CableType, Device, Face, LinkEnd, LinkKind } from '@planmyrack/core'
 import type { Layout } from '@planmyrack/core'
 import type { LayoutStore } from '@planmyrack/storage'
@@ -105,17 +105,23 @@ export function RackEditorScreen({
     [activeRack, editor, face, layout.racks, wide],
   )
 
-  const connectTo = (target: LinkEnd, meta: { cableType: CableType; label: string }) => {
+  const connectTo = (
+    target: LinkEnd,
+    meta: { cableType: CableType; label: string },
+    kind: LinkKind,
+  ) => {
     if (!picking) return
-    editor.apply((current) =>
-      connect(
-        current,
-        picking.kind,
-        { deviceId: picking.device.id, port: picking.port },
-        target,
-        meta,
-      ),
-    )
+    // A power cable leaves the device's inlet, not whichever network port was tapped to open
+    // the sheet; cables cycle through the palette so neighbouring runs stay tellable apart.
+    const from =
+      kind === 'power'
+        ? { deviceId: picking.device.id, port: 0 }
+        : { deviceId: picking.device.id, port: picking.port }
+    const colour = CABLE_COLOURS[layout.links.length % CABLE_COLOURS.length]
+    // A power run has no Ethernet category; recording one would put "CAT6" against it in the
+    // schedule and the CSV.
+    const cableType = kind === 'power' ? 'power' : meta.cableType
+    editor.apply((current) => connect(current, kind, from, target, { ...meta, cableType, colour }))
     setPicking(null)
   }
 

@@ -80,9 +80,11 @@ describe('TestConnectFreePorts — through the UI', () => {
     )
 
     fireEvent.press(screen.getByTestId('pick-nas-1'))
+    // the picker reports which kind of cable the sheet was on, so power cannot be sent as network
     expect(onConnect).toHaveBeenCalledWith(
       { deviceId: 'nas', port: 1 },
       expect.objectContaining({ cableType: 'cat6' }),
+      'network',
     )
   })
 })
@@ -185,5 +187,86 @@ describe('TestStackedCablesArcRatherThanKink', () => {
     const path = cablePath({ x: 100, y: 100 }, { x: 600, y: 120 })
     const [, c1x] = /C([\d.-]+),/.exec(path)!.map(Number)
     expect(c1x).toBeGreaterThan(100)
+  })
+})
+
+describe('TestPowerPickerConnectsAsPower', () => {
+  it('reports the power kind when the sheet is switched to Power', () => {
+    const onConnect = jest.fn()
+    const withPdu = addDevice(
+      base,
+      newDevice({
+        id: 'pdu',
+        rackId: 'A',
+        face: 'front',
+        posU: 6,
+        heightU: 1,
+        type: 'pdu',
+        name: 'PDU',
+      }),
+    )
+    render(
+      <PortPicker
+        layout={withPdu}
+        device={withPdu.devices[1]!}
+        port={0}
+        kind="network"
+        onConnect={onConnect}
+        onDisconnect={jest.fn()}
+        onClose={jest.fn()}
+      />,
+    )
+
+    fireEvent.press(screen.getByRole('button', { name: 'Power' }))
+    fireEvent.press(screen.getByTestId('pick-pdu-2'))
+
+    expect(onConnect).toHaveBeenCalledWith({ deviceId: 'pdu', port: 2 }, expect.anything(), 'power')
+  })
+})
+
+describe('TestPowerCablesAreNotGivenAnEthernetCategory', () => {
+  it('records a power run as power, not cat6', () => {
+    const withPdu = addDevice(
+      base,
+      newDevice({
+        id: 'pdu',
+        rackId: 'A',
+        face: 'front',
+        posU: 6,
+        heightU: 1,
+        type: 'pdu',
+        name: 'PDU',
+      }),
+    )
+    const wiredPower = connect(
+      withPdu,
+      'power',
+      { deviceId: 'nas', port: 0 },
+      { deviceId: 'pdu', port: 2 },
+      { cableType: 'power' },
+    )
+    expect(wiredPower.links[0]!.cableType).toBe('power')
+
+    render(<CableSchedule layout={wiredPower} />)
+    const row = screen.getByTestId(`cable-row-${wiredPower.links[0]!.id}`)
+    expect(row).toHaveTextContent(/POWER/)
+    expect(row).not.toHaveTextContent(/CAT/)
+  })
+
+  it('offers no Ethernet categories on the power tab', () => {
+    render(
+      <PortPicker
+        layout={base}
+        device={base.devices[0]!}
+        port={0}
+        kind="network"
+        onConnect={jest.fn()}
+        onDisconnect={jest.fn()}
+        onClose={jest.fn()}
+      />,
+    )
+    expect(screen.getByRole('button', { name: 'Cable type cat6' })).toBeTruthy()
+    fireEvent.press(screen.getByRole('button', { name: 'Power' }))
+    expect(screen.queryByRole('button', { name: 'Cable type cat6' })).toBeNull()
   })
 })

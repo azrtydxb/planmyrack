@@ -149,3 +149,38 @@ describe('TestOneEditWritesOnce', () => {
     expect((await store.get(saved.id!)).revision).toBe(2)
   })
 })
+
+describe('TestRefusedEditSaysWhy', () => {
+  it('surfaces the reason instead of silently doing nothing', async () => {
+    // found in the running app: connecting power through the picker did nothing at all, because
+    // the refusal was raised inside a state updater and React discarded the error it set.
+    const store = createMemoryStore()
+    const saved = await store.create(seeded)
+    const { result } = renderHook(() => useLayoutEditor(store, saved))
+
+    act(() =>
+      result.current.apply(() => {
+        throw new Error('that port does not exist')
+      }),
+    )
+
+    expect(result.current.error).toBe('that port does not exist')
+    expect(result.current.layout).toEqual(saved)
+  })
+
+  it('clears the error once an edit succeeds', async () => {
+    const store = createMemoryStore()
+    const saved = await store.create(seeded)
+    const { result } = renderHook(() => useLayoutEditor(store, saved))
+
+    act(() =>
+      result.current.apply(() => {
+        throw new Error('nope')
+      }),
+    )
+    expect(result.current.error).toBe('nope')
+
+    act(() => result.current.apply((l) => updateDevice(l, 'd1', { name: 'Fine' })))
+    expect(result.current.error).toBeNull()
+  })
+})

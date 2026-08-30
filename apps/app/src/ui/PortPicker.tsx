@@ -24,7 +24,11 @@ export function PortPicker({
   device: Device
   port: number
   kind: LinkKind
-  onConnect: (target: LinkEnd, meta: { cableType: CableType; label: string }) => void
+  onConnect: (
+    target: LinkEnd,
+    meta: { cableType: CableType; label: string },
+    kind: LinkKind,
+  ) => void
   onDisconnect: (linkId: string) => void
   onClose: () => void
 }) {
@@ -84,7 +88,7 @@ export function PortPicker({
               ]}
             />
             <View style={styles.chips}>
-              {CABLE_TYPES.map((type) => (
+              {(linkKind === 'power' ? [] : CABLE_TYPES).map((type) => (
                 <Pressable
                   key={type}
                   accessibilityRole="button"
@@ -151,6 +155,7 @@ export function PortPicker({
                             onConnect(
                               { deviceId: candidate.id, port: index },
                               { cableType, label: '' },
+                              linkKind,
                             )
                           }
                           style={[styles.portTile, (taken || self) && styles.portTileTaken]}

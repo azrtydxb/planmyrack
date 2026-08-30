@@ -55,17 +55,19 @@ export function useLayoutEditor(store: LayoutStore | null, initial: Layout) {
   )
 
   const apply = useCallback((change: (current: Layout) => Layout) => {
-    setHistory((current) => {
-      let next: Layout
-      try {
-        next = change(current.present)
-      } catch (err) {
-        setError((err as Error).message)
-        return current
-      }
-      dirty.current = true
-      return commit(current, next)
-    })
+    // The change runs here rather than inside the updater: setting error state from within a
+    // state updater is a side effect React may discard, which is how a refused connection used
+    // to fail silently — nothing happened and nothing said why.
+    let next: Layout
+    try {
+      next = change(latest.current)
+    } catch (err) {
+      setError((err as Error).message)
+      return
+    }
+    dirty.current = true
+    setError(null)
+    setHistory((current) => commit(current, next))
   }, [])
 
   /**
