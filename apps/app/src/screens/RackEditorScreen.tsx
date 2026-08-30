@@ -329,6 +329,13 @@ export function RackEditorScreen({
       </View>
     ) : null
 
+  const settingsPane = (
+    <ScrollView contentContainerStyle={styles.stats}>
+      <Text style={styles.screenTitle}>Settings</Text>
+      <Button label="Open settings" onPress={() => onOpenSettings?.()} />
+    </ScrollView>
+  )
+
   const body = () => {
     if (wide) return canvas
     switch (tab) {
@@ -339,12 +346,7 @@ export function RackEditorScreen({
       case 'stats':
         return stats
       case 'settings':
-        return (
-          <ScrollView contentContainerStyle={styles.stats}>
-            <Text style={styles.screenTitle}>Settings</Text>
-            <Button label="Open settings" onPress={() => onOpenSettings?.()} />
-          </ScrollView>
-        )
+        return settingsPane
       default:
         return canvas
     }
@@ -387,7 +389,13 @@ export function RackEditorScreen({
         ) : null}
 
         <View style={styles.content}>
-          {wide && tab === 'cables' ? cableSchedule : wide && tab === 'stats' ? stats : body()}
+          {wide && tab === 'cables'
+            ? cableSchedule
+            : wide && tab === 'stats'
+              ? stats
+              : wide && tab === 'settings'
+                ? settingsPane
+                : body()}
         </View>
 
         {sidePanel}

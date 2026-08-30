@@ -42,7 +42,9 @@ export function CableSchedule({
         <View style={styles.headText}>
           <Text style={styles.title}>Cables</Text>
           <Mono size={8.5}>
-            {`${layout.name.toUpperCase()} · ${layout.links.length} CONNECTIONS`}
+            {`${layout.name.toUpperCase()} · ${layout.links.length} ${
+              layout.links.length === 1 ? 'CONNECTION' : 'CONNECTIONS'
+            }`}
           </Mono>
         </View>
         {onExportCsv ? <Button small label="Export CSV" tone="soft" onPress={onExportCsv} /> : null}

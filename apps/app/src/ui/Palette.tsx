@@ -201,6 +201,9 @@ export function Palette({
     colour: template.colour,
   })
 
+  /** A search that matches no size chip must not leave its heading standing alone. */
+  const sizeChips = Object.values(DEVICE_TYPES).filter((spec) => match(spec.label))
+
   const entryChoice = (entry: CatalogEntry): PaletteChoice => ({
     type: entry.type,
     heightU: entry.heightU,
@@ -270,9 +273,11 @@ export function Palette({
         ) : (
           <>
             <View style={styles.group}>
-              <Mono size={7.5} tone={colour.icon}>
-                SIZES
-              </Mono>
+              {sizeChips.length > 0 ? (
+                <Mono size={7.5} tone={colour.icon}>
+                  SIZES
+                </Mono>
+              ) : null}
               <View style={styles.sizes}>
                 {Object.values(DEVICE_TYPES).flatMap((spec) =>
                   spec.sizes
