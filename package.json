@@ -11,9 +11,14 @@
     "apps/*"
   ],
   "scripts": {
-    "test": "vitest run",
+    "test": "vitest run && npm run test -w planmyrack",
     "typecheck": "tsc -p tsconfig.json && npm run typecheck --workspaces --if-present",
-    "check:purity": "node scripts/check-purity.mjs packages"
+    "check:purity": "node scripts/check-purity.mjs packages",
+    "web": "npm run web -w planmyrack",
+    "ios": "npm run ios -w planmyrack",
+    "android": "npm run android -w planmyrack",
+    "server": "node packages/server/bin/planmyrack-server.mjs",
+    "build:web": "npm run build:web -w planmyrack"
   },
   "devDependencies": {
     "@types/node": "^26.4.0",
@@ -23,5 +28,10 @@
   },
   "allowScripts": {
     "esbuild@0.28.2": true
+  },
+  "overrides": {
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "uuid": "^11.1.1"
   }
 }

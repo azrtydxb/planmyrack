@@ -5,3 +5,5 @@ dist/
 
 # procoder session state — regenerated every run, not worth versioning
 .procoder/state/
+apps/app/dist/
+apps/app/.expo/

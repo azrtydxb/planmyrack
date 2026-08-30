@@ -85,7 +85,8 @@ describe('TestWebBuildIsServedCrossOriginIsolated', () => {
     try {
       const res = await fetch(`${server.url}/`)
       expect(res.headers.get('cross-origin-opener-policy')).toBe('same-origin')
-      expect(res.headers.get('cross-origin-embedder-policy')).toBe('require-corp')
+      // credentialless is what the Expo SDK 57 docs require for expo-sqlite on web
+      expect(res.headers.get('cross-origin-embedder-policy')).toBe('credentialless')
     } finally {
       await server.close()
     }

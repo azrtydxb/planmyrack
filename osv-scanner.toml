@@ -1,0 +1,20 @@
+# Accepted risks, reviewed rather than silenced. Each entry must say why, and carry a date to
+# re-examine it — an ignore with no expiry is how a real vulnerability gets to live forever.
+
+[[IgnoredVulns]]
+id = "GHSA-w5hq-g745-h8pq"
+ignoreUntil = 2026-11-30
+reason = """
+uuid <11.1.1: missing buffer bounds check in v3/v5/v6 when the caller supplies a buffer.
+
+Reached only as a build-time transitive dependency:
+  expo-sharing -> @expo/config-plugins -> xcode -> uuid@7.0.3
+xcode uses uuid.v4() to mint Xcode project object ids; v4 takes no caller buffer, so the
+affected code path is never entered. Nothing from uuid ships in the app bundle — it runs on this
+machine during `expo prebuild`, over files we already own.
+
+Not fixable here: `overrides` in the root package.json are not honoured by the npm in use
+(11.19.0 — the override is accepted but the lockfile still resolves uuid@7.0.3), and the fix has
+to come from Expo bumping @expo/config-plugins/xcode. Re-check when the Expo SDK is next
+upgraded, or by 2026-11-30, whichever comes first.
+"""

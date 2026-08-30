@@ -22,10 +22,12 @@ const MIME: Record<string, string> = {
 }
 
 // expo-sqlite's web build stores through OPFS, which needs the page cross-origin isolated.
-// Without these two headers local mode silently has nowhere to persist.
+// Without these two headers local mode silently has nowhere to persist. `credentialless` is what
+// the Expo SDK 57 docs specify; `require-corp` also isolates but demands every cross-origin
+// resource opt in, which buys nothing for a self-hosted single-origin build.
 const ISOLATION = {
   'cross-origin-opener-policy': 'same-origin',
-  'cross-origin-embedder-policy': 'require-corp',
+  'cross-origin-embedder-policy': 'credentialless',
 }
 
 const CORS = {
