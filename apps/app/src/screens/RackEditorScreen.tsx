@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { ScrollView, StyleSheet, Text, View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
   RACK_UNIT_PRESETS,
   addDevice,
@@ -56,6 +57,9 @@ export function RackEditorScreen({
   const editor = useLayoutEditor(store, initial)
   const { templates, save: saveTemplate } = useTemplates(store)
   const breakpoint = useBreakpoint()
+  // This screen hides the navigation header, so nothing else pads for the status bar and the
+  // Dynamic Island — without this the layout name is cut in half on an iPhone.
+  const insets = useSafeAreaInsets()
 
   const [tab, setTab] = useState<TabKey>('racks')
   const [face, setFace] = useState<Face>('front')
@@ -217,7 +221,7 @@ export function RackEditorScreen({
   }
 
   return (
-    <View style={styles.screen}>
+    <View style={[styles.screen, { paddingTop: insets.top }]}>
       <OfflineBanner
         message={editor.conflict ? null : editor.error}
         onRetry={editor.saveNow}

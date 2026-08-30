@@ -1,5 +1,11 @@
 import { act, fireEvent, render, renderHook, screen, waitFor } from '@testing-library/react-native'
-import { Dimensions } from 'react-native'
+import { Dimensions, View } from 'react-native'
+import { RackEditorScreen } from '../src/screens/RackEditorScreen'
+
+jest.mock('react-native-safe-area-context', () => ({
+  ...jest.requireActual('react-native-safe-area-context'),
+  useSafeAreaInsets: () => ({ top: 59, bottom: 34, left: 0, right: 0 }),
+}))
 import { addDevice, newDevice, newLayout, newRack, updateDevice } from '@planmyrack/core'
 import { createMemoryStore } from '@planmyrack/storage'
 import { Inspector } from '../src/ui/Inspector'
@@ -182,5 +188,16 @@ describe('TestRefusedEditSaysWhy', () => {
 
     act(() => result.current.apply((l) => updateDevice(l, 'd1', { name: 'Fine' })))
     expect(result.current.error).toBeNull()
+  })
+})
+
+describe('TestEditorClearsTheStatusBar', () => {
+  it('pads the screen by the top safe-area inset', () => {
+    // seen on the simulator: the layout name ran under the Dynamic Island, because this screen
+    // hides the navigation header and nothing else applied the inset
+    const store = createMemoryStore()
+    render(<RackEditorScreen store={store} initial={seeded} />)
+    const padded = screen.UNSAFE_getByType(View as never)
+    expect(JSON.stringify(padded.props.style)).toContain('59')
   })
 })
