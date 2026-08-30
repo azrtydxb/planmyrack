@@ -21,6 +21,9 @@ export function RackPager({
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
+      // a scroller grows to fill its column by default, which centred these chips in half the
+      // canvas and pushed the racks off the bottom of the screen
+      style={styles.bar}
       contentContainerStyle={styles.row}
     >
       {racks.map((rack) => {
@@ -71,6 +74,7 @@ export function RackPager({
 }
 
 const styles = StyleSheet.create({
+  bar: { flexGrow: 0, flexShrink: 0 },
   row: { gap: 8, paddingHorizontal: 16, paddingVertical: 10, alignItems: 'center' },
   chip: {
     flexDirection: 'row',

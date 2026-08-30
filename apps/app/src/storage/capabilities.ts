@@ -55,7 +55,10 @@ export interface StorageProblem {
 const FULL = /disk (is )?full|quota|SQLITE_FULL|no space/i
 const CORRUPT = /not a database|malformed|corrupt|SQLITE_CORRUPT|file is encrypted/i
 const PERMISSION = /NSLocalNetworkDenied|local network|permission denied/i
-const BUSY = /already open in another tab/i
+// The two ways the same situation arrives: our own deadline, and OPFS refusing a second access
+// handle when another page still holds one.
+const BUSY =
+  /already open in another tab|NoModificationAllowedError|Access Handles? cannot be created|another open Access Handle/i
 
 /** Turns a raw driver or network error into something the user can act on. */
 export function classifyStorageError(error: Error): StorageProblem {

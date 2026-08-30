@@ -20,8 +20,11 @@ interface StoreContextValue {
 
 const StoreContext = createContext<StoreContextValue | null>(null)
 
-/** How long the on-device database may take to open before the app says something is wrong. */
-export const LOCAL_OPEN_TIMEOUT_MS = 6000
+/** How long one attempt at opening the on-device database may take. */
+export const LOCAL_OPEN_TIMEOUT_MS = 2000
+
+/** How many attempts before the app says the database is held by another tab. */
+export const LOCAL_OPEN_ATTEMPTS = 3
 
 export function StoreProvider({
   children,
@@ -66,21 +69,39 @@ export function StoreProvider({
       setStore(makeServerStore(mode.url))
       return
     }
-    // expo-sqlite's OPFS driver does not reject when another tab holds the database: it waits,
-    // and the app sits on a spinner with nothing to say. Give it a deadline instead.
-    const deadline = new Promise<never>((_resolve, reject) => {
-      timeout = setTimeout(() => reject(new Error(STORE_BUSY_MESSAGE)), localOpenTimeoutMs)
-    })
-    void Promise.race([makeLocalStore(), deadline])
-      .then((built) => {
-        if (!cancelled) setStore(built as LayoutStore)
+    /**
+     * expo-sqlite's OPFS driver does not reject while another page holds the database: it waits,
+     * and the app sat on a spinner with nothing to say. Waiting for it now has a deadline.
+     *
+     * The attempts wait on the SAME open, they do not start another one. Reloading the page
+     * reliably loses the first few seconds — the handle from the page being replaced has not been
+     * released yet — and the open then succeeds on its own. Opening the database a second time
+     * would hand back the same cached connection, so abandoning or closing one breaks the other:
+     * that mistake surfaced as "Error code 21: bad parameter or other API misuse".
+     */
+    const opening = makeLocalStore()
+    const waitForIt = (): Promise<LayoutStore> => {
+      const deadline = new Promise<never>((_resolve, reject) => {
+        timeout = setTimeout(() => reject(new Error(STORE_BUSY_MESSAGE)), localOpenTimeoutMs)
       })
-      .catch((err: Error) => {
-        if (cancelled) return
-        setStore(null)
-        setProblem(err.message)
-      })
-      .finally(() => clearTimeout(timeout))
+      return Promise.race([opening, deadline]).finally(() => clearTimeout(timeout))
+    }
+
+    void (async () => {
+      let last: Error | null = null
+      for (let tries = 0; tries < LOCAL_OPEN_ATTEMPTS && !cancelled; tries += 1) {
+        try {
+          const built = await waitForIt()
+          if (!cancelled) setStore(built)
+          return
+        } catch (err) {
+          last = err as Error
+        }
+      }
+      if (cancelled) return
+      setStore(null)
+      setProblem(last?.message ?? STORE_BUSY_MESSAGE)
+    })()
     return () => {
       cancelled = true
       clearTimeout(timeout)

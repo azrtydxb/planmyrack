@@ -95,13 +95,38 @@ describe('TestSecondTabSaysWhyInsteadOfSpinning', () => {
     expect(screen.getByTestId('storage-problem-busy')).toBeTruthy()
   })
 
+  it("recognises the browser's own words for a database another page holds", () => {
+    const raw = new Error(
+      "NoModificationAllowedError: Failed to execute 'createSyncAccessHandle' on " +
+        "'FileSystemFileHandle': Access Handles cannot be created if there is another open " +
+        'Access Handle or Writable stream associated with the same file.',
+    )
+    expect(classifyStorageError(raw)).toEqual({ kind: 'busy', detail: STORE_BUSY_MESSAGE })
+  })
+
+  it('opens without complaint when the database is merely slow', async () => {
+    // reloading the page always loses the first attempt: the handle from the page being replaced
+    // has not been released yet, and the open lands a moment later
+    await saveMode({ kind: 'local' })
+    const slow = () =>
+      new Promise<LayoutStore>((resolve) => setTimeout(() => resolve(createMemoryStore()), 40))
+
+    render(
+      <StoreProvider makeLocalStore={slow} localOpenTimeoutMs={20}>
+        <Probe />
+      </StoreProvider>,
+    )
+
+    await screen.findByText('store ready')
+    expect(screen.queryByText(STORE_BUSY_MESSAGE)).toBeNull()
+  })
+
   it('opens the store again when the other tab has gone', async () => {
     await saveMode({ kind: 'local' })
-    let attempts = 0
-    const openOnRetry = async () => {
-      attempts += 1
-      if (attempts === 1) return new Promise<LayoutStore>(() => {})
-      return createMemoryStore()
+    let opens = 0
+    const openOnRetry = () => {
+      opens += 1
+      return opens === 1 ? new Promise<LayoutStore>(() => {}) : Promise.resolve(createMemoryStore())
     }
 
     render(
@@ -113,6 +138,33 @@ describe('TestSecondTabSaysWhyInsteadOfSpinning', () => {
 
     fireEvent.press(screen.getByRole('button', { name: 'Retry' }))
     await screen.findByText('store ready')
+  })
+
+  it('waits on one open rather than starting another', async () => {
+    // opening the database twice hands back the same cached connection, so a second attempt that
+    // abandons or closes its handle breaks the one in use: "Error code 21: bad parameter"
+    await saveMode({ kind: 'local' })
+    let opens = 0
+    let release: ((store: LayoutStore) => void) | null = null
+    const openOnce = () => {
+      opens += 1
+      return new Promise<LayoutStore>((resolve) => {
+        release = resolve
+      })
+    }
+
+    render(
+      <StoreProvider makeLocalStore={openOnce} localOpenTimeoutMs={20}>
+        <Probe />
+      </StoreProvider>,
+    )
+
+    await waitFor(() => expect(release).not.toBeNull())
+    // long enough for every attempt to have timed out
+    await new Promise((resolve) => setTimeout(resolve, 120))
+    expect(opens).toBe(1)
+
+    release!(createMemoryStore())
   })
 })
 

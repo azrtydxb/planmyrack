@@ -48,3 +48,23 @@ export function rackUnder<T extends { id: string; width: RackWidth; units: numbe
   }
   return null
 }
+
+/** Where the canvas is: measured stage origin, scroll offset, and the pinch transform on top. */
+export interface CanvasView {
+  origin: Origin
+  scrollX: number
+  scale: number
+  translate: Origin
+}
+
+/**
+ * A point on screen in canvas coordinates. The stage is measured unscaled and unscrolled, so a
+ * finger position has the scroll added, the pan subtracted, and the zoom divided out — in that
+ * order. Getting this wrong puts every drop half a rack away from the pointer.
+ */
+export function canvasPoint(screen: Origin, view: CanvasView): Origin {
+  return {
+    x: (screen.x + view.scrollX - view.origin.x - view.translate.x) / view.scale,
+    y: (screen.y - view.origin.y - view.translate.y) / view.scale,
+  }
+}

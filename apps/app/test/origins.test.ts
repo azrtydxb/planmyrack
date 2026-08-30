@@ -1,4 +1,4 @@
-import { bodyOrigins, rackUnder } from '../src/canvas/origins'
+import { bodyOrigins, canvasPoint, rackUnder } from '../src/canvas/origins'
 
 describe('TestCableOriginsSumTheLayoutChain', () => {
   it('adds the body position to its frame position', () => {
@@ -42,5 +42,27 @@ describe('TestDropLandsOnTheRackUnderTheFinger', () => {
 
   it('ignores a rack that has not reported its layout yet', () => {
     expect(rackUnder([rack], {}, { x: 100, y: 100 })).toBeNull()
+  })
+})
+
+describe('TestCanvasPointFollowsScrollAndZoom', () => {
+  const view = { origin: { x: 100, y: 50 }, scrollX: 0, scale: 1, translate: { x: 0, y: 0 } }
+
+  it('is the offset from the stage when nothing is scrolled or zoomed', () => {
+    expect(canvasPoint({ x: 140, y: 90 }, view)).toEqual({ x: 40, y: 40 })
+  })
+
+  it('adds the horizontal scroll, which moves the content under a fixed stage', () => {
+    expect(canvasPoint({ x: 140, y: 90 }, { ...view, scrollX: 200 })).toEqual({ x: 240, y: 40 })
+  })
+
+  it('divides out the zoom, so a drop lands where the pointer looks', () => {
+    expect(canvasPoint({ x: 140, y: 90 }, { ...view, scale: 2 })).toEqual({ x: 20, y: 20 })
+  })
+
+  it('subtracts a two-finger pan before dividing', () => {
+    expect(
+      canvasPoint({ x: 140, y: 90 }, { ...view, scale: 2, translate: { x: 20, y: 10 } }),
+    ).toEqual({ x: 10, y: 15 })
   })
 })
