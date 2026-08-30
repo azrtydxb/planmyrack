@@ -14,6 +14,9 @@ const PORT_GAP = 2
 const PORT_MAX = 14
 const PORT_MIN = 4
 
+/** Space kept clear at the left of a device for its name, so ports never sit under the label. */
+export const labelGutter = (boxWidth: number): number => Math.min(150, Math.round(boxWidth * 0.36))
+
 export interface Rect {
   top: number
   height: number
@@ -44,7 +47,8 @@ export interface PortRect {
 export function portRects(device: Device, boxWidth: number, boxHeight: number): PortRect[] {
   if (device.ports <= 0) return []
 
-  const usableWidth = boxWidth - DEVICE_PAD * 2
+  const gutter = labelGutter(boxWidth)
+  const usableWidth = boxWidth - gutter - DEVICE_PAD * 2
   const usableHeight = boxHeight - DEVICE_PAD * 2
   const rows = device.heightU >= 2 && device.ports > 12 ? 2 : 1
   const cols = Math.ceil(device.ports / rows)
@@ -63,7 +67,7 @@ export function portRects(device: Device, boxWidth: number, boxHeight: number): 
     const row = Math.floor(i / cols)
     const col = i % cols
     rects.push({
-      x: DEVICE_PAD + col * (size + PORT_GAP),
+      x: gutter + DEVICE_PAD + col * (size + PORT_GAP),
       y: DEVICE_PAD + row * (size + PORT_GAP),
       size,
     })

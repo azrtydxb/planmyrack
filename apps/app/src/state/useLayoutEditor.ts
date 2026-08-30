@@ -19,9 +19,17 @@ export function useLayoutEditor(store: LayoutStore | null, initial: Layout) {
   const [conflict, setConflict] = useState<Layout | null>(null)
   const [error, setError] = useState<string | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const pending = useRef<Layout | null>(null)
+  const dirty = useRef(false)
+  /**
+   * The newest layout INCLUDING the revision the store last handed back. The debounced save reads
+   * this rather than the snapshot taken when the edit was made: two quick edits would otherwise
+   * send the second one at the revision the first had already superseded, and the store would
+   * rightly refuse it as stale — the app conflicting with itself on a single device.
+   */
+  const latest = useRef<Layout>(initial)
 
   const layout = history.present
+  latest.current = layout
 
   const save = useCallback(
     async (next: Layout) => {
@@ -29,6 +37,7 @@ export function useLayoutEditor(store: LayoutStore | null, initial: Layout) {
       setSaving('saving')
       try {
         const saved = await store.update(next)
+        latest.current = { ...latest.current, revision: saved.revision }
         setHistory((h) => ({ ...h, present: { ...h.present, revision: saved.revision } }))
         setSaving('idle')
         setError(null)
@@ -54,17 +63,16 @@ export function useLayoutEditor(store: LayoutStore | null, initial: Layout) {
         setError((err as Error).message)
         return current
       }
-      pending.current = next
+      dirty.current = true
       return commit(current, next)
     })
   }, [])
 
   // Debounced, so a name being typed does not write on every keystroke.
   useEffect(() => {
-    if (pending.current === null) return
+    if (!dirty.current) return
     if (timer.current) clearTimeout(timer.current)
-    const next = pending.current
-    timer.current = setTimeout(() => void save(next), AUTOSAVE_MS)
+    timer.current = setTimeout(() => void save(latest.current), AUTOSAVE_MS)
     return () => {
       if (timer.current) clearTimeout(timer.current)
     }
@@ -72,6 +80,8 @@ export function useLayoutEditor(store: LayoutStore | null, initial: Layout) {
 
   const reload = useCallback(() => {
     if (!conflict) return
+    latest.current = conflict
+    dirty.current = false
     setHistory(initHistory(conflict))
     setConflict(null)
     setSaving('idle')

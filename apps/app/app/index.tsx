@@ -3,6 +3,7 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
 import { FirstRunScreen } from '../src/screens/FirstRunScreen'
 import { LayoutsScreen } from '../src/screens/LayoutsScreen'
 import { useStoreContext } from '../src/storage/StoreProvider'
+import { shareText } from '../src/export/files'
 import { theme } from '../src/ui/theme'
 
 export default function Index() {
@@ -27,7 +28,14 @@ export default function Index() {
     )
   }
 
-  return <LayoutsScreen store={store} onOpenSettings={() => router.push('/settings')} />
+  return (
+    <LayoutsScreen
+      store={store}
+      onOpen={(layoutId) => router.push(`/rack/${layoutId}`)}
+      onOpenSettings={() => router.push('/settings')}
+      onExport={(filename, text) => void shareText(filename, text, 'application/json')}
+    />
+  )
 }
 
 const styles = StyleSheet.create({

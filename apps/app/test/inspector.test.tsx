@@ -103,3 +103,27 @@ describe('TestDevicePropertyRoundTrip', () => {
     expect(result.current.layout.devices[0]!.name).toBe('Core switch')
   })
 })
+
+describe('TestRapidEditsDoNotSelfConflict', () => {
+  it('saves two quick edits without the app conflicting with itself', async () => {
+    // Found by running the built app: placing two devices in a row raised the stale-save dialog,
+    // because the second save was sent at the revision the first had already superseded.
+    const store = createMemoryStore()
+    const saved = await store.create(seeded)
+    const { result } = renderHook(() => useLayoutEditor(store, saved))
+
+    act(() => result.current.apply((l) => updateDevice(l, 'd1', { name: 'First' })))
+    await waitFor(async () => expect((await store.get(saved.id!)).devices[0]!.name).toBe('First'), {
+      timeout: 3000,
+    })
+
+    act(() => result.current.apply((l) => updateDevice(l, 'd1', { name: 'Second' })))
+    await waitFor(
+      async () => expect((await store.get(saved.id!)).devices[0]!.name).toBe('Second'),
+      { timeout: 3000 },
+    )
+
+    expect(result.current.conflict).toBeNull()
+    expect(result.current.saving).toBe('idle')
+  })
+})

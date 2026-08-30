@@ -18,6 +18,7 @@ export default function RootLayout() {
         >
           <Stack.Screen name="index" options={{ title: 'PlanMyRack' }} />
           <Stack.Screen name="settings" options={{ title: 'Settings' }} />
+          <Stack.Screen name="rack/[id]" options={{ title: 'Rack' }} />
         </Stack>
       </StoreProvider>
     </GestureHandlerRootView>

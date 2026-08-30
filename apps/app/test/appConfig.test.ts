@@ -2,7 +2,17 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { PNG } from 'pngjs'
 import config from '../app.json'
-import withLocalNetwork from '../plugins/withLocalNetwork'
+// The plugin exports its transforms for testing; the module is plain JS with no types.
+const withLocalNetwork = require('../plugins/withLocalNetwork') as {
+  __applyAndroid: (manifest: { manifest: { application: { $: Record<string, string> }[] } }) => {
+    manifest: { application: { $: Record<string, string> }[] }
+  }
+  __applyInfoPlist: (plist: Record<string, never> | object) => {
+    NSAppTransportSecurity: { NSAllowsLocalNetworking: boolean }
+    NSLocalNetworkUsageDescription: string
+  }
+  __networkSecurityConfig: string
+}
 
 const readAsset = (name: string): PNG =>
   PNG.sync.read(readFileSync(join(__dirname, '..', 'assets', name)))

@@ -1,5 +1,5 @@
 import { newDevice, newRack } from '@planmyrack/core'
-import { RACK_INNER_PX, U_PX, deviceRect, portRects } from '../src/canvas/metrics'
+import { RACK_INNER_PX, U_PX, deviceRect, labelGutter, portRects } from '../src/canvas/metrics'
 
 const rack = newRack({ id: 'R', units: 12 })
 const device = (over: Partial<Parameters<typeof newDevice>[0]> = {}) =>
@@ -50,5 +50,23 @@ describe('TestDensePortsStayInsideDevice', () => {
 
   it('draws nothing for a device with no ports', () => {
     expect(portRects(device({ ports: 0, type: 'blank' }), 470, 26)).toEqual([])
+  })
+})
+
+describe('TestPortsNeverSitUnderTheDeviceName', () => {
+  it('starts the first port after the label gutter', () => {
+    // Found by looking at the built app: on a 1U switch the name was drawn over the ports.
+    const dev = device({ ports: 24, heightU: 1 })
+    const box = deviceRect(rack, dev)
+    const rects = portRects(dev, box.width, box.height)
+    expect(rects[0]!.x).toBeGreaterThanOrEqual(labelGutter(box.width))
+  })
+
+  it('still fits every port inside the box once the gutter is taken out', () => {
+    const dev = device({ ports: 48, heightU: 1 })
+    const box = deviceRect(rack, dev)
+    for (const rect of portRects(dev, box.width, box.height)) {
+      expect(rect.x + rect.size).toBeLessThanOrEqual(box.width)
+    }
   })
 })

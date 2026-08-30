@@ -4,7 +4,7 @@ import Svg from 'react-native-svg'
 import { sizeLabel } from '@planmyrack/core'
 import { DeviceArt } from './art'
 import { PortGrid } from './PortGrid'
-import { deviceRect } from './metrics'
+import { deviceRect, labelGutter } from './metrics'
 import { theme } from '../ui/theme'
 import type { Device, Layout, Rack } from '@planmyrack/core'
 
@@ -52,7 +52,7 @@ export const DeviceBox = memo(function DeviceBox({
         </Svg>
       </View>
 
-      <View style={styles.label} pointerEvents="none">
+      <View style={[styles.label, { width: labelGutter(rect.width) }]} pointerEvents="none">
         <Text numberOfLines={1} style={styles.name}>
           {device.name}
         </Text>
