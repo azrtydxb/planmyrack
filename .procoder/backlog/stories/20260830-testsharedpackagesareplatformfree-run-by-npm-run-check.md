@@ -1,0 +1,31 @@
+# `TestSharedPackagesArePlatformFree`, run by `npm run check:purity`, reports no react, react-native or platform import in the shared packages — fails if any file under `packages/core`, `packages/storage` or `packages/catalog` imports a UI or platform module.
+
+Status: open
+Created: 2026-08-30
+Epic: rack-layout-planner
+Sprint: 001-every-rack-rule-proved-in-pure-typescript-placement-cabling
+
+## Description
+
+Spec: rack-layout-planner — scope S-16 (Shippable builds)
+Plan: Task 1: Monorepo skeleton and the purity gate
+Test: `TestSharedPackagesArePlatformFree`
+
+The home-lab owner needs this to hold: `TestSharedPackagesArePlatformFree`, run by `npm run check:purity`, reports no react, react-native or platform import in the shared packages.
+
+Done when `TestSharedPackagesArePlatformFree` passes exactly as written in the plan task above, AND the behaviour is
+observed once in the running app rather than only in the test — the criterion below names the
+change that must make it fail, so a test that cannot fail does not close this story.
+
+## Acceptance criteria
+
+<!-- Each criterion is testable. Check a box ONLY when it is verifiably
+     true — the closer will ask for the evidence. -->
+
+- [ ] `TestSharedPackagesArePlatformFree`, run by `npm run check:purity`, reports no react, react-native or platform import in the shared packages — fails if any file under `packages/core`, `packages/storage` or `packages/catalog` imports a UI or platform module.
+
+## Evidence
+
+<!-- Filled at close time: the commands run and what their output proved,
+     one line per criterion. Empty evidence keeps the story open. -->
+
