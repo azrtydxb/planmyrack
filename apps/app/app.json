@@ -2,7 +2,7 @@
   "expo": {
     "name": "PlanMyRack",
     "slug": "planmyrack",
-    "version": "1.0.0",
+    "version": "0.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -12,18 +12,23 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
+        "backgroundColor": "#0b1020",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.azrty.planmyrack"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "output": "static"
     },
-    "plugins": ["expo-router", "expo-sqlite", "expo-sharing"],
-    "scheme": "planmyrack"
+    "plugins": ["./plugins/withLocalNetwork", "expo-router", "expo-sharing", "expo-sqlite"],
+    "scheme": "planmyrack",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0b1020"
+    }
   }
 }

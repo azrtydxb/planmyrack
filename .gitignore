@@ -7,3 +7,5 @@ dist/
 .procoder/state/
 apps/app/dist/
 apps/app/.expo/
+apps/app/android/
+apps/app/ios/
