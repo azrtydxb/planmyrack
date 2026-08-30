@@ -35,6 +35,13 @@
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#0b1020"
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "fb484982-4a6f-4409-9041-2275076ce91a"
+      }
+    },
+    "owner": "piwi3910"
   }
 }
