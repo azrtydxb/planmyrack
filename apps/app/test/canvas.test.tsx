@@ -1,0 +1,94 @@
+import { render, screen } from '@testing-library/react-native'
+import { DEVICE_TYPES, addDevice, addRack, newDevice, newLayout, newRack } from '@planmyrack/core'
+import { RackCanvas } from '../src/canvas/RackCanvas'
+import { DeviceBox } from '../src/canvas/DeviceBox'
+import { RACK_INNER_PX } from '../src/canvas/metrics'
+import type { DeviceType, Layout } from '@planmyrack/core'
+
+const wide = newRack({ id: 'W', units: 12, name: 'Wide', width: 19 })
+const narrow = newRack({ id: 'N', units: 12, name: 'Narrow', width: 10 })
+const twoRacks: Layout = addRack(newLayout('two', [wide]), narrow)
+
+const withDevice = (over: Partial<Parameters<typeof newDevice>[0]>): Layout =>
+  addDevice(
+    newLayout('one', [wide]),
+    newDevice({
+      id: 'd1',
+      rackId: 'W',
+      face: 'front',
+      posU: 0,
+      heightU: 1,
+      type: 'switch',
+      ...over,
+    }),
+  )
+
+const styleOf = (testID: string): Record<string, unknown> => {
+  const style = screen.getByTestId(testID).props.style as unknown
+  return Object.assign({}, ...(Array.isArray(style) ? style.flat(9) : [style]))
+}
+
+describe('TestLayoutHoldsMixedWidthRacks', () => {
+  it('draws a 19-inch and a 10-inch rack at different widths, each with its own U scale', () => {
+    render(<RackCanvas layout={twoRacks} face="front" />)
+    expect(styleOf(`rack-${wide.id}`).width).toBe(RACK_INNER_PX[19])
+    expect(styleOf(`rack-${narrow.id}`).width).toBe(RACK_INNER_PX[10])
+    // two racks, two scales each side, all numbered from the top unit
+    expect(screen.getAllByText('12')).toHaveLength(4)
+  })
+})
+
+describe('TestFacesAreIndependent — on the canvas', () => {
+  it('shows a rear device only on the rear face', () => {
+    const layout = withDevice({ face: 'rear', name: 'Rear PDU', type: 'pdu' })
+    const { rerender } = render(<RackCanvas layout={layout} face="front" />)
+    expect(screen.queryByTestId('device-d1')).toBeNull()
+    rerender(<RackCanvas layout={layout} face="rear" />)
+    expect(screen.getByTestId('device-d1')).toBeTruthy()
+  })
+})
+
+describe('TestPortCountRendersExactly', () => {
+  it.each([
+    [4, 'equipment'],
+    [24, 'switch'],
+    [48, 'switch'],
+  ])('draws %i ports on a %s', (ports, type) => {
+    render(<RackCanvas layout={withDevice({ ports, type: type as DeviceType })} face="front" />)
+    expect(screen.getAllByTestId(/^port-d1-network-/)).toHaveLength(ports)
+  })
+
+  it('redraws when the port count changes', () => {
+    const { rerender } = render(<RackCanvas layout={withDevice({ ports: 24 })} face="front" />)
+    expect(screen.getAllByTestId(/^port-d1-network-/)).toHaveLength(24)
+    rerender(<RackCanvas layout={withDevice({ ports: 48 })} face="front" />)
+    expect(screen.getAllByTestId(/^port-d1-network-/)).toHaveLength(48)
+  })
+
+  it('draws no ports on a blanking plate', () => {
+    render(<RackCanvas layout={withDevice({ type: 'blank', ports: 0 })} face="front" />)
+    expect(screen.queryAllByTestId(/^port-d1-network-/)).toHaveLength(0)
+  })
+})
+
+describe('TestCableManagementFlavoursRender', () => {
+  const draw = (type: DeviceType) => {
+    const dev = newDevice({ rackId: 'W', face: 'front', posU: 0, heightU: 1, type })
+    return JSON.stringify(render(<DeviceBox device={dev} rack={wide} />).toJSON())
+  }
+
+  it('draws hooks and brush differently, and both differently from a blank panel', () => {
+    const hooks = draw('hooks')
+    const brush = draw('brush')
+    const blank = draw('blank')
+    expect(hooks).not.toBe(brush)
+    expect(hooks).not.toBe(blank)
+    expect(brush).not.toBe(blank)
+  })
+
+  it('offers both flavours at half a unit and one unit', () => {
+    for (const type of ['hooks', 'brush'] as const) {
+      expect(DEVICE_TYPES[type].sizes).toEqual([0.5, 1])
+    }
+  })
+})
