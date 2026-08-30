@@ -242,7 +242,8 @@ expect(findFreeSlot([], rack, { face: 'front', posU: 1, heightU: 2 })).toBe(1)
 })
 it('slides to the closest free slot when the target is taken', () => {
 const sitting = mk({ rackId: rack.id, posU: 1, heightU: 2 })
-expect(findFreeSlot([sitting], rack, { face: 'front', posU: 1, heightU: 1 })).toBe(0.5)
+expect(findFreeSlot([sitting], rack, { face: 'front', posU: 1, heightU: 1 })).toBe(0)
+  // sitting occupies [1, 3), so 0.5 overlaps it; 0 is the nearest slot that fits
 })
 it('returns null when the face has no room at all', () => {
 const full = mk({ rackId: rack.id, posU: 0, heightU: 4 })
