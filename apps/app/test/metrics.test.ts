@@ -1,5 +1,12 @@
 import { newDevice, newRack } from '@planmyrack/core'
-import { RACK_INNER_PX, U_PX, deviceRect, labelGutter, portRects } from '../src/canvas/metrics'
+import {
+  CAGE_PITCH,
+  RACK_INNER_PX,
+  U_PX,
+  deviceRect,
+  labelGutter,
+  portRects,
+} from '../src/canvas/metrics'
 
 const rack = newRack({ id: 'R', units: 12 })
 const device = (over: Partial<Parameters<typeof newDevice>[0]> = {}) =>
@@ -89,5 +96,23 @@ describe('TestPortsNeverSitUnderTheDeviceName', () => {
     for (const rect of portRects(dev, box.width, box.height)) {
       expect(rect.x + rect.width).toBeLessThanOrEqual(box.width)
     }
+  })
+})
+
+describe('TestUplinkCagesDoNotSitOnThePorts', () => {
+  it('stops the copper strip before the cages', () => {
+    // seen in the app: the SFP cages were drawn over the last few RJ45 ports
+    const dev = device({ ports: 24, heightU: 1, sfp: 2 })
+    const box = deviceRect(rack, dev)
+    const rects = portRects(dev, box.width, box.height)
+    const stripEnd = Math.max(...rects.map((r) => r.x + r.width))
+    expect(stripEnd).toBeLessThanOrEqual(box.width - 2 * CAGE_PITCH)
+  })
+
+  it('uses the full width when a device has no cages', () => {
+    const dev = device({ ports: 24, heightU: 1 })
+    const box = deviceRect(rack, dev)
+    const rects = portRects(dev, box.width, box.height)
+    expect(Math.max(...rects.map((r) => r.x + r.width))).toBeGreaterThan(box.width - 2 * CAGE_PITCH)
   })
 })

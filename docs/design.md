@@ -49,6 +49,8 @@ Rack hardware:
 
 - 1U = 34px; rail 14px each side; rack body 292px wide at 19" on phone.
 - Port square 8x12, radius 1, 2px gaps.
+- SFP/SFP+ cage 11x9 on a 13px pitch (`CAGE_PITCH`), pinned to the right of the faceplate; the
+  copper strip reserves that width so the two never overlap.
 - Radii: 10 (buttons, tiles), 9 (segmented track), 7 (segment), 12–16 (cards), 2 (faceplate).
 
 ## Structure

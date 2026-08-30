@@ -18,6 +18,9 @@ export const rackBodyWidth = (rack: Rack): number => RACK_INNER_PX[rack.width] +
 /** Width of the numbered U scale outside the rack. */
 export const SCALE_PX = 16
 
+/** Width taken by one SFP/SFP+ cage, including its gap. */
+export const CAGE_PITCH = 13
+
 const PORT_W = 8
 const PORT_H = 12
 const PORT_GAP = 2
@@ -60,7 +63,10 @@ export function portRects(device: Device, boxWidth: number, boxHeight: number): 
   if (device.ports <= 0) return []
 
   const gutter = labelGutter(boxWidth)
-  const usableWidth = boxWidth - gutter - FACE_PAD
+  // Uplink cages are drawn at the right edge; the copper strip stops before them rather than
+  // running underneath.
+  const cages = device.sfp ? device.sfp * CAGE_PITCH + FACE_PAD : 0
+  const usableWidth = boxWidth - gutter - FACE_PAD - cages
   const usableHeight = boxHeight - FACE_PAD
 
   // The design's slot is 8x12. When a device is too dense for that at this rack width, prefer
@@ -90,7 +96,7 @@ export function portRects(device: Device, boxWidth: number, boxHeight: number): 
   const cols = Math.ceil(device.ports / chosen.rows)
   const stripWidth = cols * chosen.width + chosen.gap * (cols - 1)
   const stripHeight = chosen.rows * chosen.height + chosen.gap * (chosen.rows - 1)
-  const left = Math.max(gutter, boxWidth - FACE_PAD - stripWidth)
+  const left = Math.max(gutter, boxWidth - FACE_PAD - cages - stripWidth)
   const top = Math.max(2, (boxHeight - stripHeight) / 2)
 
   const rects: PortRect[] = []
