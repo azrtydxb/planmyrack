@@ -46,14 +46,27 @@ describe('TestDropLandsOnTheRackUnderTheFinger', () => {
 })
 
 describe('TestCanvasPointFollowsScrollAndZoom', () => {
-  const view = { origin: { x: 100, y: 50 }, scrollX: 0, scale: 1, translate: { x: 0, y: 0 } }
+  const view = {
+    origin: { x: 100, y: 50 },
+    scroll: { x: 0, y: 0 },
+    scale: 1,
+    translate: { x: 0, y: 0 },
+  }
 
   it('is the offset from the stage when nothing is scrolled or zoomed', () => {
     expect(canvasPoint({ x: 140, y: 90 }, view)).toEqual({ x: 40, y: 40 })
   })
 
-  it('adds the horizontal scroll, which moves the content under a fixed stage', () => {
-    expect(canvasPoint({ x: 140, y: 90 }, { ...view, scrollX: 200 })).toEqual({ x: 240, y: 40 })
+  it('adds the scroll, which moves the content under a fixed stage', () => {
+    expect(canvasPoint({ x: 140, y: 90 }, { ...view, scroll: { x: 200, y: 0 } })).toEqual({
+      x: 240,
+      y: 40,
+    })
+    // a short screen scrolls down the rack: without this a drop lands where the rack used to be
+    expect(canvasPoint({ x: 140, y: 90 }, { ...view, scroll: { x: 0, y: 120 } })).toEqual({
+      x: 40,
+      y: 160,
+    })
   })
 
   it('divides out the zoom, so a drop lands where the pointer looks', () => {

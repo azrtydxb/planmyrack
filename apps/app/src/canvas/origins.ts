@@ -52,7 +52,7 @@ export function rackUnder<T extends { id: string; width: RackWidth; units: numbe
 /** Where the canvas is: measured stage origin, scroll offset, and the pinch transform on top. */
 export interface CanvasView {
   origin: Origin
-  scrollX: number
+  scroll: Origin
   scale: number
   translate: Origin
 }
@@ -64,7 +64,7 @@ export interface CanvasView {
  */
 export function canvasPoint(screen: Origin, view: CanvasView): Origin {
   return {
-    x: (screen.x + view.scrollX - view.origin.x - view.translate.x) / view.scale,
-    y: (screen.y - view.origin.y - view.translate.y) / view.scale,
+    x: (screen.x + view.scroll.x - view.origin.x - view.translate.x) / view.scale,
+    y: (screen.y + view.scroll.y - view.origin.y - view.translate.y) / view.scale,
   }
 }

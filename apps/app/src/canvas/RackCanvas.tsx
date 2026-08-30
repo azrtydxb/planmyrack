@@ -53,7 +53,7 @@ export function RackCanvas({
   // Where the stage sits on screen, and how far the canvas is scrolled: together they turn a
   // finger position anywhere on screen into a point in canvas space.
   const stageOrigin = useRef<Point>({ x: 0, y: 0 })
-  const scrollX = useRef(0)
+  const scroll = useRef({ x: 0, y: 0 })
   const transform = useRef({ scale: 1, x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
   const [scaleTo, setScaleTo] = useState<number | undefined>(undefined)
@@ -80,7 +80,7 @@ export function RackCanvas({
     (screen: Point): Point =>
       canvasPoint(screen, {
         origin: stageOrigin.current,
-        scrollX: scrollX.current,
+        scroll: scroll.current,
         scale: transform.current.scale,
         translate: { x: transform.current.x, y: transform.current.y },
       }),
@@ -128,7 +128,7 @@ export function RackCanvas({
         contentContainerStyle={styles.content}
         scrollEventThrottle={16}
         onScroll={(event) => {
-          scrollX.current = event.nativeEvent.contentOffset.x
+          scroll.current = { ...scroll.current, x: event.nativeEvent.contentOffset.x }
         }}
         onLayout={(event) => {
           const { width: w, height: h } = event.nativeEvent.layout
@@ -137,51 +137,65 @@ export function RackCanvas({
           )
         }}
       >
-        <CanvasGestures onTransform={noteTransform} scaleTo={scaleTo}>
-          <View
-            testID="canvas-content"
-            ref={stage}
-            onLayout={() =>
-              stage.current?.measureInWindow((x, y) => {
-                stageOrigin.current = { x, y }
-              })
-            }
-            style={[styles.stage, { width, height }]}
-          >
-            <DotGrid width={width} height={height} />
-            <View style={styles.row}>
-              {layout.racks.map((rack) => (
-                <View
-                  key={rack.id}
-                  onLayout={(event) => noteFrame(rack.id, event.nativeEvent.layout)}
-                >
-                  <RackFrame
-                    rack={rack}
-                    layout={layout}
-                    face={face}
-                    devices={layout.devices.filter((d) => d.rackId === rack.id && d.face === face)}
-                    selectedId={selectedId}
-                    dropHint={dropHint?.rackId === rack.id ? dropHint : null}
-                    onSelect={onSelect}
-                    onPortPress={onPortPress}
-                    onDeviceLongPress={onDeviceLongPress}
-                    drag={drag}
-                    onBodyLayout={noteBody}
-                  />
-                </View>
-              ))}
+        {/* a rack is taller than a phone in landscape: the workspace scrolls both ways */}
+        <ScrollView
+          testID="canvas-scroll-y"
+          style={styles.scroller}
+          contentContainerStyle={styles.column}
+          nestedScrollEnabled
+          scrollEventThrottle={16}
+          onScroll={(event) => {
+            scroll.current = { ...scroll.current, y: event.nativeEvent.contentOffset.y }
+          }}
+        >
+          <CanvasGestures onTransform={noteTransform} scaleTo={scaleTo}>
+            <View
+              testID="canvas-content"
+              ref={stage}
+              onLayout={() =>
+                stage.current?.measureInWindow((x, y) => {
+                  stageOrigin.current = { x, y }
+                })
+              }
+              style={[styles.stage, { width, height }]}
+            >
+              <DotGrid width={width} height={height} />
+              <View style={styles.row}>
+                {layout.racks.map((rack) => (
+                  <View
+                    key={rack.id}
+                    onLayout={(event) => noteFrame(rack.id, event.nativeEvent.layout)}
+                  >
+                    <RackFrame
+                      rack={rack}
+                      layout={layout}
+                      face={face}
+                      devices={layout.devices.filter(
+                        (d) => d.rackId === rack.id && d.face === face,
+                      )}
+                      selectedId={selectedId}
+                      dropHint={dropHint?.rackId === rack.id ? dropHint : null}
+                      onSelect={onSelect}
+                      onPortPress={onPortPress}
+                      onDeviceLongPress={onDeviceLongPress}
+                      drag={drag}
+                      onBodyLayout={noteBody}
+                    />
+                  </View>
+                ))}
+              </View>
+              {showCables ? (
+                <CableOverlay
+                  layout={layout}
+                  face={face}
+                  rackOffsets={offsets}
+                  width={width}
+                  height={height}
+                />
+              ) : null}
             </View>
-            {showCables ? (
-              <CableOverlay
-                layout={layout}
-                face={face}
-                rackOffsets={offsets}
-                width={width}
-                height={height}
-              />
-            ) : null}
-          </View>
-        </CanvasGestures>
+          </CanvasGestures>
+        </ScrollView>
       </ScrollView>
 
       {/* 3a's zoom readout, bottom left of the workspace */}
@@ -218,6 +232,7 @@ export function RackCanvas({
 const styles = StyleSheet.create({
   canvas: { flex: 1, backgroundColor: colour.canvasBg },
   scroller: { flex: 1 },
+  column: { flexGrow: 1 },
   content: { padding: 16, flexGrow: 1 },
   stage: { position: 'relative' },
   row: { flexDirection: 'row', alignItems: 'flex-start' },

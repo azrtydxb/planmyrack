@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native'
+import { ScrollView, StyleSheet, Text, View } from 'react-native'
 import { BottomSheet } from './BottomSheet'
 import { Inspector } from './Inspector'
 import { useBreakpoint } from './useBreakpoint'
@@ -28,11 +28,13 @@ export function InspectorHost({
 
   return (
     <View testID="inspector-panel" style={styles.panel}>
-      <Text style={styles.title} numberOfLines={1}>
-        {inspector.device.name}
-      </Text>
-      <Inspector {...inspector} />
-      {footer}
+      <ScrollView contentContainerStyle={styles.body}>
+        <Text style={styles.title} numberOfLines={1}>
+          {inspector.device.name}
+        </Text>
+        <Inspector {...inspector} />
+        {footer}
+      </ScrollView>
     </View>
   )
 }
@@ -40,10 +42,10 @@ export function InspectorHost({
 const styles = StyleSheet.create({
   panel: {
     width: 330,
-    padding: 18,
     backgroundColor: colour.surface,
     borderLeftColor: colour.borderSoft,
     borderLeftWidth: 1,
   },
-  title: { fontFamily: font.uiBold, fontSize: 19, color: colour.text, marginBottom: 10 },
+  body: { padding: 18, gap: 12 },
+  title: { fontFamily: font.uiBold, fontSize: 19, color: colour.text },
 })

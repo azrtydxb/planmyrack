@@ -1,4 +1,4 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { COLOURS, DEVICE_TYPES, UNIT_SIZES, otherEnd, sizeLabel } from '@planmyrack/core'
 import { Button, Mono, StatTile } from './primitives'
 import { NumberField, TextField } from './Field'
@@ -41,8 +41,10 @@ export function Inspector({
           (l.b.deviceId === device.id && l.b.port === index)),
     )
 
+  // A plain column, not a scroller: every host already scrolls, and a scroller inside a scroller
+  // clipped the panel title and let the rack summary land on top of the ports.
   return (
-    <ScrollView contentContainerStyle={styles.body}>
+    <View style={styles.body}>
       <Mono size={8}>
         {[
           sizeLabel(device.heightU),
@@ -191,7 +193,7 @@ export function Inspector({
         {onSaveTemplate ? <Button label="Template" onPress={onSaveTemplate} /> : null}
         {onDelete ? <Button label="Delete" tone="danger" onPress={onDelete} /> : null}
       </View>
-    </ScrollView>
+    </View>
   )
 }
 

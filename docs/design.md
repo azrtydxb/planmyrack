@@ -94,6 +94,9 @@ forced by real data or a missing door rather than preference.
   that width the library opens on its own tab and closes when a side panel does.
 - **Rack settings.** The design never shows where a rack is renamed, resized or removed. The
   active rack chip carries a ⚙ that opens those controls in the side panel.
+- **The workspace scrolls both ways.** The design draws racks that fit. A 12U rack is 408px and
+  a phone in landscape is about 390px tall, so the canvas scrolls vertically as well as
+  horizontally — and both offsets feed the drop position.
 
 ## Where each part of the design lives
 

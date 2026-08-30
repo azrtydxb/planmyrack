@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react-native'
 import { DEVICE_TYPES, addDevice, addRack, newDevice, newLayout, newRack } from '@planmyrack/core'
 import { RackCanvas } from '../src/canvas/RackCanvas'
+import type { CanvasGeometry } from '../src/canvas/RackCanvas'
 import { DeviceBox } from '../src/canvas/DeviceBox'
 import { RACK_INNER_PX } from '../src/canvas/metrics'
 import type { DeviceType, Layout } from '@planmyrack/core'
@@ -153,5 +154,26 @@ describe('TestKnownModelsLookLikeTheirHardware', () => {
     const display = draw({ type: 'equipment', faceplate: 'display', ports: 8, name: 'UDM' })
     const plain = draw({ type: 'equipment', ports: 8, name: 'UDM' })
     expect(display).not.toBe(plain)
+  })
+})
+
+describe('TestCanvasReportsWhereTheFingerIs', () => {
+  it('shifts canvas coordinates by both scroll offsets', () => {
+    // a rack is taller than a phone in landscape, so the workspace scrolls down; without the
+    // vertical term a drop lands where the rack was before it scrolled
+    let geometry: CanvasGeometry | null = null
+    render(<RackCanvas layout={twoRacks} face="front" onGeometry={(next) => (geometry = next)} />)
+
+    const before = geometry!.toLocal({ x: 100, y: 100 })
+    fireEvent.scroll(screen.getByTestId('canvas-scroll'), {
+      nativeEvent: { contentOffset: { x: 60, y: 0 } },
+    })
+    fireEvent.scroll(screen.getByTestId('canvas-scroll-y'), {
+      nativeEvent: { contentOffset: { x: 0, y: 40 } },
+    })
+    const after = geometry!.toLocal({ x: 100, y: 100 })
+
+    expect(after.x - before.x).toBe(60)
+    expect(after.y - before.y).toBe(40)
   })
 })

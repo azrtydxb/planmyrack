@@ -69,6 +69,13 @@ describe('TestExpoConfigDeclaresLocalNetworking', () => {
   })
 })
 
+describe('TestAppIsAlwaysLandscape', () => {
+  it('locks both platforms to landscape', () => {
+    // a rack is tall and the console puts panels either side of it: the app is never portrait
+    expect(config.expo.orientation).toBe('landscape')
+  })
+})
+
 describe('TestSplashShowsTheBrand', () => {
   it('configures the splash through the plugin, not the legacy key', () => {
     // SDK 57 ignores expo.splash; the splash never appeared until this moved to the plugin
