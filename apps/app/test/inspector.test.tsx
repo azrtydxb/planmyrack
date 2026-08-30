@@ -127,3 +127,25 @@ describe('TestRapidEditsDoNotSelfConflict', () => {
     expect(result.current.saving).toBe('idle')
   })
 })
+
+describe('TestOneEditWritesOnce', () => {
+  it('does not autosave in a loop after the store returns a new revision', async () => {
+    // found by watching the running app: revisions climbed about twice a second with nobody
+    // touching it, because a successful save changed the layout and re-armed the debounce.
+    const store = createMemoryStore()
+    const saved = await store.create(seeded)
+    const update = jest.spyOn(store, 'update')
+
+    const { result } = renderHook(() => useLayoutEditor(store, saved))
+    act(() => result.current.apply((l) => updateDevice(l, 'd1', { name: 'Once' })))
+
+    await waitFor(async () => expect((await store.get(saved.id!)).devices[0]!.name).toBe('Once'), {
+      timeout: 3000,
+    })
+    // give the debounce several more windows to misfire
+    await new Promise((resolve) => setTimeout(resolve, 2000))
+
+    expect(update).toHaveBeenCalledTimes(1)
+    expect((await store.get(saved.id!)).revision).toBe(2)
+  })
+})

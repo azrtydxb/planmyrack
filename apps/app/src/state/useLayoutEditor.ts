@@ -68,11 +68,22 @@ export function useLayoutEditor(store: LayoutStore | null, initial: Layout) {
     })
   }, [])
 
-  // Debounced, so a name being typed does not write on every keystroke.
+  /**
+   * Debounced, so a name being typed does not write on every keystroke.
+   *
+   * `dirty` is cleared when the write is dispatched, NOT when the edit is made. A successful save
+   * hands back a new revision, which changes `layout` and re-runs this effect; without clearing
+   * the flag the effect would schedule another save, that save would bump the revision again, and
+   * the layout would autosave forever — revisions climbing about twice a second with nobody
+   * touching the app.
+   */
   useEffect(() => {
     if (!dirty.current) return
     if (timer.current) clearTimeout(timer.current)
-    timer.current = setTimeout(() => void save(latest.current), AUTOSAVE_MS)
+    timer.current = setTimeout(() => {
+      dirty.current = false
+      void save(latest.current)
+    }, AUTOSAVE_MS)
     return () => {
       if (timer.current) clearTimeout(timer.current)
     }

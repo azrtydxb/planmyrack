@@ -1,0 +1,14 @@
+uid=31_0 RootWebArea url="http://127.0.0.1:8821/"
+  uid=31_1 heading "PlanMyRack" level="1"
+  uid=31_2 StaticText "Where should your layouts live?"
+  uid=31_3 StaticText "You can change this later in Settings. The two stores are separate — moving a layout between them means exporting and importing JSON."
+  uid=31_4 StaticText "ON THIS DEVICE"
+  uid=31_5 StaticText "Work on this device only"
+  uid=31_6 StaticText "Layouts are stored on this device. No server, no network, works offline."
+  uid=31_7 button "Work on this device only"
+  uid=31_8 StaticText "SHARED"
+  uid=31_9 StaticText "Connect to a server"
+  uid=31_10 StaticText "Several devices share the layouts held by a PlanMyRack server on your network."
+  uid=31_11 textbox "Server address"
+  uid=31_12 button "Test connection" disableable disabled
+  uid=31_13 button "Use this server" disableable disabled
