@@ -130,7 +130,10 @@ Interfaces produced (all re-exported from `@planmyrack/core`):
 `interface LinkEnd { deviceId: string; port: number }`;
 `interface Link { id: string; kind: 'network' | 'power'; a: LinkEnd; b: LinkEnd; label: string; colour: string; cableType: CableType }`;
 `interface Layout { schemaVersion: number; id: string | null; name: string; revision: number; createdAt: string; updatedAt: string; racks: Rack[]; devices: Device[]; links: Link[] }`;
-`interface DeviceTypeSpec { type: DeviceType; label: string; sizes: number[]; defaultPorts: number; maxPorts: number; defaultOutlets: number; maxOutlets: number; defaultColour: string }`;
+`interface DeviceTypeSpec { type: DeviceType; label: string; sizes: number[]; defaultPorts: number; maxPorts: number; defaultOutlets: number; maxOutlets: number; drawsPower: boolean; defaultColour: string }`
+— `drawsPower` says whether the type has a power inlet at all, which is what lets a device with
+zero outlets still be the drawing end of a power link (a NAS plugs into a PDU) while a shelf or
+blanking plate never can; without it `TestPduOutletSingleOccupancy` has nothing to connect;
 `const DEVICE_TYPES: Record<DeviceType, DeviceTypeSpec>`; `const UNIT_SIZES = [0.5,1,2,3,4,5,6,8]`;
 `const RACK_UNIT_PRESETS = [6,9,12,15,18,24,42,47]`; `const MAX_RACK_UNITS = 48`;
 `const COLOURS: string[]` (ten hex values); `newId(): string` (16 chars of base36 from `Math.random()` and a monotonic counter — ids are
