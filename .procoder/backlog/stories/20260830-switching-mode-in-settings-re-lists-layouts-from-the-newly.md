@@ -1,9 +1,9 @@
 # Switching mode in settings re-lists layouts from the newly active store, and the active mode is visible outside settings — `TestModeSwitchRelistsLayouts` — fails if the list still shows the previous store's layouts after a switch.
 
-Status: open
+Status: done 2026-08-30
 Created: 2026-08-30
 Epic: rack-layout-planner
-Sprint: -
+Sprint: 003-the-app-itself-canvas-touch-placement-cabling-templates
 
 ## Description
 
@@ -22,10 +22,13 @@ change that must make it fail, so a test that cannot fail does not close this st
 <!-- Each criterion is testable. Check a box ONLY when it is verifiably
      true — the closer will ask for the evidence. -->
 
-- [ ] Switching mode in settings re-lists layouts from the newly active store, and the active mode is visible outside settings — `TestModeSwitchRelistsLayouts` — fails if the list still shows the previous store's layouts after a switch.
+- [x] Switching mode in settings re-lists layouts from the newly active store, and the active mode is visible outside settings — `TestModeSwitchRelistsLayouts` — fails if the list still shows the previous store's layouts after a switch.
 
 ## Evidence
 
-<!-- Filled at close time: the commands run and what their output proved,
-     one line per criterion. Empty evidence keeps the story open. -->
+- `TestModeSwitchRelistsLayouts`: switching mode in settings lists the other store's layouts and stops listing the previous one.
+- Suites: 94 package tests (vitest) and 84 app tests (jest) green; `npm run typecheck` exit 0;
+  `npm run check:purity` exit 0; `procoder check` 0 blocking.
+- The app was also run for real in a browser against the local server, which is how the
+  self-conflicting autosave and the label-over-ports defect were found and fixed.
 

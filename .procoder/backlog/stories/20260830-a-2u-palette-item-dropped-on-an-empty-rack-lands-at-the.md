@@ -1,9 +1,9 @@
 # A 2U palette item dropped on an empty rack lands at the half-U-snapped position under the pointer and spans exactly two units — `TestDropSnapsToHalfU` — fails if a drop resolves to a position that is not a multiple of 0.5U.
 
-Status: open
+Status: done 2026-08-30
 Created: 2026-08-30
 Epic: rack-layout-planner
-Sprint: -
+Sprint: 003-the-app-itself-canvas-touch-placement-cabling-templates
 
 ## Description
 
@@ -22,10 +22,13 @@ change that must make it fail, so a test that cannot fail does not close this st
 <!-- Each criterion is testable. Check a box ONLY when it is verifiably
      true — the closer will ask for the evidence. -->
 
-- [ ] A 2U palette item dropped on an empty rack lands at the half-U-snapped position under the pointer and spans exactly two units — `TestDropSnapsToHalfU` — fails if a drop resolves to a position that is not a multiple of 0.5U.
+- [x] A 2U palette item dropped on an empty rack lands at the half-U-snapped position under the pointer and spans exactly two units — `TestDropSnapsToHalfU` — fails if a drop resolves to a position that is not a multiple of 0.5U.
 
 ## Evidence
 
-<!-- Filled at close time: the commands run and what their output proved,
-     one line per criterion. Empty evidence keeps the story open. -->
+- `TestDropSnapsToHalfU`: positionFromPoint centres a 2U device on the finger at the half unit (7.5 for a pointer 3.3U down a 12U rack) and clamps at both ends; useDragPlacement commits the snapped position.
+- Suites: 94 package tests (vitest) and 84 app tests (jest) green; `npm run typecheck` exit 0;
+  `npm run check:purity` exit 0; `procoder check` 0 blocking.
+- The app was also run for real in a browser against the local server, which is how the
+  self-conflicting autosave and the label-over-ports defect were found and fixed.
 
