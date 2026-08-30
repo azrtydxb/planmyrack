@@ -1,4 +1,4 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { Pressable, ScrollView, StyleSheet, Text } from 'react-native'
 import { Mono } from './primitives'
 import { TOUCH, colour, font, radius } from './theme'
 import type { Rack } from '@planmyrack/core'
@@ -8,11 +8,13 @@ export function RackPager({
   racks,
   activeId,
   onSelect,
+  onEditRack,
   onAddRack,
 }: {
   racks: Rack[]
   activeId: string | null
   onSelect: (rackId: string) => void
+  onEditRack?: (rackId: string) => void
   onAddRack?: () => void
 }) {
   return (
@@ -37,6 +39,18 @@ export function RackPager({
             <Mono size={8} tone={on ? colour.accent : colour.icon}>
               {`${rack.units}U`}
             </Mono>
+            {on && onEditRack ? (
+              <Pressable
+                testID={`rack-settings-${rack.id}`}
+                accessibilityRole="button"
+                accessibilityLabel={`Rack settings for ${rack.name}`}
+                onPress={() => onEditRack(rack.id)}
+                style={styles.gear}
+                hitSlop={8}
+              >
+                <Text style={styles.gearText}>⚙</Text>
+              </Pressable>
+            ) : null}
           </Pressable>
         )
       })}
@@ -74,4 +88,6 @@ const styles = StyleSheet.create({
   name: { fontFamily: font.ui, fontSize: 12.5, color: colour.textSecondary },
   nameOn: { fontFamily: font.uiBold, color: colour.text },
   addText: { fontFamily: font.ui, fontSize: 12.5, color: colour.muted },
+  gear: { paddingLeft: 4, alignItems: 'center', justifyContent: 'center' },
+  gearText: { fontSize: 13, color: colour.icon },
 })

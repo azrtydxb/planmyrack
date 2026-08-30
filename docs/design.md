@@ -75,8 +75,8 @@ Rack hardware:
 
 ## Deviations from the document, and why
 
-The design is the reference; these are the two places the implementation departs from it, both
-forced by real data rather than preference.
+The design is the reference; these are the places the implementation departs from it, each
+forced by real data or a missing door rather than preference.
 
 - **Faceplate label vs port slots.** The design pairs 8x12 port slots with a 44px label because
   its mock names devices with six-character codes (`PP-01`, `SW-CORE`). Real catalogue names —
@@ -85,6 +85,15 @@ forced by real data rather than preference.
   8x12; a 24-port switch trades slot width for a readable name.
 - **48 ports in 1U wrap.** Forty-eight slots cannot be drawn legibly across one 19" 1U faceplate
   at any label width, so the strip wraps to two rows rather than shrinking to a 2px smudge.
+- **The icon rail stays on a desktop.** 3a drops the rail and shows library, canvas and inspector
+  only. Doing that left the cable schedule, the figures and every export with no door at desktop
+  width, so the rail from 3b is kept at every width above a phone. The header carries 3a's Export
+  button, which opens the figures pane where the exports live.
+- **Two panels need a desktop.** 3a's library panel and 3b's side panel are only shown together
+  above 1180px. An iPad in portrait (820px) with both open left the canvas 130px wide, so below
+  that width the library opens on its own tab and closes when a side panel does.
+- **Rack settings.** The design never shows where a rack is renamed, resized or removed. The
+  active rack chip carries a ⚙ that opens those controls in the side panel.
 
 ## Where each part of the design lives
 
@@ -103,5 +112,6 @@ forced by real data rather than preference.
 | Cable schedule with filters                                    | `apps/app/src/ui/CableSchedule.tsx`                                |
 | Library (catalogue / saved)                                    | `apps/app/src/ui/Palette.tsx`                                      |
 | Inspector (sheet on phone, panel on tablet/desktop)            | `apps/app/src/ui/Inspector.tsx`, `InspectorHost.tsx`               |
+| Rack settings (name, standard, height, removal)                | `apps/app/src/ui/RackSettings.tsx`                                 |
 | Rack summary bars and tiles                                    | `apps/app/src/ui/RackSummary.tsx`                                  |
 | Phone / tablet / desktop split                                 | `apps/app/src/ui/useBreakpoint.ts`, `screens/RackEditorScreen.tsx` |

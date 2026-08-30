@@ -64,6 +64,45 @@ describe('TestLayoutCrudInBothModes — through the UI', () => {
   })
 })
 
+describe('TestLayoutCrudInBothModes — rename, duplicate and delete', () => {
+  it.each(makeStores)('renames a layout from the list in %s mode', async (_mode, make) => {
+    const store = await make()
+    await store.create(newLayout('Basement'))
+
+    render(<LayoutsScreen store={store} />)
+    fireEvent.press(await screen.findByRole('button', { name: 'Rename' }))
+    fireEvent.changeText(screen.getByLabelText('Layout name'), 'Loft')
+    fireEvent.press(screen.getByRole('button', { name: 'Save' }))
+
+    await waitFor(async () => expect((await store.list())[0]!.name).toBe('Loft'))
+  })
+
+  it.each(makeStores)('duplicates a layout in %s mode', async (_mode, make) => {
+    const store = await make()
+    await store.create(seeded)
+
+    render(<LayoutsScreen store={store} />)
+    fireEvent.press(await screen.findByRole('button', { name: 'Duplicate' }))
+
+    await waitFor(async () => expect((await store.list()).length).toBe(2))
+    const copy = (await store.list()).find((row) => row.name === 'Basement copy')
+    expect(copy).toBeDefined()
+    expect((await store.get(copy!.id)).devices).toHaveLength(1)
+  })
+
+  it.each(makeStores)('deletes only after confirmation in %s mode', async (_mode, make) => {
+    const store = await make()
+    await store.create(newLayout('Basement'))
+
+    render(<LayoutsScreen store={store} />)
+    fireEvent.press(await screen.findByRole('button', { name: 'Delete' }))
+    expect((await store.list()).length).toBe(1)
+
+    fireEvent.press(screen.getByRole('button', { name: 'Delete for good' }))
+    await waitFor(async () => expect((await store.list()).length).toBe(0))
+  })
+})
+
 describe('TestLocalModePersistsWithoutNetwork', () => {
   it('keeps edits with fetch disabled, across a fresh mount', async () => {
     const originalFetch = global.fetch

@@ -55,7 +55,6 @@ const styles = StyleSheet.create({
     backgroundColor: colour.surface,
     borderWidth: 1,
     borderColor: colour.borderSoft,
-    minWidth: 280,
   },
   head: { gap: 3 },
   name: { fontFamily: font.uiBold, fontSize: 15, color: colour.text },
@@ -64,5 +63,5 @@ const styles = StyleSheet.create({
   usageLabel: { fontFamily: font.ui, fontSize: 12, color: colour.textSecondary },
   track: { height: 6, borderRadius: 3, backgroundColor: colour.sunken, overflow: 'hidden' },
   fill: { height: 6, borderRadius: 3, backgroundColor: colour.accent },
-  tiles: { flexDirection: 'row', gap: 8 },
+  tiles: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
 })

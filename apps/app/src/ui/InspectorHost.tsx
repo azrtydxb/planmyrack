@@ -3,7 +3,7 @@ import { BottomSheet } from './BottomSheet'
 import { Inspector } from './Inspector'
 import { useBreakpoint } from './useBreakpoint'
 import { colour, font } from './theme'
-import type { ComponentProps } from 'react'
+import type { ComponentProps, ReactNode } from 'react'
 
 type InspectorProps = ComponentProps<typeof Inspector>
 
@@ -11,8 +11,9 @@ type InspectorProps = ComponentProps<typeof Inspector>
 export function InspectorHost({
   visible,
   onClose,
+  footer,
   ...inspector
-}: InspectorProps & { visible: boolean; onClose: () => void }) {
+}: InspectorProps & { visible: boolean; onClose: () => void; footer?: ReactNode }) {
   const breakpoint = useBreakpoint()
 
   if (breakpoint === 'phone') {
@@ -31,6 +32,7 @@ export function InspectorHost({
         {inspector.device.name}
       </Text>
       <Inspector {...inspector} />
+      {footer}
     </View>
   )
 }

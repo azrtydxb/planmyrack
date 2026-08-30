@@ -7,7 +7,7 @@ export function newRack(input: Partial<Rack> = {}): Rack {
   const width = input.width ?? 19
   return {
     id: input.id ?? newId(),
-    name: input.name ?? `${width}" rack`,
+    name: input.name ?? 'Rack A',
     width,
     units: input.units ?? 12,
     depthMm: input.depthMm ?? 450,

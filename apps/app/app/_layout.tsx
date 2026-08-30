@@ -22,7 +22,8 @@ export default function RootLayout() {
               contentStyle: { backgroundColor: colour.appBg },
             }}
           >
-            <Stack.Screen name="index" options={{ title: 'PlanMyRack' }} />
+            {/* Both screens draw their own branded header; a navigator title would repeat it. */}
+            <Stack.Screen name="index" options={{ headerShown: false }} />
             <Stack.Screen name="settings" options={{ title: 'Settings' }} />
             <Stack.Screen name="rack/[id]" options={{ headerShown: false }} />
           </Stack>

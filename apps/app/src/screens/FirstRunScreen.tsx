@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { probeServer } from '@planmyrack/storage'
 import { BrandMark } from '../ui/BrandMark'
 import { Button, Card, Mono } from '../ui/primitives'
@@ -7,6 +8,8 @@ import { TOUCH, colour, font, radius } from '../ui/theme'
 import type { Mode } from '../storage/settings'
 
 export function FirstRunScreen({ onChoose }: { onChoose: (mode: Mode) => void | Promise<void> }) {
+  // Nothing above this screen pads for the status bar since the navigator header is hidden.
+  const insets = useSafeAreaInsets()
   const [url, setUrl] = useState('')
   const [probing, setProbing] = useState(false)
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null)
@@ -25,7 +28,7 @@ export function FirstRunScreen({ onChoose }: { onChoose: (mode: Mode) => void | 
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.page}>
+    <ScrollView contentContainerStyle={[styles.page, { paddingTop: 20 + insets.top }]}>
       <View style={styles.brandRow}>
         <BrandMark size={44} />
         <Text style={styles.brandName}>PlanMyRack</Text>

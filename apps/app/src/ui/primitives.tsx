@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
   buttonText: { fontFamily: font.uiBold, fontSize: 12.5 },
   stat: {
     flex: 1,
-    minWidth: 78,
+    minWidth: 64,
     gap: 3,
     paddingVertical: 10,
     paddingHorizontal: 12,

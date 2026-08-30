@@ -13,7 +13,9 @@ import {
   newRack,
   partsCsv,
   removeDevice,
+  removeRack,
   updateDevice,
+  updateRack,
 } from '@planmyrack/core'
 import { AppHeader } from '../ui/AppHeader'
 import { Button, Mono } from '../ui/primitives'
@@ -25,6 +27,7 @@ import { Palette } from '../ui/Palette'
 import { PortPicker } from '../ui/PortPicker'
 import { RackCanvas } from '../canvas/RackCanvas'
 import { RackPager } from '../ui/RackPager'
+import { RackSettings } from '../ui/RackSettings'
 import { RackSummary } from '../ui/RackSummary'
 import { TabBar } from '../ui/TabBar'
 import { useBreakpoint } from '../ui/useBreakpoint'
@@ -39,6 +42,17 @@ import type { Layout } from '@planmyrack/core'
 import type { LayoutStore } from '@planmyrack/storage'
 import type { PaletteChoice } from '../ui/Palette'
 import type { TabKey } from '../ui/TabBar'
+
+const RACK_LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+
+/** Rack A, Rack B, … — a second "19\" rack" chip is indistinguishable from the first. */
+export function nextRackName(racks: { name: string }[]): string {
+  for (const letter of RACK_LETTERS) {
+    const candidate = `Rack ${letter}`
+    if (!racks.some((rack) => rack.name === candidate)) return candidate
+  }
+  return `Rack ${racks.length + 1}`
+}
 
 /** The console: canvas, library, cabling and figures over one layout. */
 export function RackEditorScreen({
@@ -69,11 +83,15 @@ export function RackEditorScreen({
   const [picking, setPicking] = useState<{ device: Device; port: number; kind: LinkKind } | null>(
     null,
   )
+  const [editingRack, setEditingRack] = useState(false)
+  const [rackError, setRackError] = useState<string | null>(null)
 
   const layout = editor.layout
   const wide = breakpoint !== 'phone'
-  // 3a: the desktop keeps the library beside the canvas; 3b: the tablet uses the icon rail alone.
-  const showLibraryPanel = breakpoint === 'desktop'
+  // 3a keeps the library open beside the canvas. Below that width the canvas would be crushed
+  // between two panels — an iPad in portrait left it 130px wide — so the library only opens on
+  // its own tab, and a side panel closes it.
+  const roomForBothPanels = breakpoint === 'desktop'
   const selected = useMemo(
     () => layout.devices.find((d) => d.id === selectedId) ?? null,
     [layout.devices, selectedId],
@@ -137,10 +155,28 @@ export function RackEditorScreen({
       <RackPager
         racks={layout.racks}
         activeId={activeRack?.id ?? null}
-        onSelect={setActiveRackId}
+        onSelect={(rackId) => {
+          // Tapping the rack you are already on opens its settings — the only route to a rack's
+          // name, standard and height.
+          if (rackId === activeRack?.id) {
+            setRackError(null)
+            setEditingRack(true)
+            setSelectedId(null)
+          }
+          setActiveRackId(rackId)
+        }}
+        onEditRack={(rackId) => {
+          setRackError(null)
+          setActiveRackId(rackId)
+          setSelectedId(null)
+          setEditingRack(true)
+        }}
         onAddRack={() =>
           editor.apply((current) =>
-            addRack(current, newRack({ units: RACK_UNIT_PRESETS[2] ?? 12 })),
+            addRack(
+              current,
+              newRack({ name: nextRackName(layout.racks), units: RACK_UNIT_PRESETS[2] ?? 12 }),
+            ),
           )
         }
       />
@@ -187,23 +223,66 @@ export function RackEditorScreen({
     </ScrollView>
   )
 
+  const cableSchedule = (
+    <CableSchedule
+      layout={layout}
+      onJumpToDevice={(id) => {
+        setSelectedId(id)
+        setTab('racks')
+      }}
+      onDisconnect={(linkId) => editor.apply((current) => disconnect(current, linkId))}
+      onExportCsv={() => void shareText('planmyrack-cables.csv', cablesCsv(layout), 'text/csv')}
+    />
+  )
+
+  const editRack = (patch: Partial<typeof activeRack & object>) => {
+    if (!activeRack) return
+    // updateRack refuses a resize that would strand a device. The editor turns that refusal into
+    // its own error banner, so run the pure op once first to put the reason beside the control
+    // that caused it.
+    try {
+      updateRack(layout, activeRack.id, patch)
+    } catch (err) {
+      setRackError((err as Error).message)
+      return
+    }
+    setRackError(null)
+    editor.apply((current) => updateRack(current, activeRack.id, patch))
+  }
+
+  /** The right-hand panel of 3a/3b: whatever is being edited, with the rack's figures beneath. */
+  const sidePanel =
+    editingRack && activeRack ? (
+      <View testID="rack-panel" style={styles.sidePanel}>
+        <View style={styles.panelHead}>
+          <Text style={styles.panelTitle} numberOfLines={1}>
+            {activeRack.name}
+          </Text>
+          <Button small label="Close" onPress={() => setEditingRack(false)} />
+        </View>
+        <RackSettings
+          rack={activeRack}
+          error={rackError}
+          onChange={editRack}
+          onRemove={
+            layout.racks.length > 1
+              ? () => {
+                  const id = activeRack.id
+                  editor.apply((current) => removeRack(current, id))
+                  setEditingRack(false)
+                  setActiveRackId(layout.racks.find((r) => r.id !== id)?.id ?? null)
+                }
+              : undefined
+          }
+        />
+      </View>
+    ) : null
+
   const body = () => {
     if (wide) return canvas
     switch (tab) {
       case 'cables':
-        return (
-          <CableSchedule
-            layout={layout}
-            onJumpToDevice={(id) => {
-              setSelectedId(id)
-              setTab('racks')
-            }}
-            onDisconnect={(linkId) => editor.apply((current) => disconnect(current, linkId))}
-            onExportCsv={() =>
-              void shareText('planmyrack-cables.csv', cablesCsv(layout), 'text/csv')
-            }
-          />
-        )
+        return cableSchedule
       case 'library':
         return <Palette templates={templates} onPick={place} />
       case 'stats':
@@ -242,37 +321,27 @@ export function RackEditorScreen({
         canUndo={editor.canUndo}
         canRedo={editor.canRedo}
         onMore={onOpenSettings}
+        onExport={wide ? () => setTab('stats') : undefined}
       />
 
       <View style={styles.main}>
-        {breakpoint === 'tablet' ? <TabBar rail active={tab} onChange={setTab} /> : null}
+        {/* 3a hides the rail; without it the cable schedule, the figures and the exports have no
+            door on a desktop, so it stays at every width above a phone. */}
+        {wide ? <TabBar rail active={tab} onChange={setTab} /> : null}
 
-        {showLibraryPanel || (wide && tab === 'library') ? (
-          <View style={styles.libraryPanel}>
+        {wide && (roomForBothPanels || tab === 'library') && !(sidePanel && !roomForBothPanels) ? (
+          <View testID="library-panel" style={styles.libraryPanel}>
             <Palette templates={templates} onPick={place} />
           </View>
         ) : null}
 
         <View style={styles.content}>
-          {showLibraryPanel && tab === 'library' ? (
-            canvas
-          ) : wide && tab === 'cables' ? (
-            <CableSchedule
-              layout={layout}
-              onJumpToDevice={setSelectedId}
-              onDisconnect={(linkId) => editor.apply((current) => disconnect(current, linkId))}
-              onExportCsv={() =>
-                void shareText('planmyrack-cables.csv', cablesCsv(layout), 'text/csv')
-              }
-            />
-          ) : wide && tab === 'stats' ? (
-            stats
-          ) : (
-            body()
-          )}
+          {wide && tab === 'cables' ? cableSchedule : wide && tab === 'stats' ? stats : body()}
         </View>
 
-        {selected ? (
+        {sidePanel}
+
+        {!sidePanel && selected ? (
           <InspectorHost
             visible
             device={selected}
@@ -292,7 +361,23 @@ export function RackEditorScreen({
               setSelectedId(null)
             }}
             onSaveTemplate={() => void saveTemplate(selected)}
+            footer={
+              roomForBothPanels && activeRack ? (
+                <RackSummary layout={layout} rackId={activeRack.id} />
+              ) : null
+            }
           />
+        ) : null}
+
+        {roomForBothPanels && !sidePanel && !selected && activeRack ? (
+          <View testID="summary-panel" style={styles.sidePanel}>
+            <View style={styles.panelHead}>
+              <Text style={styles.panelTitle} numberOfLines={1}>
+                {activeRack.name}
+              </Text>
+            </View>
+            <RackSummary layout={layout} rackId={activeRack.id} />
+          </View>
         ) : null}
       </View>
 
@@ -328,6 +413,16 @@ const styles = StyleSheet.create({
   content: { flex: 1 },
   canvasColumn: { flex: 1 },
   libraryPanel: { width: 300, borderRightWidth: 1, borderRightColor: colour.borderSoft },
+  sidePanel: {
+    width: 330,
+    padding: 18,
+    gap: 12,
+    backgroundColor: colour.surface,
+    borderLeftColor: colour.borderSoft,
+    borderLeftWidth: 1,
+  },
+  panelHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  panelTitle: { flex: 1, fontFamily: font.uiBold, fontSize: 19, color: colour.text },
   pagerHint: { alignSelf: 'center', paddingVertical: 8 },
   stats: { padding: 16, gap: 12 },
   screenTitle: { fontFamily: font.uiBold, fontSize: 22, color: colour.text },
