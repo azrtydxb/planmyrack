@@ -1,6 +1,6 @@
 # Task 16: Port picker, cable overlay and cable schedule
 
-Status: open
+Status: done
 Created: 2026-08-30
 Plan: .procoder/plans/rack-layout-planner.md (## Task 16: Port picker, cable overlay and cable schedule)
 Spec: .procoder/specs/rack-layout-planner.md
@@ -19,11 +19,20 @@ Done means the named tests pass, `npm run check:purity` still exits 0, the gate
 
 ## Acceptance criteria
 
-- [ ] Write the failing test `apps/app/test/cables.test.tsx`: Run `npm test -w planmyrack` — expect FAIL with "Cannot find module '../src/ui/PortPicker'".
-- [ ] Implement `cablePath`, `CableOverlay` (measuring port centres from `portRects` and `deviceRect` rather than from the DOM, so it works on native), `PortPicker` (grouped by device, taken ports disabled with the peer's name, `Disconnect` shown when the tapped port already has a link, and…
-- [ ] Run `npm test -w planmyrack` — passes.
-- [ ] Run `procoder check`, then commit: `feat(app): port picker, cable overlay and cable schedule`.
+- [x] Write the failing test `apps/app/test/cables.test.tsx`: Run `npm test -w planmyrack` — expect FAIL with "Cannot find module '../src/ui/PortPicker'".
+- [x] Implement `cablePath`, `CableOverlay` (measuring port centres from `portRects` and `deviceRect` rather than from the DOM, so it works on native), `PortPicker` (grouped by device, taken ports disabled with the peer's name, `Disconnect` shown when the tapped port already has a link, and…
+- [x] Run `npm test -w planmyrack` — passes.
+- [x] Run `procoder check`, then commit: `feat(app): port picker, cable overlay and cable schedule`.
 
 ## Evidence
 
-<!-- Command output, test names and the commit sha, recorded as each box is ticked. -->
+- `TestConnectFreePorts`, `TestPickerBlocksTakenPorts` (a taken port is disabled AND its
+  accessibility label names what holds it) and `TestDisconnectClearsBothEnds` through the picker.
+- `TestCrossRackCableListedWithoutOverlay` proves the split that matters: the overlay draws a
+  same-rack cable, draws nothing for one whose far end is in another rack or on the other face,
+  and the schedule lists it either way. The schedule is built from the links, not from the
+  overlay, which is why a cable cannot vanish by being undrawable.
+- `TestCableMetadataFlowsToScheduleAndCsv`: label and cable type appear in the row.
+- The overlay computes port centres from the same pure metrics the canvas uses rather than
+  measuring the DOM, so it works on native as well as web.
+- 50 app tests, typecheck clean.
