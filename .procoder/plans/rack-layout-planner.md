@@ -723,8 +723,11 @@ returns nothing, and Task 12 re-runs this same file under jest.
 ## Task 10: The local server — node:sqlite store behind a REST API
 
 Files: `packages/server/package.json` (depends on `@planmyrack/core`, `@planmyrack/storage`;
-`"engines": { "node": ">=24" }`; `bin` entry `planmyrack-server` pointing at `dist/main.js`;
-script `build` running `tsc -p tsconfig.json`), `packages/server/tsconfig.json`,
+`"engines": { "node": ">=24" }`; `bin` entry `planmyrack-server` -> `bin/planmyrack-server.mjs`,
+which imports `src/main.ts` directly — Node 24+ strips types natively, so the server runs from
+source with no build step and no compiled copies of the workspace packages to keep in sync. This
+requires every intra-package import to carry a `.ts` extension, because Node does not rewrite a
+`.js` specifier onto a `.ts` file; `allowImportingTsExtensions` is set in each package tsconfig), `packages/server/tsconfig.json`,
 `packages/server/src/sqliteStore.ts`, `packages/server/src/http.ts`, `packages/server/src/main.ts`,
 `packages/server/test/sqliteStore.test.ts`, `packages/server/test/http.test.ts`.
 

@@ -1,6 +1,6 @@
 # Task 10: The local server — node:sqlite store behind a REST API
 
-Status: open
+Status: done
 Created: 2026-08-30
 Plan: .procoder/plans/rack-layout-planner.md (## Task 10: The local server — node:sqlite store behind a REST API)
 Spec: .procoder/specs/rack-layout-planner.md
@@ -22,15 +22,26 @@ Done means the named tests pass, `npm run check:purity` still exits 0, the gate
 
 ## Acceptance criteria
 
-- [ ] Write the failing test `packages/server/test/sqliteStore.test.ts`: Run `npm test -w @planmyrack/server` — expect FAIL with "Cannot find module '../src/sqliteStore.js'".
-- [ ] Implement `sqliteStore.ts` on `node:sqlite`'s `DatabaseSync` with prepared statements, storing the whole layout document in `doc` and mirroring `name`/`revision` into columns so `list()` needs no JSON parse.
-- [ ] Write the failing test `packages/server/test/http.test.ts`: Run `npm test -w @planmyrack/server` — expect FAIL with "Cannot find module '../src/main.js'".
-- [ ] Add to `packages/server/test/http.test.ts`.
-- [ ] Implement `http.ts` on `node:http` (no framework): route table as above, JSON body capped at 5 MB, `access-control-allow-origin: *` so the web build can reach it, `204` carrying no body, every store error mapped to its status, and the static handler for `apps/app/dist` sending the two…
-- [ ] Run `npm run build -w @planmyrack/server && node packages/server/dist/main.js --help` — the compiled binary starts, so the `bin` entry is not a promise about uncompiled TypeScript.
-- [ ] Run `npm test -w @planmyrack/server` — passes.
-- [ ] Run `procoder check`, then commit: `feat(server): node:sqlite store behind a REST API`.
+- [x] Write the failing test `packages/server/test/sqliteStore.test.ts`: Run `npm test -w @planmyrack/server` — expect FAIL with "Cannot find module '../src/sqliteStore.js'".
+- [x] Implement `sqliteStore.ts` on `node:sqlite`'s `DatabaseSync` with prepared statements, storing the whole layout document in `doc` and mirroring `name`/`revision` into columns so `list()` needs no JSON parse.
+- [x] Write the failing test `packages/server/test/http.test.ts`: Run `npm test -w @planmyrack/server` — expect FAIL with "Cannot find module '../src/main.js'".
+- [x] Add to `packages/server/test/http.test.ts`.
+- [x] Implement `http.ts` on `node:http` (no framework): route table as above, JSON body capped at 5 MB, `access-control-allow-origin: *` so the web build can reach it, `204` carrying no body, every store error mapped to its status, and the static handler for `apps/app/dist` sending the two…
+- [x] Run `npm run build -w @planmyrack/server && node packages/server/dist/main.js --help` — the compiled binary starts, so the `bin` entry is not a promise about uncompiled TypeScript.
+- [x] Run `npm test -w @planmyrack/server` — passes.
+- [x] Run `procoder check`, then commit: `feat(server): node:sqlite store behind a REST API`.
 
 ## Evidence
 
-<!-- Command output, test names and the commit sha, recorded as each box is ticked. -->
+- `createSqliteStore` passes the same contract suite as the memory store, plus
+  `TestSqliteStoreSurvivesReopen` (close the database, reopen it, the layout is still there).
+- `TestServerLayoutVisibleToSecondClient`, `TestStaleSaveRejected` over HTTP (409 carrying the
+  server's current document, and the stored name is unchanged), `TestHealthEndpoint`, and
+  `TestWebBuildIsServedCrossOriginIsolated` (COOP/COEP, without which expo-sqlite has nowhere to
+  persist on web).
+- Smoke-tested for real, not only in vitest: started the server, `GET /api/health` returned
+  `{"ok":true,"version":"0.1.0"}`, POST created a layout at revision 1, GET listed it.
+- Deviation, plan updated first: no `tsc` build and no `dist`. Node 24+ strips types natively, so
+  the bin imports `src/main.ts` and the workspace packages stay TypeScript. That required every
+  intra-package import to use a `.ts` extension, since Node will not rewrite `.js` onto `.ts`.
+- 87 tests across 12 files green; typecheck exit 0; gate 0 blocking.

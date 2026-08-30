@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { MAX_RACK_UNITS } from './types.js'
+import { MAX_RACK_UNITS } from './types.ts'
 
 const halfUnit = z
   .number()

@@ -1,5 +1,5 @@
 import { COLOURS } from '@planmyrack/core'
-import type { CatalogEntry } from './types.js'
+import type { CatalogEntry } from './types.ts'
 
 const GENERIC = 'generic rack sizes; nothing vendor-specific to verify'
 const STRUCTURAL =

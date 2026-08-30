@@ -17,8 +17,8 @@ import {
   removeRack,
   undo,
   updateDevice,
-} from '../src/index.js'
-import type { Layout } from '../src/index.js'
+} from '../src/index.ts'
+import type { Layout } from '../src/index.ts'
 
 const rackA = newRack({ id: 'A', units: 12 })
 const rackB = newRack({ id: 'B', units: 12 })

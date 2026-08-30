@@ -1,6 +1,6 @@
 # Task 9: Store interface, in-memory adapter and the contract suite
 
-Status: open
+Status: done
 Created: 2026-08-30
 Plan: .procoder/plans/rack-layout-planner.md (## Task 9: Store interface, in-memory adapter and the contract suite)
 Spec: .procoder/specs/rack-layout-planner.md
@@ -22,12 +22,18 @@ Done means the named tests pass, `npm run check:purity` still exits 0, the gate
 
 ## Acceptance criteria
 
-- [ ] Write the failing test `packages/storage/test/memory.test.ts`: and write `contract.ts` itself, which declares the ambient globals (`declare const describe: (n: string, f: () => void) => void` and the same for `it`/`expect`, or `@types/jest`-free equivalents) and imports NOTHING from `vitest` or…
-- [ ] Implement `types.ts`, the errors, and `memory.ts` as a `Map<string, Layout>` plus a `Map<string, Template>`; `create` deep-clones and assigns `newId()` and `revision: 1`, `update` compares revisions and throws `StaleRevisionError` carrying a clone of the stored document, and both stamp `updatedAt`.
-- [ ] Run `npm test -w @planmyrack/storage` — passes. Run `npm run check:purity` — exits 0.
-- [ ] Prove the suite is runner-agnostic: `grep -rE "from '(vitest|@jest/globals)'" packages/storage/src/contract.ts` returns nothing, and Task 12 re-runs this same file under jest.
-- [ ] Run `procoder check`, then commit: `feat(storage): LayoutStore contract and in-memory adapter`.
+- [x] Write the failing test `packages/storage/test/memory.test.ts`: and write `contract.ts` itself, which declares the ambient globals (`declare const describe: (n: string, f: () => void) => void` and the same for `it`/`expect`, or `@types/jest`-free equivalents) and imports NOTHING from `vitest` or…
+- [x] Implement `types.ts`, the errors, and `memory.ts` as a `Map<string, Layout>` plus a `Map<string, Template>`; `create` deep-clones and assigns `newId()` and `revision: 1`, `update` compares revisions and throws `StaleRevisionError` carrying a clone of the stored document, and both stamp `updatedAt`.
+- [x] Run `npm test -w @planmyrack/storage` — passes. Run `npm run check:purity` — exits 0.
+- [x] Prove the suite is runner-agnostic: `grep -rE "from '(vitest|@jest/globals)'" packages/storage/src/contract.ts` returns nothing, and Task 12 re-runs this same file under jest.
+- [x] Run `procoder check`, then commit: `feat(storage): LayoutStore contract and in-memory adapter`.
 
 ## Evidence
 
-<!-- Command output, test names and the commit sha, recorded as each box is ticked. -->
+- `runStoreContract` imports no test runner: it declares ambient describe/it/expect so the same
+  file runs under vitest here and under jest in the app. `grep -rE "from '(vitest|@jest/globals)'"
+packages/storage/src/contract.ts` returns nothing.
+- Vitest needed `globals: true` for that to work; set in every package config, as the plan's
+  constraint required.
+- Memory adapter passes the contract: CRUD, layout round-trip, templates, and stale-save refusal.
+- 87 tests across 12 files green; typecheck exit 0; gate 0 blocking.

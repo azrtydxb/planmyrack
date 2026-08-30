@@ -1,7 +1,7 @@
-import { ImportError } from './errors.js'
-import { layoutSchema } from './schema.js'
-import { SCHEMA_VERSION } from './types.js'
-import type { Layout } from './types.js'
+import { ImportError } from './errors.ts'
+import { layoutSchema } from './schema.ts'
+import { SCHEMA_VERSION } from './types.ts'
+import type { Layout } from './types.ts'
 
 export function exportJson(layout: Layout): string {
   const { schemaVersion, ...rest } = layout

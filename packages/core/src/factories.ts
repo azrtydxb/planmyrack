@@ -1,7 +1,7 @@
-import { newId } from './ids.js'
-import { DEVICE_TYPES, sizeLabel } from './deviceTypes.js'
-import { SCHEMA_VERSION } from './types.js'
-import type { Device, DeviceType, Face, Layout, Rack } from './types.js'
+import { newId } from './ids.ts'
+import { DEVICE_TYPES, sizeLabel } from './deviceTypes.ts'
+import { SCHEMA_VERSION } from './types.ts'
+import type { Device, DeviceType, Face, Layout, Rack } from './types.ts'
 
 export function newRack(input: Partial<Rack> = {}): Rack {
   const width = input.width ?? 19

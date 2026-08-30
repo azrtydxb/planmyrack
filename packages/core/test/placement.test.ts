@@ -9,8 +9,8 @@ import {
   newRack,
   removeRack,
   updateRack,
-} from '../src/index.js'
-import type { Layout, Link } from '../src/index.js'
+} from '../src/index.ts'
+import type { Layout, Link } from '../src/index.ts'
 
 const rackA = newRack({ id: 'A', units: 12, name: 'A' })
 const rackB = newRack({ id: 'B', units: 12, name: 'B', width: 10 })

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { DEVICE_TYPES, UNIT_SIZES } from '@planmyrack/core'
-import { BUNDLED_CATALOG, catalogByVendor, deviceFromCatalog } from '../src/index.js'
+import { BUNDLED_CATALOG, catalogByVendor, deviceFromCatalog } from '../src/index.ts'
 
 describe('TestBundledCatalogueShape', () => {
   it('ships the generic set and the named vendor families', () => {

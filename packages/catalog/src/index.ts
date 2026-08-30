@@ -1,10 +1,10 @@
 import { newDevice } from '@planmyrack/core'
-import { BUNDLED_CATALOG } from './bundled.js'
-import type { CatalogEntry } from './types.js'
+import { BUNDLED_CATALOG } from './bundled.ts'
+import type { CatalogEntry } from './types.ts'
 import type { Device, Face } from '@planmyrack/core'
 
-export * from './types.js'
-export { BUNDLED_CATALOG } from './bundled.js'
+export * from './types.ts'
+export { BUNDLED_CATALOG } from './bundled.ts'
 
 export function catalogByVendor(
   entries: CatalogEntry[] = BUNDLED_CATALOG,

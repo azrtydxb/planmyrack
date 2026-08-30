@@ -12,8 +12,8 @@ import {
   newRack,
   partsCsv,
   updateDevice,
-} from '../src/index.js'
-import type { Layout } from '../src/index.js'
+} from '../src/index.ts'
+import type { Layout } from '../src/index.ts'
 
 const rack = newRack({ id: 'R', units: 12, name: 'Basement' })
 const seeded: Layout = (() => {

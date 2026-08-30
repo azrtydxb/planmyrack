@@ -1,5 +1,5 @@
-import type { DeviceType } from './types.js'
-import { UNIT_SIZES } from './types.js'
+import type { DeviceType } from './types.ts'
+import { UNIT_SIZES } from './types.ts'
 
 export interface DeviceTypeSpec {
   type: DeviceType

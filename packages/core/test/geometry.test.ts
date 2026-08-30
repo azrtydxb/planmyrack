@@ -7,8 +7,8 @@ import {
   newRack,
   rackStats,
   snapHalfU,
-} from '../src/index.js'
-import type { Device, Face } from '../src/index.js'
+} from '../src/index.ts'
+import type { Device, Face } from '../src/index.ts'
 
 const rack = newRack({ id: 'r1', units: 4 })
 const mk = (p: Partial<Device> & { posU: number; heightU: number }): Device =>

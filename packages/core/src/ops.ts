@@ -1,8 +1,8 @@
-import { PlacementError } from './errors.js'
-import { DEVICE_TYPES } from './deviceTypes.js'
-import { findFreeSlot } from './geometry.js'
-import { pruneLinks } from './links.js'
-import type { Device, Face, Layout, Rack } from './types.js'
+import { PlacementError } from './errors.ts'
+import { DEVICE_TYPES } from './deviceTypes.ts'
+import { findFreeSlot } from './geometry.ts'
+import { pruneLinks } from './links.ts'
+import type { Device, Face, Layout, Rack } from './types.ts'
 
 const rackOf = (layout: Layout, rackId: string): Rack => {
   const rack = layout.racks.find((r) => r.id === rackId)

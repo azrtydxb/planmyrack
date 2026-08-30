@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { DEVICE_TYPES, UNIT_SIZES, newLayout, newId } from '../src/index.js'
+import { DEVICE_TYPES, UNIT_SIZES, newLayout, newId } from '../src/index.ts'
 
 describe('TestDeviceTypeTableIsConsistent', () => {
   it('gives every type at least one size drawn from UNIT_SIZES', () => {

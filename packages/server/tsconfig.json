@@ -5,7 +5,9 @@
     "composite": false,
     "declaration": false,
     "declarationMap": false,
-    "types": [],
+    "types": [
+      "node"
+    ],
     "allowImportingTsExtensions": true
   },
   "include": ["src/**/*.ts", "test/**/*.ts"]

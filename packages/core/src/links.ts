@@ -1,7 +1,7 @@
-import { DEVICE_TYPES } from './deviceTypes.js'
-import { PlacementError, PortBusyError } from './errors.js'
-import { newId } from './ids.js'
-import type { CableType, Device, Layout, Link, LinkEnd, LinkKind } from './types.js'
+import { DEVICE_TYPES } from './deviceTypes.ts'
+import { PlacementError, PortBusyError } from './errors.ts'
+import { newId } from './ids.ts'
+import type { CableType, Device, Layout, Link, LinkEnd, LinkKind } from './types.ts'
 
 /**
  * How many ports of `kind` this device offers.

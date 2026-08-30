@@ -1,0 +1,130 @@
+import { DatabaseSync } from 'node:sqlite'
+import { mkdirSync } from 'node:fs'
+import { dirname } from 'node:path'
+import { newId } from '@planmyrack/core'
+import { NotFoundError, StaleRevisionError } from '@planmyrack/storage'
+import type { Layout } from '@planmyrack/core'
+import type { LayoutStore, LayoutSummary, Template } from '@planmyrack/storage'
+
+const SCHEMA = `
+  CREATE TABLE IF NOT EXISTS layouts (
+    id         TEXT    PRIMARY KEY,
+    name       TEXT    NOT NULL,
+    revision   INTEGER NOT NULL,
+    doc        TEXT    NOT NULL,
+    created_at TEXT    NOT NULL,
+    updated_at TEXT    NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS templates (
+    id  TEXT PRIMARY KEY,
+    doc TEXT NOT NULL
+  );
+`
+
+interface LayoutRow {
+  id: string
+  name: string
+  revision: number
+  doc: string
+  created_at: string
+  updated_at: string
+}
+
+/**
+ * The layout document is stored whole in `doc`; name and revision are mirrored into columns so
+ * listing never has to parse JSON. Racks, devices and cables are always read, written and undone
+ * together, so splitting them into tables would buy a join and nothing else.
+ */
+export function createSqliteStore(dbPath: string): LayoutStore & { close(): void } {
+  if (dbPath !== ':memory:') mkdirSync(dirname(dbPath), { recursive: true })
+  const db = new DatabaseSync(dbPath)
+  db.exec(SCHEMA)
+
+  const q = {
+    list: db.prepare(
+      'SELECT id, name, revision, created_at, updated_at FROM layouts ORDER BY updated_at DESC',
+    ),
+    get: db.prepare('SELECT * FROM layouts WHERE id = ?'),
+    insert: db.prepare(
+      'INSERT INTO layouts (id, name, revision, doc, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
+    ),
+    update: db.prepare(
+      'UPDATE layouts SET name = ?, revision = ?, doc = ?, updated_at = ? WHERE id = ?',
+    ),
+    remove: db.prepare('DELETE FROM layouts WHERE id = ?'),
+    templates: db.prepare('SELECT doc FROM templates'),
+    saveTemplate: db.prepare('INSERT OR REPLACE INTO templates (id, doc) VALUES (?, ?)'),
+    removeTemplate: db.prepare('DELETE FROM templates WHERE id = ?'),
+  }
+
+  const readRow = (id: string): LayoutRow => {
+    const row = q.get.get(id) as LayoutRow | undefined
+    if (!row) throw new NotFoundError(id)
+    return row
+  }
+  const toLayout = (row: LayoutRow): Layout => ({
+    ...(JSON.parse(row.doc) as Layout),
+    id: row.id,
+    name: row.name,
+    revision: row.revision,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  })
+
+  return {
+    async list(): Promise<LayoutSummary[]> {
+      return (q.list.all() as Omit<LayoutRow, 'doc'>[]).map((r) => ({
+        id: r.id,
+        name: r.name,
+        revision: r.revision,
+        createdAt: r.created_at,
+        updatedAt: r.updated_at,
+      }))
+    },
+    async get(id) {
+      return toLayout(readRow(id))
+    },
+    async create(layout) {
+      const now = new Date().toISOString()
+      const stored: Layout = {
+        ...layout,
+        id: newId(),
+        revision: 1,
+        createdAt: layout.createdAt ?? now,
+        updatedAt: now,
+      }
+      q.insert.run(stored.id!, stored.name, 1, JSON.stringify(stored), stored.createdAt, now)
+      return stored
+    },
+    async update(layout) {
+      if (!layout.id) throw new NotFoundError('(no id)')
+      const row = readRow(layout.id)
+      if (row.revision !== layout.revision) throw new StaleRevisionError(toLayout(row))
+      const next: Layout = {
+        ...layout,
+        revision: row.revision + 1,
+        createdAt: row.created_at,
+        updatedAt: new Date().toISOString(),
+      }
+      q.update.run(next.name, next.revision, JSON.stringify(next), next.updatedAt, next.id!)
+      return next
+    },
+    async remove(id) {
+      if (q.remove.run(id).changes === 0) throw new NotFoundError(id)
+    },
+    async listTemplates() {
+      return (q.templates.all() as { doc: string }[]).map((r) => JSON.parse(r.doc) as Template)
+    },
+    async saveTemplate(template) {
+      const stored = { ...template, id: template.id || newId() }
+      q.saveTemplate.run(stored.id, JSON.stringify(stored))
+      return stored
+    },
+    async removeTemplate(id) {
+      q.removeTemplate.run(id)
+    },
+    close() {
+      db.close()
+    },
+  }
+}

@@ -3,7 +3,7 @@
 Status: open
 Created: 2026-08-30
 Epic: rack-layout-planner
-Sprint: -
+Sprint: 002-layouts-persist-and-are-shared-one-store-contract-proved-by
 
 ## Description
 

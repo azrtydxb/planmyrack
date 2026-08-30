@@ -10,8 +10,8 @@ import {
   portLink,
   removeDevice,
   updateDevice,
-} from '../src/index.js'
-import type { Layout } from '../src/index.js'
+} from '../src/index.ts'
+import type { Layout } from '../src/index.ts'
 
 /** The failure code is the contract; the message is for humans and may be reworded. */
 const codeOf = (fn: () => unknown): string | undefined => {

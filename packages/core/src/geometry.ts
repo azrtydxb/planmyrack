@@ -1,4 +1,4 @@
-import type { Device, Face, Layout, Rack } from './types.js'
+import type { Device, Face, Layout, Rack } from './types.ts'
 
 /** Positions live on a half-unit grid; everything that comes from a pointer goes through here. */
 export const snapHalfU = (u: number): number => Math.round(u * 2) / 2
