@@ -56,6 +56,11 @@ describe('TestExpoConfigDeclaresLocalNetworking', () => {
     expect(plist.NSLocalNetworkUsageDescription).toMatch(/server/i)
   })
 
+  it('answers the export-compliance question up front', () => {
+    // without this, App Store Connect asks on every single submission
+    expect(config.expo.ios.infoPlist.ITSAppUsesNonExemptEncryption).toBe(false)
+  })
+
   it('carries the identity a store submission needs', () => {
     expect(config.expo.ios.bundleIdentifier).toBe('com.azrty.planmyrack')
     expect(config.expo.android.package).toBe('com.azrty.planmyrack')
