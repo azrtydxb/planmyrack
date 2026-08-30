@@ -35,7 +35,9 @@ Inherited by every task, taken from the spec:
   `@planmyrack/catalog`, `@planmyrack/storage`, `@planmyrack/server`; the app is `planmyrack`.
 - **Test runners**: vitest (`globals: true`) for `packages/*` (`npm test -w @planmyrack/<pkg>`),
   jest with the `jest-expo` preset plus `@testing-library/react-native` for `apps/app`
-  (`npm test -w planmyrack`). Root `npm test` runs both; root `npm run typecheck` runs `tsc -b`.
+  (`npm test -w planmyrack`). Root `npm test` runs both. Root `npm run typecheck` runs `tsc -p tsconfig.json` while the
+  repository is a single project, and becomes `tsc -b` once the packages carry composite project
+  references (from Task 2 on).
   The shared store contract suite runs under BOTH runners, so it must use the ambient
   `describe`/`it`/`expect` globals and import nothing from `vitest` or `@jest/globals`.
 - **expo-sqlite on web** needs Metro configured for `.wasm` and the page served with
@@ -68,9 +70,13 @@ Inherited by every task, taken from the spec:
 
 Files: `package.json` (root: workspaces `packages/*`, `apps/*`, scripts `test`, `typecheck`,
 `check:purity`), `tsconfig.base.json` (`strict: true`, `moduleResolution: "bundler"`),
-`vitest.workspace.ts`, `scripts/check-purity.mjs` (scanner + CLI), `tests/purity.test.ts`,
+`scripts/check-purity.mjs` (scanner + CLI), `tests/purity.test.ts`,
 `tests/fixtures/impure/bad.ts` (positive control), `.gitignore`, `README.md` (how to run web,
 iOS, Android and the server).
+
+Vitest discovers `tests/**` from the root config by default, so no workspace file is created
+here; `vitest.workspace.ts` is deprecated in vitest 3.2 in favour of `test.projects`, which
+Task 2 adds when the first package needs its own suite.
 
 Interfaces produced: `findPlatformImports(dirs: string[]): Promise<{ file: string, module: string }[]>`
 exported from `scripts/check-purity.mjs`; npm scripts `npm test`, `npm run typecheck`,
