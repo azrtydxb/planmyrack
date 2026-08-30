@@ -139,7 +139,8 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, paddingBottom: 8 },
   headText: { flex: 1, gap: 3 },
   title: { fontFamily: font.uiBold, fontSize: 22, color: colour.text },
-  filters: { gap: 8, paddingHorizontal: 16, paddingBottom: 12 },
+  // a horizontal ScrollView stretches its children to full height without this
+  filters: { gap: 8, paddingHorizontal: 16, paddingBottom: 12, alignItems: 'center' },
   filter: {
     minHeight: 32,
     paddingHorizontal: 14,

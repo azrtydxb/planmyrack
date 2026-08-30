@@ -73,9 +73,12 @@ export const DeviceBox = memo(function DeviceBox({
         <Text numberOfLines={1} style={[styles.name, shelf && styles.nameOnLight]}>
           {device.name.toUpperCase()}
         </Text>
-        <Text numberOfLines={1} style={[styles.meta, shelf && styles.metaOnLight]}>
-          {meta}
-        </Text>
+        {/* a half-U faceplate is 17px tall: the name and its meta line cannot both fit */}
+        {device.heightU >= 1 ? (
+          <Text numberOfLines={1} style={[styles.meta, shelf && styles.metaOnLight]}>
+            {meta}
+          </Text>
+        ) : null}
       </View>
 
       <PortStrip

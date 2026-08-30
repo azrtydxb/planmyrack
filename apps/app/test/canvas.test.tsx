@@ -92,3 +92,19 @@ describe('TestCableManagementFlavoursRender', () => {
     }
   })
 })
+
+describe('TestHalfUFaceplatesDropTheMetaLine', () => {
+  it('shows only the name on a half-U device, which is too short for two lines', () => {
+    // seen in the built app: the ½U cable-management label was clipped mid-glyph
+    const half = withDevice({ type: 'hooks', heightU: 0.5, name: 'HOOKS', ports: 0 })
+    render(<RackCanvas layout={half} face="front" />)
+    expect(screen.getByText('HOOKS')).toBeTruthy()
+    expect(screen.queryByText('½U')).toBeNull()
+  })
+
+  it('keeps the meta line on a full-height device', () => {
+    const full = withDevice({ type: 'switch', heightU: 1, name: 'SW', ports: 8 })
+    render(<RackCanvas layout={full} face="front" />)
+    expect(screen.getByText('1U · 8P')).toBeTruthy()
+  })
+})
