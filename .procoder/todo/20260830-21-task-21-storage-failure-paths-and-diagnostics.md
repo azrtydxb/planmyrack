@@ -1,6 +1,6 @@
 # Task 21: Storage failure paths and diagnostics
 
-Status: open
+Status: done
 Created: 2026-08-30
 Plan: .procoder/plans/rack-layout-planner.md (## Task 21: Storage failure paths and diagnostics)
 Spec: .procoder/specs/rack-layout-planner.md
@@ -19,10 +19,10 @@ Done means the named tests pass, `npm run check:purity` still exits 0, the gate
 
 ## Acceptance criteria
 
-- [ ] Write the failing test `apps/app/test/failures.test.tsx`, one case per spec failure mode: Run `npm test -w planmyrack` — expect FAIL with "Cannot find module '../src/storage/capabilities'".
-- [ ] Implement `capabilities.ts`, the open-failure branch in `StoreProvider` (an unreadable database yields an empty in-memory store plus a `StorageProblem`, never a delete or overwrite), `StorageProblem` with its four messages, and the settings diagnostics block recording the last server URL, status…
-- [ ] Run `npm test -w planmyrack` — passes.
-- [ ] Run `procoder check`, then commit: `feat(app): storage failure paths and server diagnostics`. ## Coverage self-review Every spec scope id maps to the task that implements it: S-1 → Tasks 2, 4, 13; S-2 → Tasks 3, 4, 14; S-3 → Tasks 4, 15; S-4 → Tasks 2, 13; S-5 → Tasks 2, 13; S-6 → Tasks 5, 16;…
+- [x] Write the failing test `apps/app/test/failures.test.tsx`, one case per spec failure mode: Run `npm test -w planmyrack` — expect FAIL with "Cannot find module '../src/storage/capabilities'".
+- [x] Implement `capabilities.ts`, the open-failure branch in `StoreProvider` (an unreadable database yields an empty in-memory store plus a `StorageProblem`, never a delete or overwrite), `StorageProblem` with its four messages, and the settings diagnostics block recording the last server URL, status…
+- [x] Run `npm test -w planmyrack` — passes.
+- [x] Run `procoder check`, then commit: `feat(app): storage failure paths and server diagnostics`. ## Coverage self-review Every spec scope id maps to the task that implements it: S-1 → Tasks 2, 4, 13; S-2 → Tasks 3, 4, 14; S-3 → Tasks 4, 15; S-4 → Tasks 2, 13; S-5 → Tasks 2, 13; S-6 → Tasks 5, 16;…
 
 ## Evidence
 

@@ -1,6 +1,6 @@
 # Task 17: Equipment templates and the catalogue in the palette
 
-Status: open
+Status: done
 Created: 2026-08-30
 Plan: .procoder/plans/rack-layout-planner.md (## Task 17: Equipment templates and the catalogue in the palette)
 Spec: .procoder/specs/rack-layout-planner.md
@@ -19,10 +19,10 @@ Done means the named tests pass, `npm run check:purity` still exits 0, the gate
 
 ## Acceptance criteria
 
-- [ ] Write the failing test `apps/app/test/templates.test.tsx`: Run `npm test -w planmyrack` — expect FAIL with "Cannot find module '../src/state/useTemplates'".
-- [ ] Implement `templates.ts` in core, `useTemplates` over the store's template methods, the palette sections (device types, "My gear", then the catalogue grouped by vendor) and the inspector's "Save as template" button.
-- [ ] Run `npm test -w planmyrack` and `npm test -w @planmyrack/core` — both pass.
-- [ ] Run `procoder check`, then commit: `feat(app): equipment templates and catalogue palette`.
+- [x] Write the failing test `apps/app/test/templates.test.tsx`: Run `npm test -w planmyrack` — expect FAIL with "Cannot find module '../src/state/useTemplates'".
+- [x] Implement `templates.ts` in core, `useTemplates` over the store's template methods, the palette sections (device types, "My gear", then the catalogue grouped by vendor) and the inspector's "Save as template" button.
+- [x] Run `npm test -w planmyrack` and `npm test -w @planmyrack/core` — both pass.
+- [x] Run `procoder check`, then commit: `feat(app): equipment templates and catalogue palette`.
 
 ## Evidence
 

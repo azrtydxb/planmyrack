@@ -1,6 +1,6 @@
 # Task 13: Rack canvas rendering
 
-Status: open
+Status: done
 Created: 2026-08-30
 Plan: .procoder/plans/rack-layout-planner.md (## Task 13: Rack canvas rendering)
 Spec: .procoder/specs/rack-layout-planner.md
@@ -21,10 +21,10 @@ Done means the named tests pass, `npm run check:purity` still exits 0, the gate
 
 ## Acceptance criteria
 
-- [ ] Write the failing test `apps/app/test/canvas.test.tsx`: Run `npm test -w planmyrack` — expect FAIL with "Cannot find module '../src/canvas/RackCanvas'".
-- [ ] Implement `metrics.ts` first (pure, no React — `deviceRect`, `portRects`, port sizing that shrinks the port square and drops the printed number below 12 ports per row), then the components: `RackFrame` with `testID={`rack-${rack.id}`}`, `UScale` numbering from `rack.units` at the top down to 1,…
-- [ ] Run `npm test -w planmyrack` — passes.
-- [ ] Run `procoder check`, then commit: `feat(app): rack canvas with devices, ports and artwork`.
+- [x] Write the failing test `apps/app/test/canvas.test.tsx`: Run `npm test -w planmyrack` — expect FAIL with "Cannot find module '../src/canvas/RackCanvas'".
+- [x] Implement `metrics.ts` first (pure, no React — `deviceRect`, `portRects`, port sizing that shrinks the port square and drops the printed number below 12 ports per row), then the components: `RackFrame` with `testID={`rack-${rack.id}`}`, `UScale` numbering from `rack.units` at the top down to 1,…
+- [x] Run `npm test -w planmyrack` — passes.
+- [x] Run `procoder check`, then commit: `feat(app): rack canvas with devices, ports and artwork`.
 
 ## Evidence
 

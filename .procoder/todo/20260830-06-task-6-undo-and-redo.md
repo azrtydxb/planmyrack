@@ -1,6 +1,6 @@
 # Task 6: Undo and redo
 
-Status: open
+Status: done
 Created: 2026-08-30
 Plan: .procoder/plans/rack-layout-planner.md (## Task 6: Undo and redo)
 Spec: .procoder/specs/rack-layout-planner.md
@@ -18,10 +18,10 @@ Done means the named tests pass, `npm run check:purity` still exits 0, the gate
 
 ## Acceptance criteria
 
-- [ ] Write the failing test `packages/core/test/history.test.ts`: Run `npm test -w @planmyrack/core` — expect FAIL with "does not provide an export named 'initHistory'".
-- [ ] Implement `history.ts` as three plain arrays; `commit` pushes `present` onto `past`, `undo` pops `past` into `present` and pushes the old `present` onto `future`, `redo` mirrors it.
-- [ ] Run `npm test -w @planmyrack/core` — passes.
-- [ ] Run `procoder check`, then commit: `feat(core): undo and redo over layout edits`.
+- [x] Write the failing test `packages/core/test/history.test.ts`: Run `npm test -w @planmyrack/core` — expect FAIL with "does not provide an export named 'initHistory'".
+- [x] Implement `history.ts` as three plain arrays; `commit` pushes `present` onto `past`, `undo` pops `past` into `present` and pushes the old `present` onto `future`, `redo` mirrors it.
+- [x] Run `npm test -w @planmyrack/core` — passes.
+- [x] Run `procoder check`, then commit: `feat(core): undo and redo over layout edits`.
 
 ## Evidence
 

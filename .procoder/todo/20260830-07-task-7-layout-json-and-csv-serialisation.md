@@ -1,6 +1,6 @@
 # Task 7: Layout JSON and CSV serialisation
 
-Status: open
+Status: done
 Created: 2026-08-30
 Plan: .procoder/plans/rack-layout-planner.md (## Task 7: Layout JSON and CSV serialisation)
 Spec: .procoder/specs/rack-layout-planner.md
@@ -19,10 +19,10 @@ Done means the named tests pass, `npm run check:purity` still exits 0, the gate
 
 ## Acceptance criteria
 
-- [ ] Write the failing test `packages/core/test/io.test.ts`: Run `npm test -w @planmyrack/core` — expect FAIL with "does not provide an export named 'exportJson'".
-- [ ] Implement `schema.ts` with zod mirroring the `Layout` types (ports and outlets non-negative integers, `posU` a multiple of 0.5, `width` a literal union of 19 and 10), then `io.ts`: `importJson` parses, checks `schemaVersion <= SCHEMA_VERSION`, checks id uniqueness across racks/devices/links,…
-- [ ] Run `npm test -w @planmyrack/core` — passes.
-- [ ] Run `procoder check`, then commit: `feat(core): layout JSON import/export and CSV reports`.
+- [x] Write the failing test `packages/core/test/io.test.ts`: Run `npm test -w @planmyrack/core` — expect FAIL with "does not provide an export named 'exportJson'".
+- [x] Implement `schema.ts` with zod mirroring the `Layout` types (ports and outlets non-negative integers, `posU` a multiple of 0.5, `width` a literal union of 19 and 10), then `io.ts`: `importJson` parses, checks `schemaVersion <= SCHEMA_VERSION`, checks id uniqueness across racks/devices/links,…
+- [x] Run `npm test -w @planmyrack/core` — passes.
+- [x] Run `procoder check`, then commit: `feat(core): layout JSON import/export and CSV reports`.
 
 ## Evidence
 
