@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native'
+import { BrandMark } from './BrandMark'
 import { IconButton, Mono, Segmented, Toggle } from './primitives'
 import { colour, font } from './theme'
 import type { Face } from '@planmyrack/core'
@@ -46,6 +47,7 @@ export function AppHeader({
   return (
     <View style={styles.header}>
       <View style={styles.topRow}>
+        <BrandMark />
         <View style={styles.identity}>
           <Text numberOfLines={1} style={styles.name}>
             {name}

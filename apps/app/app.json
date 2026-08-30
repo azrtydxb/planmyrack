@@ -31,14 +31,22 @@
       "expo-router",
       "expo-sharing",
       "expo-sqlite",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-mark.png",
+          "imageWidth": 220,
+          "resizeMode": "contain",
+          "backgroundColor": "#eef1f5",
+          "dark": {
+            "image": "./assets/splash-mark.png",
+            "backgroundColor": "#0b1020"
+          }
+        }
+      ]
     ],
     "scheme": "planmyrack",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#0b1020"
-    },
     "extra": {
       "router": {},
       "eas": {

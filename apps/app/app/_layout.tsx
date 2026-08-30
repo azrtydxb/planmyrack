@@ -1,7 +1,7 @@
 import { Stack } from 'expo-router'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { StatusBar } from 'expo-status-bar'
-import { View } from 'react-native'
+import { BrandSplash } from '../src/ui/BrandMark'
 import { StoreProvider } from '../src/storage/StoreProvider'
 import { useAppFonts } from '../src/ui/fonts'
 import { colour, font } from '../src/ui/theme'
@@ -27,7 +27,7 @@ export default function RootLayout() {
             <Stack.Screen name="rack/[id]" options={{ headerShown: false }} />
           </Stack>
         ) : (
-          <View style={{ flex: 1, backgroundColor: colour.appBg }} />
+          <BrandSplash message="LOADING" />
         )}
       </StoreProvider>
     </GestureHandlerRootView>

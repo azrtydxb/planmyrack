@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 import { probeServer } from '@planmyrack/storage'
+import { BrandMark } from '../ui/BrandMark'
 import { Button, Card, Mono } from '../ui/primitives'
 import { TOUCH, colour, font, radius } from '../ui/theme'
 import type { Mode } from '../storage/settings'
@@ -25,6 +26,10 @@ export function FirstRunScreen({ onChoose }: { onChoose: (mode: Mode) => void | 
 
   return (
     <ScrollView contentContainerStyle={styles.page}>
+      <View style={styles.brandRow}>
+        <BrandMark size={44} />
+        <Text style={styles.brandName}>PlanMyRack</Text>
+      </View>
       <Text style={styles.title}>Where should your layouts live?</Text>
       <Text style={styles.body}>
         You can change this later in Settings. The two stores are separate — moving a layout between
@@ -89,6 +94,8 @@ export function FirstRunScreen({ onChoose }: { onChoose: (mode: Mode) => void | 
 
 const styles = StyleSheet.create({
   page: { padding: 20, gap: 14, backgroundColor: colour.appBg, flexGrow: 1 },
+  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 4 },
+  brandName: { fontFamily: font.uiBold, fontSize: 20, color: colour.text },
   title: { fontFamily: font.uiBold, fontSize: 22, color: colour.text },
   body: { fontFamily: font.ui, fontSize: 13, lineHeight: 19, color: colour.muted },
   card: { padding: 16, gap: 10 },

@@ -66,7 +66,24 @@ describe('TestExpoConfigDeclaresLocalNetworking', () => {
     expect(config.expo.android.package).toBe('com.azrty.planmyrack')
     expect(config.expo.name).toBe('PlanMyRack')
     expect(config.expo.icon).toBe('./assets/icon.png')
-    expect(config.expo.splash.image).toBe('./assets/splash-icon.png')
+  })
+})
+
+describe('TestSplashShowsTheBrand', () => {
+  it('configures the splash through the plugin, not the legacy key', () => {
+    // SDK 57 ignores expo.splash; the splash never appeared until this moved to the plugin
+    expect('splash' in config.expo).toBe(false)
+    const splash = config.expo.plugins.find(
+      (plugin) => Array.isArray(plugin) && plugin[0] === 'expo-splash-screen',
+    ) as [string, { image: string; backgroundColor: string }] | undefined
+    expect(splash).toBeDefined()
+    expect(splash![1].image).toBe('./assets/splash-mark.png')
+  })
+
+  it('ships the splash artwork it names', () => {
+    const mark = readAsset('splash-mark.png')
+    expect(mark.width).toBeGreaterThanOrEqual(256)
+    expect(mark.width).toBe(mark.height)
   })
 })
 

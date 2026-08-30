@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native'
 import { exportJson, importJson, newLayout } from '@planmyrack/core'
+import { BrandMark } from '../ui/BrandMark'
 import { Button, Card, Mono } from '../ui/primitives'
 import { TOUCH, colour, font, radius } from '../ui/theme'
 import type { LayoutStore, LayoutSummary } from '@planmyrack/storage'
@@ -71,6 +72,7 @@ export function LayoutsScreen({
   return (
     <View style={styles.page}>
       <View style={styles.head}>
+        <BrandMark />
         <View style={styles.headText}>
           <Text style={styles.title}>Layouts</Text>
           <Mono size={8.5}>{`${rows.length} SAVED`}</Mono>
