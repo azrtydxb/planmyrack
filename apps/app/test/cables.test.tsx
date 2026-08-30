@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react-native'
 import { addDevice, addRack, connect, newDevice, newLayout, newRack } from '@planmyrack/core'
 import { CableOverlay } from '../src/canvas/CableOverlay'
+import { cablePath } from '../src/canvas/cablePath'
 import { CableSchedule } from '../src/ui/CableSchedule'
 import { PortPicker } from '../src/ui/PortPicker'
 import type { Layout } from '@planmyrack/core'
@@ -145,7 +146,8 @@ describe('TestCrossRackCableListedWithoutOverlay', () => {
   it('lists the cross-rack cable in the schedule all the same', () => {
     render(<CableSchedule layout={crossRack} />)
     expect(screen.getByTestId(`cable-row-${crossRack.links[0]!.id}`)).toBeTruthy()
-    expect(screen.getByText(/Switch port 3 → Patch B port 1/)).toBeTruthy()
+    // the design writes a cable as "A · Port n ⇄ B · Port n"
+    expect(screen.getByText(/Switch · Port 3 ⇄ Patch B · Port 1/)).toBeTruthy()
   })
 
   it('draws nothing for a cable whose far end is on the other face', () => {
@@ -165,6 +167,23 @@ describe('TestCableMetadataFlowsToScheduleAndCsv', () => {
     render(<CableSchedule layout={wired} />)
     const row = screen.getByTestId(`cable-row-${wired.links[0]!.id}`)
     expect(row).toHaveTextContent(/uplink-1/)
-    expect(row).toHaveTextContent(/cat6a/)
+    // cable type reads as a mono chip in the design
+    expect(row).toHaveTextContent(/CAT6A/)
+  })
+})
+
+describe('TestStackedCablesArcRatherThanKink', () => {
+  it('bows both control points the same way when two ports are stacked', () => {
+    // seen in the running app: opposed control points turned a short vertical run into an S
+    const path = cablePath({ x: 200, y: 100 }, { x: 210, y: 160 })
+    const [, c1x, , c2x] = /C([\d.-]+),([\d.-]+) ([\d.-]+),([\d.-]+)/.exec(path)!.map(Number)
+    expect(c1x).toBeLessThan(200)
+    expect(c2x).toBeLessThan(210)
+  })
+
+  it('still bows along the run when the ports are far apart horizontally', () => {
+    const path = cablePath({ x: 100, y: 100 }, { x: 600, y: 120 })
+    const [, c1x] = /C([\d.-]+),/.exec(path)!.map(Number)
+    expect(c1x).toBeGreaterThan(100)
   })
 })

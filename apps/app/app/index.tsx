@@ -4,7 +4,7 @@ import { FirstRunScreen } from '../src/screens/FirstRunScreen'
 import { LayoutsScreen } from '../src/screens/LayoutsScreen'
 import { useStoreContext } from '../src/storage/StoreProvider'
 import { shareText } from '../src/export/files'
-import { theme } from '../src/ui/theme'
+import { colour, font } from '../src/ui/theme'
 
 export default function Index() {
   const { store, mode, ready, problem, setMode } = useStoreContext()
@@ -13,7 +13,7 @@ export default function Index() {
   if (!ready) {
     return (
       <View style={styles.centre}>
-        <ActivityIndicator color={theme.accent} />
+        <ActivityIndicator color={colour.accent} />
       </View>
     )
   }
@@ -39,6 +39,11 @@ export default function Index() {
 }
 
 const styles = StyleSheet.create({
-  centre: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.bg },
-  problem: { color: theme.danger, padding: 20, textAlign: 'center' },
+  centre: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colour.appBg,
+  },
+  problem: { fontFamily: font.ui, color: colour.danger, padding: 20, textAlign: 'center' },
 })

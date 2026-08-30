@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native'
 import { exportJson, importJson, newLayout } from '@planmyrack/core'
-import { Button } from '../ui/Button'
-import { theme } from '../ui/theme'
+import { Button, Card, Mono } from '../ui/primitives'
+import { TOUCH, colour, font, radius } from '../ui/theme'
 import type { LayoutStore, LayoutSummary } from '@planmyrack/storage'
 
 const when = (iso: string): string => {
@@ -70,6 +70,14 @@ export function LayoutsScreen({
 
   return (
     <View style={styles.page}>
+      <View style={styles.head}>
+        <View style={styles.headText}>
+          <Text style={styles.title}>Layouts</Text>
+          <Mono size={8.5}>{`${rows.length} SAVED`}</Mono>
+        </View>
+        {onOpenSettings ? <Button small label="Settings" onPress={onOpenSettings} /> : null}
+      </View>
+
       <View style={styles.toolbar}>
         <Button label="New layout" tone="primary" onPress={() => void create()} />
         {pickJson ? (
@@ -78,7 +86,6 @@ export function LayoutsScreen({
             onPress={() => void pickJson().then((text) => (text ? importLayout(text) : undefined))}
           />
         ) : null}
-        {onOpenSettings ? <Button label="Settings" onPress={onOpenSettings} /> : null}
       </View>
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -89,24 +96,29 @@ export function LayoutsScreen({
       ) : null}
 
       <FlatList
+        contentContainerStyle={styles.list}
         data={rows}
         keyExtractor={(row) => row.id}
         ListEmptyComponent={
           error ? null : <Text style={styles.empty}>No layouts yet. Start with a new one.</Text>
         }
         renderItem={({ item }) => (
-          <Pressable
-            accessibilityRole="button"
-            testID={`layout-row-${item.id}`}
-            onPress={() => onOpen?.(item.id)}
-            style={styles.row}
-          >
-            <Text style={styles.rowName}>{item.name}</Text>
-            <Text style={styles.rowMeta}>Updated {when(item.updatedAt)}</Text>
+          <Card style={styles.row}>
+            <Pressable
+              accessibilityRole="button"
+              testID={`layout-row-${item.id}`}
+              onPress={() => onOpen?.(item.id)}
+              style={styles.rowMain}
+            >
+              <Text style={styles.rowName}>{item.name}</Text>
+              <Mono size={7.5} tone={colour.muted} weight="medium">
+                {`REV ${item.revision} · UPDATED ${when(item.updatedAt).toUpperCase()}`}
+              </Mono>
+            </Pressable>
             {onExport ? (
-              <Button label="Export JSON" onPress={() => void exportLayout(item.id)} />
+              <Button small label="Export JSON" onPress={() => void exportLayout(item.id)} />
             ) : null}
-          </Pressable>
+          </Card>
         )}
       />
     </View>
@@ -114,20 +126,27 @@ export function LayoutsScreen({
 }
 
 const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: theme.bg, padding: 16, gap: theme.gap },
-  toolbar: { flexDirection: 'row', gap: theme.gap, flexWrap: 'wrap' },
-  row: {
-    minHeight: theme.touch + 12,
-    justifyContent: 'center',
-    padding: 14,
-    marginBottom: 10,
-    backgroundColor: theme.panel,
-    borderColor: theme.panelEdge,
-    borderWidth: 1,
-    borderRadius: theme.radius,
+  page: { flex: 1, backgroundColor: colour.appBg },
+  head: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, paddingBottom: 6 },
+  headText: { flex: 1, gap: 3 },
+  title: { fontFamily: font.uiBold, fontSize: 22, color: colour.text },
+  toolbar: {
+    flexDirection: 'row',
+    gap: 8,
+    flexWrap: 'wrap',
+    paddingHorizontal: 16,
+    paddingBottom: 8,
   },
-  rowName: { color: theme.text, fontSize: 16, fontWeight: '600' },
-  rowMeta: { color: theme.dim, fontSize: 12, marginTop: 4 },
-  empty: { color: theme.dim, padding: 12 },
-  error: { color: theme.danger, padding: 12 },
+  list: { padding: 16, paddingTop: 4, gap: 8 },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    padding: 12,
+    borderRadius: radius.card,
+  },
+  rowMain: { flex: 1, gap: 3, minHeight: TOUCH - 12, justifyContent: 'center' },
+  rowName: { fontFamily: font.uiBold, fontSize: 15, color: colour.text },
+  empty: { fontFamily: font.ui, fontSize: 13, color: colour.muted, padding: 8 },
+  error: { fontFamily: font.ui, fontSize: 12.5, color: colour.danger, paddingHorizontal: 16 },
 })

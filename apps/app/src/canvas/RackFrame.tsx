@@ -1,9 +1,25 @@
 import { StyleSheet, Text, View } from 'react-native'
 import { DeviceBox } from './DeviceBox'
-import { UScale } from './UScale'
-import { RACK_INNER_PX, U_PX, rackHeightPx } from './metrics'
-import { theme } from '../ui/theme'
+import { Rail } from './Rail'
+import { CAP_PX, RACK_INNER_PX, SCALE_PX, U_PX, rackHeightPx } from './metrics'
+import { Mono } from '../ui/primitives'
+import { colour, font, rack as hw } from '../ui/theme'
 import type { Device, Face, Layout, Rack } from '@planmyrack/core'
+
+/** U numbers run outside the rack, counting from 1 at the bottom as a real rack does. */
+function UScale({ units }: { units: number }) {
+  return (
+    <View style={styles.scale}>
+      {Array.from({ length: units }, (_, i) => units - i).map((u) => (
+        <View key={u} style={styles.scaleCell}>
+          <Mono size={7.5} tone="#9aa4b0" weight="medium">
+            {u}
+          </Mono>
+        </View>
+      ))}
+    </View>
+  )
+}
 
 export function RackFrame({
   rack,
@@ -30,78 +46,70 @@ export function RackFrame({
 
   return (
     <View style={styles.rack}>
-      <View style={styles.head}>
-        <Text style={styles.name} numberOfLines={1}>
-          {rack.name}
-        </Text>
-        <Text style={styles.tag}>
-          {rack.width}" · {rack.units}U · {face}
-        </Text>
-      </View>
-
-      <View style={styles.frame}>
+      <View style={styles.frameRow}>
         <UScale units={rack.units} />
-        <View
-          testID={`rack-${rack.id}`}
-          data-face={face}
-          style={[styles.body, { width: RACK_INNER_PX[rack.width], height }]}
-        >
-          {Array.from({ length: rack.units }, (_, i) => (
-            <View key={i} style={[styles.unitLine, { top: i * U_PX }]} />
-          ))}
-
-          {dropHint ? (
+        <View>
+          <View style={styles.cap} />
+          <View style={styles.body}>
+            <Rail units={rack.units} />
             <View
-              testID="drop-hint"
-              style={[
-                styles.dropHint,
-                {
-                  top: (rack.units - dropHint.posU - dropHint.heightU) * U_PX,
-                  height: dropHint.heightU * U_PX,
-                  borderColor: dropHint.valid ? theme.ok : theme.danger,
-                },
-              ]}
-            />
-          ) : null}
+              testID={`rack-${rack.id}`}
+              style={[styles.inner, { width: RACK_INNER_PX[rack.width], height }]}
+            >
+              {dropHint ? (
+                <View
+                  testID="drop-hint"
+                  style={[
+                    styles.dropHint,
+                    {
+                      top: (rack.units - dropHint.posU - dropHint.heightU) * U_PX,
+                      height: dropHint.heightU * U_PX,
+                      borderColor: dropHint.valid ? colour.accent : colour.danger,
+                    },
+                  ]}
+                />
+              ) : null}
 
-          {devices.map((device) => (
-            <DeviceBox
-              key={device.id}
-              device={device}
-              rack={rack}
-              layout={layout}
-              selected={device.id === selectedId}
-              onPress={onSelect}
-              onPortPress={onPortPress}
-              onLongPress={onDeviceLongPress}
-            />
-          ))}
+              {devices.map((device) => (
+                <DeviceBox
+                  key={device.id}
+                  device={device}
+                  rack={rack}
+                  layout={layout}
+                  selected={device.id === selectedId}
+                  onPress={onSelect}
+                  onPortPress={onPortPress}
+                  onLongPress={onDeviceLongPress}
+                />
+              ))}
+            </View>
+            <Rail units={rack.units} />
+          </View>
+          <View style={styles.cap} />
         </View>
-        <UScale units={rack.units} />
       </View>
+
+      <Text style={styles.caption}>
+        {rack.name.toUpperCase()} · {rack.units}U · {rack.width}" · {face.toUpperCase()}
+      </Text>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  rack: { marginRight: 20 },
-  head: { flexDirection: 'row', alignItems: 'baseline', gap: 8, marginBottom: 6 },
-  name: { color: theme.text, fontWeight: '700', fontSize: 15 },
-  tag: { color: theme.dim, fontSize: 12 },
-  frame: { flexDirection: 'row', alignItems: 'flex-start' },
-  body: {
-    position: 'relative',
-    backgroundColor: '#0d1424',
-    borderColor: theme.panelEdge,
-    borderWidth: 2,
-    borderRadius: 4,
+  rack: { alignItems: 'center', marginRight: 28 },
+  frameRow: { flexDirection: 'row', alignItems: 'flex-start' },
+  scale: { width: SCALE_PX, paddingTop: CAP_PX },
+  scaleCell: { height: U_PX, alignItems: 'flex-end', justifyContent: 'center', paddingRight: 3 },
+  cap: { height: CAP_PX, backgroundColor: hw.cap, borderRadius: 3 },
+  body: { flexDirection: 'row', backgroundColor: hw.body },
+  inner: { position: 'relative', backgroundColor: hw.body },
+  dropHint: { position: 'absolute', left: 0, right: 0, borderWidth: 2, borderRadius: 2 },
+  caption: {
+    marginTop: 10,
+    fontFamily: font.monoBold,
+    fontSize: 8,
+    letterSpacing: 1,
+    color: colour.mutedSoft,
   },
-  unitLine: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    height: 1,
-    backgroundColor: 'rgba(147,160,192,0.12)',
-  },
-  dropHint: { position: 'absolute', left: 0, right: 0, borderWidth: 2, borderRadius: 3 },
 })

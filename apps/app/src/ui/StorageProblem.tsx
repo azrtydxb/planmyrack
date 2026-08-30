@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native'
-import { Button } from './Button'
-import { theme } from './theme'
+import { Button } from './primitives'
+import { colour, font, radius } from './theme'
 import type { StorageProblem as Problem } from '../storage/capabilities'
 
 /** A storage failure the user can act on: never a silent empty screen, never a lost edit. */
@@ -26,18 +26,18 @@ export function StorageProblem({
       <Text style={styles.text}>{problem.detail}</Text>
       <View style={styles.actions}>
         {problem.kind === 'corrupt' && onImportJson ? (
-          <Button label="Import JSON" onPress={onImportJson} />
+          <Button small label="Import JSON" onPress={onImportJson} />
         ) : null}
         {problem.kind === 'full' && onExportJson ? (
-          <Button label="Export to JSON" tone="primary" onPress={onExportJson} />
+          <Button small label="Export to JSON" tone="primary" onPress={onExportJson} />
         ) : null}
         {problem.kind === 'permission' && onOpenSettings ? (
-          <Button label="Open Settings" tone="primary" onPress={onOpenSettings} />
+          <Button small label="Open Settings" tone="primary" onPress={onOpenSettings} />
         ) : null}
         {problem.kind === 'unsupported' && onSwitchMode ? (
-          <Button label="Connect to a server" tone="primary" onPress={onSwitchMode} />
+          <Button small label="Connect to a server" tone="primary" onPress={onSwitchMode} />
         ) : null}
-        {onRetry ? <Button label="Retry" onPress={onRetry} /> : null}
+        {onRetry ? <Button small label="Retry" onPress={onRetry} /> : null}
       </View>
     </View>
   )
@@ -46,13 +46,13 @@ export function StorageProblem({
 const styles = StyleSheet.create({
   card: {
     padding: 16,
-    gap: theme.gap,
-    backgroundColor: 'rgba(239,68,68,0.12)',
-    borderColor: theme.danger,
+    gap: 12,
+    backgroundColor: colour.dangerSoft,
+    borderColor: colour.danger,
     borderWidth: 1,
-    borderRadius: theme.radius,
+    borderRadius: radius.card,
     margin: 16,
   },
-  text: { color: theme.text, fontSize: 14, lineHeight: 20 },
-  actions: { flexDirection: 'row', gap: theme.gap, flexWrap: 'wrap' },
+  text: { fontFamily: font.ui, fontSize: 13.5, color: colour.text, lineHeight: 20 },
+  actions: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
 })

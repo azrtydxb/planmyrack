@@ -23,7 +23,13 @@
       "favicon": "./assets/favicon.png",
       "output": "static"
     },
-    "plugins": ["./plugins/withLocalNetwork", "expo-router", "expo-sharing", "expo-sqlite"],
+    "plugins": [
+      "./plugins/withLocalNetwork",
+      "expo-router",
+      "expo-sharing",
+      "expo-sqlite",
+      "expo-font"
+    ],
     "scheme": "planmyrack",
     "splash": {
       "image": "./assets/splash-icon.png",

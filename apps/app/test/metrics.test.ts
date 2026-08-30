@@ -32,20 +32,41 @@ describe('TestDensePortsStayInsideDevice', () => {
 
     expect(rects).toHaveLength(ports)
     for (const rect of rects) {
-      expect(rect.x + rect.size).toBeLessThanOrEqual(box.width)
-      expect(rect.y + rect.size).toBeLessThanOrEqual(box.height)
-      expect(rect.size).toBeGreaterThan(0)
+      expect(rect.x + rect.width).toBeLessThanOrEqual(box.width)
+      expect(rect.y + rect.height).toBeLessThanOrEqual(box.height)
+      expect(rect.width).toBeGreaterThan(0)
+      expect(rect.height).toBeGreaterThan(0)
     }
   })
 
-  it('wraps to two rows only when the device is tall enough to show them', () => {
-    const oneU = device({ ports: 48, heightU: 1 })
-    const twoU = device({ ports: 48, heightU: 2 })
-    const rowsOf = (d: typeof oneU) =>
-      new Set(portRects(d, deviceRect(rack, d).width, deviceRect(rack, d).height).map((r) => r.y))
-        .size
-    expect(rowsOf(oneU)).toBe(1)
-    expect(rowsOf(twoU)).toBe(2)
+  it('keeps a 24-port 1U switch on a single row, as the design draws it', () => {
+    const dev = device({ ports: 24, heightU: 1 })
+    const box = deviceRect(rack, dev)
+    expect(new Set(portRects(dev, box.width, box.height).map((r) => r.y)).size).toBe(1)
+  })
+
+  it('wraps a 48-port switch rather than shrinking it into a smudge', () => {
+    // 48 slots cannot fit legibly across one 19-inch 1U faceplate, so the strip wraps instead
+    const dev = device({ ports: 48, heightU: 1 })
+    const box = deviceRect(rack, dev)
+    expect(new Set(portRects(dev, box.width, box.height).map((r) => r.y)).size).toBe(2)
+  })
+
+  it('draws the 8x12 slots the design specifies when the device is sparse enough', () => {
+    const dev = device({ ports: 8, heightU: 1 })
+    const box = deviceRect(rack, dev)
+    const first = portRects(dev, box.width, box.height)[0]!
+    expect([first.width, first.height]).toEqual([8, 12])
+  })
+
+  it('keeps a dense strip legible rather than matching the slot size exactly', () => {
+    // the design's 8px slots sit beside six-character codes (PP-01); a real catalogue name needs
+    // a wider label, so a 24-port strip trades slot width for a readable device name
+    const dev = device({ ports: 24, heightU: 1 })
+    const box = deviceRect(rack, dev)
+    const first = portRects(dev, box.width, box.height)[0]!
+    expect(first.width).toBeGreaterThanOrEqual(4)
+    expect(first.height).toBe(12)
   })
 
   it('draws nothing for a device with no ports', () => {
@@ -66,7 +87,7 @@ describe('TestPortsNeverSitUnderTheDeviceName', () => {
     const dev = device({ ports: 48, heightU: 1 })
     const box = deviceRect(rack, dev)
     for (const rect of portRects(dev, box.width, box.height)) {
-      expect(rect.x + rect.size).toBeLessThanOrEqual(box.width)
+      expect(rect.x + rect.width).toBeLessThanOrEqual(box.width)
     }
   })
 })

@@ -35,8 +35,8 @@ export function CableOverlay({
     const port = portRects(device, box.width, box.height)[end.port]
     if (!port) return null
     return {
-      x: offset.x + port.x + port.size / 2,
-      y: offset.y + box.top + port.y + port.size / 2,
+      x: offset.x + port.x + port.width / 2,
+      y: offset.y + box.top + port.y + port.height / 2,
     }
   }
 
@@ -55,9 +55,10 @@ export function CableOverlay({
             testID={`cable-path-${path.id}`}
             d={path.d}
             stroke={path.colour}
-            strokeWidth={2}
+            strokeWidth={2.5}
             fill="none"
-            opacity={0.9}
+            strokeLinecap="round"
+            opacity={0.95}
           />
         ))}
       </Svg>

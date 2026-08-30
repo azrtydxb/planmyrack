@@ -3,12 +3,12 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { RackEditorScreen } from '../../src/screens/RackEditorScreen'
 import { useStoreContext } from '../../src/storage/StoreProvider'
-import { theme } from '../../src/ui/theme'
+import { colour, font } from '../../src/ui/theme'
 import type { Layout } from '@planmyrack/core'
 
 export default function RackRoute() {
   const { id } = useLocalSearchParams<{ id: string }>()
-  const { store, setMode } = useStoreContext()
+  const { store, mode, setMode } = useStoreContext()
   const router = useRouter()
   const [layout, setLayout] = useState<Layout | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -36,7 +36,7 @@ export default function RackRoute() {
   if (!layout) {
     return (
       <View style={styles.centre}>
-        <ActivityIndicator color={theme.accent} />
+        <ActivityIndicator color={colour.accent} />
       </View>
     )
   }
@@ -45,6 +45,8 @@ export default function RackRoute() {
     <RackEditorScreen
       store={store}
       initial={layout}
+      mode={mode?.kind === 'server' ? 'server' : 'local'}
+      onOpenSettings={() => router.push('/settings')}
       onSwitchToLocal={() => {
         void setMode({ kind: 'local' })
         router.replace('/')
@@ -54,6 +56,11 @@ export default function RackRoute() {
 }
 
 const styles = StyleSheet.create({
-  centre: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.bg },
-  error: { color: theme.danger, padding: 20, textAlign: 'center' },
+  centre: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colour.appBg,
+  },
+  error: { fontFamily: font.ui, color: colour.danger, padding: 20, textAlign: 'center' },
 })

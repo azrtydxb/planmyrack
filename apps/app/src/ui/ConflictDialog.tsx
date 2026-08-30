@@ -1,12 +1,12 @@
 import { Modal, StyleSheet, Text, View } from 'react-native'
 import { STALE_SAVE_MESSAGE } from '@planmyrack/storage'
-import { Button } from './Button'
-import { theme } from './theme'
+import { Button } from './primitives'
+import { colour, font, radius } from './theme'
 import type { Layout } from '@planmyrack/core'
 
 /**
- * Shown when the server refused a save because the layout changed elsewhere. Reload discards this
- * device's edits, so exporting them first is offered beside it rather than buried.
+ * Shown when a save was refused because the layout changed elsewhere. Reloading discards this
+ * device's edits, so exporting them first sits beside it rather than buried.
  */
 export function ConflictDialog({
   current,
@@ -41,21 +41,19 @@ export function ConflictDialog({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.55)',
+    backgroundColor: 'rgba(22,32,44,0.45)',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
   },
   card: {
     maxWidth: 460,
-    backgroundColor: theme.panel,
-    borderRadius: theme.radius,
-    borderWidth: 1,
-    borderColor: theme.panelEdge,
+    backgroundColor: colour.surface,
+    borderRadius: radius.card,
     padding: 20,
-    gap: theme.gap,
+    gap: 12,
   },
-  title: { color: theme.text, fontSize: 16, fontWeight: '700' },
-  body: { color: theme.dim, fontSize: 13, lineHeight: 19 },
-  actions: { flexDirection: 'row', gap: theme.gap, justifyContent: 'flex-end', flexWrap: 'wrap' },
+  title: { fontFamily: font.uiBold, fontSize: 16, color: colour.text, lineHeight: 22 },
+  body: { fontFamily: font.ui, fontSize: 13, color: colour.muted, lineHeight: 19 },
+  actions: { flexDirection: 'row', gap: 8, justifyContent: 'flex-end', flexWrap: 'wrap' },
 })

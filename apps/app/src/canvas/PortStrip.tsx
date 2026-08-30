@@ -1,14 +1,15 @@
 import { Pressable, StyleSheet, View } from 'react-native'
 import { portKey } from './portKey'
 import { portRects } from './metrics'
-import { theme } from '../ui/theme'
+import { TOUCH, rack as hw } from '../ui/theme'
 import type { Device, Layout, LinkKind } from '@planmyrack/core'
 
 /**
- * Port squares are drawn small enough that 48 fit in 1U, so each one carries a 44pt touch target
- * centred on it. Looking at a port and hitting it are different problems.
+ * The port strip on a faceplate. A free port is near-black with a hairline of shine along its
+ * top; a connected one takes the cable's colour and glows. Slots are small by design, so each
+ * carries a finger-sized hit area rather than being enlarged.
  */
-export function PortGrid({
+export function PortStrip({
   device,
   layout,
   boxWidth,
@@ -33,27 +34,31 @@ export function PortGrid({
     )
 
   return (
-    <View style={styles.layer} pointerEvents="box-none">
+    <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
       {rects.map((rect, index) => {
         const link = linkFor(index)
-        const pad = Math.max(0, (theme.touch - rect.size) / 2)
+        const padX = Math.max(0, (TOUCH - rect.width) / 2)
+        const padY = Math.max(0, (TOUCH - rect.height) / 2)
         return (
           <Pressable
             key={index}
             testID={portKey(device.id, index, 'network')}
             accessibilityRole="button"
             accessibilityLabel={`${device.name} port ${index + 1}${link ? ', connected' : ', free'}`}
-            hitSlop={{ top: pad, bottom: pad, left: pad, right: pad }}
+            hitSlop={{ top: padY, bottom: padY, left: padX, right: padX }}
             onPress={() => onPortPress?.(device, index, 'network')}
             style={[
               styles.port,
               {
                 left: rect.x,
                 top: rect.y,
-                width: rect.size,
-                height: rect.size,
-                backgroundColor: link ? link.colour : 'rgba(11,16,32,0.55)',
-                borderColor: link ? '#0b1020' : 'rgba(230,236,255,0.4)',
+                width: rect.width,
+                height: rect.height,
+                backgroundColor: link ? link.colour : hw.portFree,
+                shadowColor: link ? link.colour : undefined,
+                shadowOpacity: link ? 0.9 : 0,
+                shadowRadius: link ? 4 : 0,
+                shadowOffset: { width: 0, height: 0 },
               },
             ]}
           />
@@ -64,6 +69,5 @@ export function PortGrid({
 }
 
 const styles = StyleSheet.create({
-  layer: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
-  port: { position: 'absolute', borderRadius: 2, borderWidth: 1 },
+  port: { position: 'absolute', borderRadius: 1 },
 })

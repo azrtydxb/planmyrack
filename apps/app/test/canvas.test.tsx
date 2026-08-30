@@ -33,8 +33,8 @@ describe('TestLayoutHoldsMixedWidthRacks', () => {
     render(<RackCanvas layout={twoRacks} face="front" />)
     expect(styleOf(`rack-${wide.id}`).width).toBe(RACK_INNER_PX[19])
     expect(styleOf(`rack-${narrow.id}`).width).toBe(RACK_INNER_PX[10])
-    // two racks, two scales each side, all numbered from the top unit
-    expect(screen.getAllByText('12')).toHaveLength(4)
+    // the design numbers the units once, outside the rack on the left — two racks, two scales
+    expect(screen.getAllByText('12')).toHaveLength(2)
   })
 })
 

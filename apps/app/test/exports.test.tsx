@@ -63,15 +63,19 @@ const seeded: Layout = (() => {
 describe('TestRackWattsSum — in the UI', () => {
   it('shows the rack total and updates when a device changes', () => {
     const { rerender } = render(<RackSummary layout={seeded} rackId="R" />)
-    expect(screen.getByTestId('summary-R')).toHaveTextContent(/50 W/)
+    // the design shows the figure under a mono WATTS caption
+    expect(screen.getByTestId('summary-R')).toHaveTextContent(/WATTS50/)
 
     rerender(<RackSummary layout={updateDevice(seeded, 'sw', { watts: 78 })} rackId="R" />)
-    expect(screen.getByTestId('summary-R')).toHaveTextContent(/98 W/)
+    expect(screen.getByTestId('summary-R')).toHaveTextContent(/WATTS98/)
   })
 
   it('counts each face separately and reports what is free', () => {
     render(<RackSummary layout={seeded} rackId="R" />)
-    expect(screen.getByTestId('summary-R')).toHaveTextContent(/3U front · 1U rear · 9U free/)
+    // one usage bar per face, each reporting what is still free on that face
+    const summary = screen.getByTestId('summary-R')
+    expect(summary).toHaveTextContent(/Front3U \/ 9 FREE/)
+    expect(summary).toHaveTextContent(/Rear1U \/ 11 FREE/)
   })
 })
 

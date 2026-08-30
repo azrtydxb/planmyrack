@@ -33,5 +33,10 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "uuid": "^11.1.1"
+  },
+  "dependencies": {
+    "@expo-google-fonts/ibm-plex-mono": "^0.4.1",
+    "@expo-google-fonts/manrope": "^0.4.2",
+    "expo-font": "~57.0.2"
   }
 }

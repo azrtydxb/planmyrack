@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 import { probeServer } from '@planmyrack/storage'
-import { Button } from '../ui/Button'
-import { theme } from '../ui/theme'
+import { Button, Card, Mono } from '../ui/primitives'
+import { TOUCH, colour, font, radius } from '../ui/theme'
 import type { Mode } from '../storage/settings'
 
 export function FirstRunScreen({ onChoose }: { onChoose: (mode: Mode) => void | Promise<void> }) {
@@ -31,7 +31,10 @@ export function FirstRunScreen({ onChoose }: { onChoose: (mode: Mode) => void | 
         them means exporting and importing JSON.
       </Text>
 
-      <View style={styles.card}>
+      <Card style={styles.card}>
+        <Mono size={7.5} tone={colour.icon}>
+          ON THIS DEVICE
+        </Mono>
         <Text style={styles.cardTitle}>Work on this device only</Text>
         <Text style={styles.body}>
           Layouts are stored on this device. No server, no network, works offline.
@@ -41,9 +44,12 @@ export function FirstRunScreen({ onChoose }: { onChoose: (mode: Mode) => void | 
           tone="primary"
           onPress={() => void onChoose({ kind: 'local' })}
         />
-      </View>
+      </Card>
 
-      <View style={styles.card}>
+      <Card style={styles.card}>
+        <Mono size={7.5} tone={colour.icon}>
+          SHARED
+        </Mono>
         <Text style={styles.cardTitle}>Connect to a server</Text>
         <Text style={styles.body}>
           Several devices share the layouts held by a PlanMyRack server on your network.
@@ -51,7 +57,7 @@ export function FirstRunScreen({ onChoose }: { onChoose: (mode: Mode) => void | 
         <TextInput
           accessibilityLabel="Server address"
           placeholder="http://192.168.1.20:8787"
-          placeholderTextColor={theme.dim}
+          placeholderTextColor={colour.icon}
           autoCapitalize="none"
           autoCorrect={false}
           value={url}
@@ -72,36 +78,31 @@ export function FirstRunScreen({ onChoose }: { onChoose: (mode: Mode) => void | 
           />
         </View>
         {result ? (
-          <Text style={[styles.result, { color: result.ok ? theme.ok : theme.danger }]}>
+          <Text style={[styles.result, { color: result.ok ? colour.green : colour.danger }]}>
             {result.message}
           </Text>
         ) : null}
-      </View>
+      </Card>
     </ScrollView>
   )
 }
 
 const styles = StyleSheet.create({
-  page: { padding: 20, gap: theme.gap, backgroundColor: theme.bg, flexGrow: 1 },
-  title: { color: theme.text, fontSize: 22, fontWeight: '700' },
-  body: { color: theme.dim, fontSize: 14, lineHeight: 20 },
-  card: {
-    backgroundColor: theme.panel,
-    borderColor: theme.panelEdge,
-    borderWidth: 1,
-    borderRadius: theme.radius,
-    padding: 16,
-    gap: theme.gap,
-  },
-  cardTitle: { color: theme.text, fontSize: 17, fontWeight: '600' },
+  page: { padding: 20, gap: 14, backgroundColor: colour.appBg, flexGrow: 1 },
+  title: { fontFamily: font.uiBold, fontSize: 22, color: colour.text },
+  body: { fontFamily: font.ui, fontSize: 13, lineHeight: 19, color: colour.muted },
+  card: { padding: 16, gap: 10 },
+  cardTitle: { fontFamily: font.uiBold, fontSize: 16, color: colour.text },
   input: {
-    minHeight: theme.touch,
-    borderColor: theme.panelEdge,
+    minHeight: TOUCH,
+    borderColor: colour.borderInput,
     borderWidth: 1,
-    borderRadius: theme.radius,
+    borderRadius: radius.button,
     paddingHorizontal: 12,
-    color: theme.text,
+    color: colour.text,
+    fontFamily: font.mono,
+    fontSize: 12.5,
   },
-  row: { flexDirection: 'row', gap: theme.gap, flexWrap: 'wrap' },
-  result: { fontSize: 14 },
+  row: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
+  result: { fontFamily: font.ui, fontSize: 12.5 },
 })

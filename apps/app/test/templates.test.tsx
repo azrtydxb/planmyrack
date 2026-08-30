@@ -1,4 +1,4 @@
-import { act, render, renderHook, screen, waitFor } from '@testing-library/react-native'
+import { act, fireEvent, render, renderHook, screen, waitFor } from '@testing-library/react-native'
 import { deviceFromTemplate, newDevice } from '@planmyrack/core'
 import { createMemoryStore } from '@planmyrack/storage'
 import { Palette } from '../src/ui/Palette'
@@ -45,7 +45,9 @@ describe('TestTemplateRoundTrip', () => {
     await waitFor(() => expect(result.current.templates).toHaveLength(1))
 
     render(<Palette templates={result.current.templates} onPick={jest.fn()} />)
-    expect(screen.getByText('My gear')).toBeTruthy()
+    // saved gear sits behind the Saved tab in the design's library
+    fireEvent.press(screen.getByRole('button', { name: 'Saved' }))
+    expect(screen.getByText('MY GEAR')).toBeTruthy()
     expect(screen.getByLabelText('UDM Pro')).toBeTruthy()
 
     await act(() => result.current.remove(result.current.templates[0]!.id))
@@ -56,10 +58,10 @@ describe('TestTemplateRoundTrip', () => {
 describe('TestBundledCatalogueShape — in the palette', () => {
   it('lists catalogue entries before any template is saved', () => {
     render(<Palette templates={[]} onPick={jest.fn()} />)
-    expect(screen.getByText('UniFi')).toBeTruthy()
-    expect(screen.getByText('MikroTik')).toBeTruthy()
+    expect(screen.getByText('UNIFI')).toBeTruthy()
+    expect(screen.getByText('MIKROTIK')).toBeTruthy()
     expect(screen.getAllByTestId(/^catalog-entry-/).length).toBeGreaterThan(10)
-    expect(screen.queryByText('My gear')).toBeNull()
+    expect(screen.queryByText('MY GEAR')).toBeNull()
   })
 
   it('offers every device type and size as a bare shape too', () => {

@@ -1,5 +1,5 @@
 import { StyleSheet, Text, TextInput, View } from 'react-native'
-import { theme } from './theme'
+import { TOUCH, colour, font, radius } from './theme'
 
 export function TextField({
   label,
@@ -16,14 +16,14 @@ export function TextField({
 }) {
   return (
     <View style={styles.field}>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={styles.label}>{label.toUpperCase()}</Text>
       <TextInput
         accessibilityLabel={label}
         value={value}
         onChangeText={onChange}
         keyboardType={keyboardType ?? 'default'}
         placeholder={placeholder}
-        placeholderTextColor={theme.dim}
+        placeholderTextColor={colour.icon}
         style={styles.input}
       />
     </View>
@@ -53,15 +53,22 @@ export function NumberField({
 }
 
 const styles = StyleSheet.create({
-  field: { gap: 6 },
-  label: { color: theme.dim, fontSize: 12, fontWeight: '600', textTransform: 'uppercase' },
+  field: { gap: 5, flex: 1, minWidth: 96 },
+  label: {
+    fontFamily: font.monoBold,
+    fontSize: 6.5,
+    letterSpacing: 0.6,
+    color: colour.icon,
+  },
   input: {
-    minHeight: theme.touch,
-    borderColor: theme.panelEdge,
+    minHeight: TOUCH,
+    borderColor: colour.borderInput,
     borderWidth: 1,
-    borderRadius: theme.radius,
+    borderRadius: radius.button,
     paddingHorizontal: 12,
-    color: theme.text,
-    backgroundColor: theme.bg,
+    color: colour.text,
+    backgroundColor: colour.surface,
+    fontFamily: font.ui,
+    fontSize: 14,
   },
 })

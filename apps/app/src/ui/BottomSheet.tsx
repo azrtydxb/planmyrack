@@ -1,15 +1,17 @@
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
-import { theme } from './theme'
+import { TOUCH, colour, font, radius } from './theme'
 import type { ReactNode } from 'react'
 
-/** Phone-shaped inspector: a sheet over the canvas, dismissed by tapping outside or the X. */
+/** Phone-shaped panel: a sheet over the canvas with a grab handle, dismissed by tapping outside. */
 export function BottomSheet({
   title,
+  subtitle,
   visible,
   onClose,
   children,
 }: {
   title: string
+  subtitle?: string
   visible: boolean
   onClose: () => void
   children: ReactNode
@@ -18,17 +20,21 @@ export function BottomSheet({
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Close" />
       <View testID="inspector-sheet" style={styles.sheet}>
+        <View style={styles.grab} />
         <View style={styles.head}>
-          <Text style={styles.title} numberOfLines={1}>
-            {title}
-          </Text>
+          <View style={styles.headText}>
+            <Text style={styles.title} numberOfLines={1}>
+              {title}
+            </Text>
+            {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+          </View>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Close inspector"
             onPress={onClose}
             style={styles.close}
           >
-            <Text style={styles.closeText}>×</Text>
+            <Text style={styles.closeGlyph}>×</Text>
           </Pressable>
         </View>
         <ScrollView contentContainerStyle={styles.body}>{children}</ScrollView>
@@ -38,28 +44,34 @@ export function BottomSheet({
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)' },
+  backdrop: { flex: 1, backgroundColor: 'rgba(22,32,44,0.35)' },
   sheet: {
-    maxHeight: '70%',
-    backgroundColor: theme.panel,
-    borderTopColor: theme.panelEdge,
-    borderTopWidth: 1,
+    maxHeight: '72%',
+    backgroundColor: colour.surface,
+    borderTopLeftRadius: radius.sheet,
+    borderTopRightRadius: radius.sheet,
     paddingBottom: 24,
   },
-  head: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+  grab: {
+    alignSelf: 'center',
+    width: 38,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colour.borderInput,
+    marginTop: 8,
   },
-  title: { color: theme.text, fontSize: 17, fontWeight: '700', flexShrink: 1 },
+  head: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 12 },
+  headText: { flex: 1, gap: 2 },
+  title: { fontFamily: font.uiBold, fontSize: 17, color: colour.text },
+  subtitle: { fontFamily: font.mono, fontSize: 8.5, letterSpacing: 0.5, color: colour.muted },
   close: {
-    width: theme.touch,
-    height: theme.touch,
+    width: TOUCH,
+    height: TOUCH,
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: TOUCH / 2,
+    backgroundColor: colour.sunkenSoft,
   },
-  closeText: { color: theme.text, fontSize: 24, lineHeight: 26 },
-  body: { padding: 16, gap: theme.gap },
+  closeGlyph: { fontSize: 20, color: colour.textSecondary, lineHeight: 22 },
+  body: { paddingHorizontal: 20, gap: 14 },
 })

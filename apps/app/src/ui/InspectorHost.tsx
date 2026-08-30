@@ -2,12 +2,12 @@ import { StyleSheet, Text, View } from 'react-native'
 import { BottomSheet } from './BottomSheet'
 import { Inspector } from './Inspector'
 import { useBreakpoint } from './useBreakpoint'
-import { theme } from './theme'
+import { colour, font } from './theme'
 import type { ComponentProps } from 'react'
 
 type InspectorProps = ComponentProps<typeof Inspector>
 
-/** Same inspector, two shapes: a sheet on phones, a side panel on anything wider. */
+/** Same inspector, two shapes: a sheet on phones, a side panel on tablet and desktop. */
 export function InspectorHost({
   visible,
   onClose,
@@ -37,11 +37,11 @@ export function InspectorHost({
 
 const styles = StyleSheet.create({
   panel: {
-    width: 340,
-    padding: 16,
-    backgroundColor: theme.panel,
-    borderLeftColor: theme.panelEdge,
+    width: 330,
+    padding: 18,
+    backgroundColor: colour.surface,
+    borderLeftColor: colour.borderSoft,
     borderLeftWidth: 1,
   },
-  title: { color: theme.text, fontSize: 17, fontWeight: '700', marginBottom: 12 },
+  title: { fontFamily: font.uiBold, fontSize: 19, color: colour.text, marginBottom: 10 },
 })

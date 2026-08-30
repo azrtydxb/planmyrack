@@ -1,13 +1,14 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { COLOURS, DEVICE_TYPES, UNIT_SIZES, otherEnd, sizeLabel } from '@planmyrack/core'
-import { Button } from './Button'
+import { Button, Mono, StatTile } from './primitives'
 import { NumberField, TextField } from './Field'
-import { theme } from './theme'
+import { TOUCH, colour, font, radius } from './theme'
 import type { Device, Layout } from '@planmyrack/core'
 
 /**
- * Everything about one device. Port and outlet fields exist only for types that can carry them —
- * a shelf has no ports, so offering the field would be a lie the model would then have to reject.
+ * Everything about one device, in the design's order: identity, colour, figures, connections,
+ * actions. Port and outlet fields exist only for types that can carry them — offering a port
+ * count on a shelf would be a lie the model then has to reject.
  */
 export function Inspector({
   device,
@@ -16,6 +17,7 @@ export function Inspector({
   onDuplicate,
   onDelete,
   onSaveTemplate,
+  onPortPress,
 }: {
   device: Device
   layout?: Layout
@@ -23,36 +25,119 @@ export function Inspector({
   onDuplicate?: () => void
   onDelete?: () => void
   onSaveTemplate?: () => void
+  onPortPress?: (device: Device, port: number) => void
 }) {
   const spec = DEVICE_TYPES[device.type]
+  const rack = layout?.racks.find((r) => r.id === device.rackId)
   const cables = layout?.links.filter(
     (l) => l.a.deviceId === device.id || l.b.deviceId === device.id,
   )
 
+  const portLinkFor = (index: number) =>
+    layout?.links.find(
+      (l) =>
+        l.kind === 'network' &&
+        ((l.a.deviceId === device.id && l.a.port === index) ||
+          (l.b.deviceId === device.id && l.b.port === index)),
+    )
+
   return (
     <ScrollView contentContainerStyle={styles.body}>
+      <Mono size={8}>
+        {[
+          sizeLabel(device.heightU),
+          spec.label.toUpperCase(),
+          rack?.name.toUpperCase(),
+          device.face.toUpperCase(),
+          `U${device.posU + 1}`,
+        ].join(' · ')}
+      </Mono>
+
       <TextField label="Name" value={device.name} onChange={(name) => onChange({ name })} />
 
       <View style={styles.row}>
-        <Text style={styles.label}>Type</Text>
-        <View style={styles.chips}>
-          {Object.values(DEVICE_TYPES).map((option) => (
+        <Text style={styles.rowLabel}>Colour</Text>
+        <View style={styles.swatches}>
+          {COLOURS.slice(0, 6).map((swatch) => (
             <Pressable
-              key={option.type}
+              key={swatch}
               accessibilityRole="button"
-              accessibilityLabel={option.label}
-              accessibilityState={{ selected: option.type === device.type }}
-              onPress={() => onChange({ type: option.type })}
-              style={[styles.chip, option.type === device.type && styles.chipOn]}
+              accessibilityLabel={`Colour ${swatch}`}
+              accessibilityState={{ selected: swatch === device.colour }}
+              onPress={() => onChange({ colour: swatch })}
+              style={[styles.swatchRing, swatch === device.colour && styles.swatchRingOn]}
             >
-              <Text style={styles.chipText}>{option.label}</Text>
+              <View style={[styles.swatch, { backgroundColor: swatch }]} />
             </Pressable>
           ))}
         </View>
       </View>
 
+      <View style={styles.tiles}>
+        <StatTile caption="Watts" value={String(device.watts)} />
+        <StatTile caption="Weight" value={`${device.weightKg} kg`} />
+        {spec.maxPorts > 0 ? <StatTile caption="Ports" value={String(device.ports)} /> : null}
+      </View>
+
+      {spec.maxPorts > 0 ? (
+        <>
+          <Mono size={7.5} tone={colour.icon}>
+            PORTS · TAP TO CONNECT
+          </Mono>
+          <View style={styles.ports}>
+            {Array.from({ length: device.ports }, (_, index) => {
+              const link = portLinkFor(index)
+              return (
+                <Pressable
+                  key={index}
+                  testID={`inspector-port-${index}`}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Port ${index + 1}${link ? ', connected' : ', free'}`}
+                  onPress={() => onPortPress?.(device, index)}
+                  style={[styles.portTile, link && styles.portTileTaken]}
+                >
+                  <Text style={styles.portNumber}>{String(index + 1).padStart(2, '0')}</Text>
+                  <Mono size={6.5} tone={link ? colour.icon : colour.muted} weight="medium">
+                    {link ? 'Taken' : 'Free'}
+                  </Mono>
+                </Pressable>
+              )
+            })}
+          </View>
+        </>
+      ) : null}
+
+      <View style={styles.fields}>
+        {spec.maxPorts > 0 ? (
+          <NumberField
+            label="Network ports"
+            value={device.ports}
+            onChange={(ports) => onChange({ ports: Math.min(spec.maxPorts, Math.max(0, ports)) })}
+          />
+        ) : null}
+        {spec.maxOutlets > 0 ? (
+          <NumberField
+            label="Power outlets"
+            value={device.outlets}
+            onChange={(outlets) =>
+              onChange({ outlets: Math.min(spec.maxOutlets, Math.max(0, outlets)) })
+            }
+          />
+        ) : null}
+        <NumberField
+          label="Power (W)"
+          value={device.watts}
+          onChange={(watts) => onChange({ watts })}
+        />
+        <NumberField
+          label="Weight (kg)"
+          value={device.weightKg}
+          onChange={(weightKg) => onChange({ weightKg })}
+        />
+      </View>
+
       <View style={styles.row}>
-        <Text style={styles.label}>Height</Text>
+        <Text style={styles.rowLabel}>Height</Text>
         <View style={styles.chips}>
           {UNIT_SIZES.filter((size) => spec.sizes.includes(size)).map((size) => (
             <Pressable
@@ -63,90 +148,47 @@ export function Inspector({
               onPress={() => onChange({ heightU: size })}
               style={[styles.chip, size === device.heightU && styles.chipOn]}
             >
-              <Text style={styles.chipText}>{sizeLabel(size)}</Text>
+              <Text style={[styles.chipText, size === device.heightU && styles.chipTextOn]}>
+                {sizeLabel(size)}
+              </Text>
             </Pressable>
           ))}
         </View>
       </View>
 
-      <View style={styles.row}>
-        <Text style={styles.label}>Colour</Text>
-        <View style={styles.chips}>
-          {COLOURS.map((colour) => (
-            <Pressable
-              key={colour}
-              accessibilityRole="button"
-              accessibilityLabel={`Colour ${colour}`}
-              accessibilityState={{ selected: colour === device.colour }}
-              onPress={() => onChange({ colour })}
-              style={[
-                styles.swatch,
-                { backgroundColor: colour },
-                colour === device.colour && styles.swatchOn,
-              ]}
-            />
-          ))}
-        </View>
-      </View>
-
-      {spec.maxPorts > 0 ? (
-        <NumberField
-          label="Network ports"
-          value={device.ports}
-          onChange={(ports) => onChange({ ports: Math.min(spec.maxPorts, Math.max(0, ports)) })}
-        />
-      ) : null}
-
-      {spec.maxOutlets > 0 ? (
-        <NumberField
-          label="Power outlets"
-          value={device.outlets}
-          onChange={(outlets) =>
-            onChange({ outlets: Math.min(spec.maxOutlets, Math.max(0, outlets)) })
-          }
-        />
-      ) : null}
-
-      <NumberField
-        label="Power (W)"
-        value={device.watts}
-        onChange={(watts) => onChange({ watts })}
-      />
-      <NumberField
-        label="Weight (kg)"
-        value={device.weightKg}
-        onChange={(weightKg) => onChange({ weightKg })}
-      />
-      <NumberField
-        label="Depth (mm)"
-        value={device.depthMm}
-        onChange={(depthMm) => onChange({ depthMm })}
-      />
       <TextField label="Notes" value={device.notes} onChange={(notes) => onChange({ notes })} />
 
       {cables ? (
         <View style={styles.row}>
-          <Text style={styles.label}>Connections ({cables.length})</Text>
-          {cables.length === 0 ? (
-            <Text style={styles.dim}>Tap a port on this device to connect it.</Text>
-          ) : null}
+          <Mono size={7.5} tone={colour.icon}>
+            CONNECTIONS
+          </Mono>
+          {cables.length === 0 ? <Text style={styles.empty}>Tap a port to connect it.</Text> : null}
           {cables.map((link) => {
             const near = link.a.deviceId === device.id ? link.a : link.b
             const far = otherEnd(link, near)
             const farName = layout?.devices.find((d) => d.id === far.deviceId)?.name ?? far.deviceId
             return (
-              <Text key={link.id} testID={`inspector-cable-${link.id}`} style={styles.dim}>
-                port {near.port + 1} → {farName} port {far.port + 1}
-                {link.label ? ` · ${link.label}` : ''}
-              </Text>
+              <View key={link.id} testID={`inspector-cable-${link.id}`} style={styles.cable}>
+                <View style={[styles.cableBar, { backgroundColor: link.colour }]} />
+                <View style={styles.cableText}>
+                  <Text style={styles.cableTitle}>
+                    Port {near.port + 1} ⇄ {farName} · {far.port + 1}
+                  </Text>
+                  <Mono size={7} tone={colour.muted} weight="medium">
+                    {link.kind === 'power' ? 'POWER' : link.cableType.toUpperCase()}
+                    {link.label ? `  ${link.label}` : ''}
+                  </Mono>
+                </View>
+              </View>
             )
           })}
         </View>
       ) : null}
 
       <View style={styles.actions}>
-        {onSaveTemplate ? <Button label="Save as template" onPress={onSaveTemplate} /> : null}
-        {onDuplicate ? <Button label="Duplicate" onPress={onDuplicate} /> : null}
+        {onDuplicate ? <Button label="Duplicate" tone="soft" onPress={onDuplicate} /> : null}
+        {onSaveTemplate ? <Button label="Template" onPress={onSaveTemplate} /> : null}
         {onDelete ? <Button label="Delete" tone="danger" onPress={onDelete} /> : null}
       </View>
     </ScrollView>
@@ -154,29 +196,61 @@ export function Inspector({
 }
 
 const styles = StyleSheet.create({
-  body: { gap: theme.gap, paddingBottom: 24 },
-  row: { gap: 6 },
-  label: { color: theme.dim, fontSize: 12, fontWeight: '600', textTransform: 'uppercase' },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: {
-    minHeight: theme.touch,
+  body: { gap: 14, paddingBottom: 28 },
+  row: { gap: 8 },
+  rowLabel: { fontFamily: font.ui, fontSize: 12, color: colour.textSecondary },
+  swatches: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
+  swatchRing: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 12,
-    borderRadius: theme.radius,
-    borderWidth: 1,
-    borderColor: theme.panelEdge,
-    backgroundColor: theme.bg,
-  },
-  chipOn: { borderColor: theme.accent, backgroundColor: 'rgba(59,130,246,0.15)' },
-  chipText: { color: theme.text, fontSize: 13 },
-  swatch: {
-    width: theme.touch,
-    height: theme.touch,
-    borderRadius: theme.radius,
     borderWidth: 2,
     borderColor: 'transparent',
   },
-  swatchOn: { borderColor: theme.text },
-  dim: { color: theme.dim, fontSize: 13 },
-  actions: { flexDirection: 'row', gap: theme.gap, flexWrap: 'wrap', marginTop: 8 },
+  swatchRingOn: { borderColor: colour.accent },
+  swatch: { width: 26, height: 26, borderRadius: 13 },
+  tiles: { flexDirection: 'row', gap: 8 },
+  ports: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  portTile: {
+    minWidth: 52,
+    minHeight: TOUCH,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.button,
+    borderWidth: 1,
+    borderColor: colour.borderInput,
+    backgroundColor: colour.surface,
+  },
+  portTileTaken: { backgroundColor: colour.sunkenSoft, borderColor: colour.borderSoft },
+  portNumber: { fontFamily: font.uiBold, fontSize: 12.5, color: colour.text },
+  fields: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  chip: {
+    minHeight: 34,
+    paddingHorizontal: 12,
+    justifyContent: 'center',
+    borderRadius: radius.chip,
+    borderWidth: 1,
+    borderColor: colour.borderInput,
+    backgroundColor: colour.surface,
+  },
+  chipOn: { borderColor: colour.accent, backgroundColor: colour.accentSoft },
+  chipText: { fontFamily: font.ui, fontSize: 12, color: colour.textSecondary },
+  chipTextOn: { fontFamily: font.uiBold, color: colour.accent },
+  empty: { fontFamily: font.ui, fontSize: 12, color: colour.muted },
+  cable: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    padding: 10,
+    borderRadius: radius.button,
+    backgroundColor: colour.sunkenSoft,
+  },
+  cableBar: { width: 3, alignSelf: 'stretch', borderRadius: 2 },
+  cableText: { flex: 1, gap: 2 },
+  cableTitle: { fontFamily: font.ui, fontSize: 12.5, color: colour.text },
+  actions: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
 })

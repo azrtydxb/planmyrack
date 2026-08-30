@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 import { probeServer } from '@planmyrack/storage'
-import { Button } from '../ui/Button'
-import { theme } from '../ui/theme'
+import { Button, Card, Mono } from '../ui/primitives'
+import { TOUCH, colour, font, radius } from '../ui/theme'
 import { describeMode } from '../storage/settings'
+import { lastServerStatus } from '../storage/capabilities'
 import type { LayoutStore, LayoutSummary } from '@planmyrack/storage'
 import type { Mode } from '../storage/settings'
 
@@ -16,7 +17,6 @@ export function SettingsScreen({
   mode: Mode | null
   store: LayoutStore | null
   onSetMode: (mode: Mode) => void | Promise<void>
-  /** Lets the screen list what a mode holds without the whole app switching first. */
   storeForPreview?: (mode: Mode) => LayoutStore
 }) {
   const [active, setActive] = useState<Mode | null>(mode)
@@ -27,6 +27,7 @@ export function SettingsScreen({
 
   const current = active ?? mode
   const activeStore = current && storeForPreview ? storeForPreview(current) : store
+  const diagnostics = lastServerStatus()
 
   useEffect(() => {
     let cancelled = false
@@ -60,16 +61,18 @@ export function SettingsScreen({
     <ScrollView contentContainerStyle={styles.page}>
       <Text style={styles.title}>Settings</Text>
 
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Where layouts live</Text>
-        <Text testID="active-mode" style={styles.body}>
+      <Card style={styles.card}>
+        <Mono size={7.5} tone={colour.icon}>
+          WHERE LAYOUTS LIVE
+        </Mono>
+        <Text testID="active-mode" style={styles.value}>
           {describeMode(current)}
         </Text>
         <Button label="Work on this device only" onPress={() => void switchTo({ kind: 'local' })} />
         <TextInput
           accessibilityLabel="Server address"
           placeholder="http://192.168.1.20:8787"
-          placeholderTextColor={theme.dim}
+          placeholderTextColor={colour.icon}
           autoCapitalize="none"
           autoCorrect={false}
           value={url}
@@ -86,48 +89,58 @@ export function SettingsScreen({
           />
         </View>
         {probe ? (
-          <Text style={[styles.body, { color: probe.ok ? theme.ok : theme.danger }]}>
+          <Text style={[styles.body, { color: probe.ok ? colour.green : colour.danger }]}>
             {probe.message}
           </Text>
         ) : null}
-      </View>
+      </Card>
 
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Layouts in this store</Text>
-        {listError ? <Text style={[styles.body, { color: theme.danger }]}>{listError}</Text> : null}
+      <Card style={styles.card}>
+        <Mono size={7.5} tone={colour.icon}>
+          LAYOUTS IN THIS STORE
+        </Mono>
+        {listError ? (
+          <Text style={[styles.body, { color: colour.danger }]}>{listError}</Text>
+        ) : null}
         {summaries.length === 0 && !listError ? (
           <Text style={styles.body}>Nothing saved here yet.</Text>
         ) : null}
         {summaries.map((summary) => (
-          <Text key={summary.id} style={styles.body}>
+          <Text key={summary.id} style={styles.value}>
             {summary.name}
           </Text>
         ))}
-      </View>
+      </Card>
+
+      {diagnostics ? (
+        <Card style={styles.card}>
+          <Mono size={7.5} tone={colour.icon}>
+            SERVER DIAGNOSTICS
+          </Mono>
+          <Mono size={9} tone={colour.textSecondary} testID="server-diagnostics">
+            {`${diagnostics.url} · ${diagnostics.status ?? 'no answer'} · ${diagnostics.at}`}
+          </Mono>
+        </Card>
+      ) : null}
     </ScrollView>
   )
 }
 
 const styles = StyleSheet.create({
-  page: { padding: 20, gap: theme.gap, backgroundColor: theme.bg, flexGrow: 1 },
-  title: { color: theme.text, fontSize: 22, fontWeight: '700' },
-  body: { color: theme.dim, fontSize: 14, lineHeight: 20 },
-  card: {
-    backgroundColor: theme.panel,
-    borderColor: theme.panelEdge,
-    borderWidth: 1,
-    borderRadius: theme.radius,
-    padding: 16,
-    gap: theme.gap,
-  },
-  cardTitle: { color: theme.text, fontSize: 17, fontWeight: '600' },
+  page: { padding: 16, gap: 12, backgroundColor: colour.appBg, flexGrow: 1 },
+  title: { fontFamily: font.uiBold, fontSize: 22, color: colour.text },
+  card: { padding: 16, gap: 10 },
+  body: { fontFamily: font.ui, fontSize: 13, color: colour.muted, lineHeight: 19 },
+  value: { fontFamily: font.ui, fontSize: 13.5, color: colour.text },
   input: {
-    minHeight: theme.touch,
-    borderColor: theme.panelEdge,
+    minHeight: TOUCH,
+    borderColor: colour.borderInput,
     borderWidth: 1,
-    borderRadius: theme.radius,
+    borderRadius: radius.button,
     paddingHorizontal: 12,
-    color: theme.text,
+    color: colour.text,
+    fontFamily: font.mono,
+    fontSize: 12.5,
   },
-  row: { flexDirection: 'row', gap: theme.gap, flexWrap: 'wrap' },
+  row: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
 })
