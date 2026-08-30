@@ -43,7 +43,13 @@ export function DeviceArt({
       const step = (width - inset * 2) / bristles
       return (
         <G opacity={0.85}>
-          <Rect x={inset} y={mid - height * 0.2} width={width - inset * 2} height={height * 0.4} fill="#0f172a" />
+          <Rect
+            x={inset}
+            y={mid - height * 0.2}
+            width={width - inset * 2}
+            height={height * 0.4}
+            fill="#0f172a"
+          />
           {Array.from({ length: bristles }, (_, i) => (
             <Line
               key={i}
@@ -62,13 +68,29 @@ export function DeviceArt({
       return (
         <G opacity={0.8}>
           <Line x1={inset} y1={mid} x2={width - inset} y2={mid} stroke="#e6ecff" strokeWidth={2} />
-          <Line x1={inset} y1={mid + 5} x2={width - inset} y2={mid + 5} stroke="#e6ecff" strokeWidth={1} strokeDasharray="6 4" />
+          <Line
+            x1={inset}
+            y1={mid + 5}
+            x2={width - inset}
+            y2={mid + 5}
+            stroke="#e6ecff"
+            strokeWidth={1}
+            strokeDasharray="6 4"
+          />
         </G>
       )
     case 'blank':
       return (
         <G opacity={0.5}>
-          <Line x1={inset} y1={mid} x2={width - inset} y2={mid} stroke="#93a0c0" strokeWidth={1} strokeDasharray="2 6" />
+          <Line
+            x1={inset}
+            y1={mid}
+            x2={width - inset}
+            y2={mid}
+            stroke="#93a0c0"
+            strokeWidth={1}
+            strokeDasharray="2 6"
+          />
         </G>
       )
     case 'pdu': {
@@ -77,7 +99,15 @@ export function DeviceArt({
       return (
         <G>
           {Array.from({ length: outlets }, (_, i) => (
-            <Circle key={i} cx={inset + step * (i + 0.5)} cy={mid} r={Math.min(6, height / 3)} stroke="#e6ecff" strokeWidth={1.5} fill="none" />
+            <Circle
+              key={i}
+              cx={inset + step * (i + 0.5)}
+              cy={mid}
+              r={Math.min(6, height / 3)}
+              stroke="#e6ecff"
+              strokeWidth={1.5}
+              fill="none"
+            />
           ))}
         </G>
       )
@@ -85,7 +115,11 @@ export function DeviceArt({
     case 'ups':
       return (
         <G>
-          <Path d={`M ${inset + 6} ${mid - 8} l 10 0 l -6 8 l 8 0 l -12 12 l 3 -10 l -7 0 Z`} fill="#e6ecff" opacity={0.9} />
+          <Path
+            d={`M ${inset + 6} ${mid - 8} l 10 0 l -6 8 l 8 0 l -12 12 l 3 -10 l -7 0 Z`}
+            fill="#e6ecff"
+            opacity={0.9}
+          />
         </G>
       )
     default:

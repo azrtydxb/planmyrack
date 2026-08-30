@@ -71,7 +71,13 @@ export const DeviceBox = memo(function DeviceBox({
 })
 
 const styles = StyleSheet.create({
-  box: { position: 'absolute', left: 0, borderRadius: 3, overflow: 'hidden', justifyContent: 'center' },
+  box: {
+    position: 'absolute',
+    left: 0,
+    borderRadius: 3,
+    overflow: 'hidden',
+    justifyContent: 'center',
+  },
   label: { paddingHorizontal: 8, flexDirection: 'row', alignItems: 'center', gap: 8 },
   name: { color: '#0b1020', fontWeight: '700', fontSize: 12, flexShrink: 1 },
   size: { color: 'rgba(11,16,32,0.7)', fontSize: 11, fontWeight: '600' },

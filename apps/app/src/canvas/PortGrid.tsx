@@ -64,6 +64,6 @@ export function PortGrid({
 }
 
 const styles = StyleSheet.create({
-  layer: { ...StyleSheet.absoluteFillObject },
+  layer: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
   port: { position: 'absolute', borderRadius: 2, borderWidth: 1 },
 })

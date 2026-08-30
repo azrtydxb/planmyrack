@@ -1016,10 +1016,13 @@ Interfaces produced:
 (returns the snapped `posU` centring the device on the pointer, clamped to the rack);
 `useDragPlacement(args: { layout: Layout; onCommit(next: Layout): void }): { drag: DragState | null; startNew(type: DeviceType, heightU: number, at: Point): void; startMove(deviceId: string, at: Point): void; moveTo(at: Point): void; drop(): void; cancel(): void }`;
 `type DragState = { kind: 'new' | 'move'; heightU: number; target: { rackId: string; face: Face; posU: number } | null; valid: boolean }`;
-`<CanvasGestures scale pan onScaleChange onPanChange>` composing a pinch gesture with the
-device pan gesture so a two-finger gesture always wins. The gestures are declared with
-`Gesture.Pinch().withTestId('pinch')` and `Gesture.Pan().withTestId('device-pan')`, because
-`getByGestureTestId` resolves that id and not a component `testID`.
+`<CanvasGestures onScaleChange>` composing a pinch gesture with a two-pointer canvas pan so a
+two-finger gesture always wins over a device drag. The gestures are declared with
+`Gesture.Pinch().withTestId('pinch')` and `Gesture.Pan().withTestId('canvas-pan')`, because
+`getByGestureTestId` resolves that id and not a component `testID`. The transform uses React
+Native's own `Animated`, NOT Reanimated: Reanimated 4 routes through react-native-worklets, which
+has no jest setup and throws on import under the test runner — keeping it would have made the
+pinch-versus-drag rule untestable, and the transform is a single native-driven node either way.
 
 - [ ] Write the failing test `apps/app/test/gestures.test.tsx`:
 ```
