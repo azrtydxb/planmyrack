@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
-import { ScrollView, StyleSheet, Text, View } from 'react-native'
+import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
   RACK_UNIT_PRESETS,
@@ -21,7 +21,7 @@ import { AppHeader } from '../ui/AppHeader'
 import { Button, Mono } from '../ui/primitives'
 import { CableSchedule } from '../ui/CableSchedule'
 import { ConflictDialog } from '../ui/ConflictDialog'
-import { InspectorHost } from '../ui/InspectorHost'
+import { InspectorHost, panelWidth } from '../ui/InspectorHost'
 import { OfflineBanner } from '../ui/OfflineBanner'
 import { Palette } from '../ui/Palette'
 import { PortPicker } from '../ui/PortPicker'
@@ -73,6 +73,7 @@ export function RackEditorScreen({
   const editor = useLayoutEditor(store, initial)
   const { templates, save: saveTemplate } = useTemplates(store)
   const breakpoint = useBreakpoint()
+  const { width: screenWidth } = useWindowDimensions()
   // This screen hides the navigation header, so nothing else pads for the status bar and the
   // Dynamic Island — without this the layout name is cut in half on an iPhone.
   const insets = useSafeAreaInsets()
@@ -304,7 +305,7 @@ export function RackEditorScreen({
   /** The right-hand panel of 3a/3b: whatever is being edited, with the rack's figures beneath. */
   const sidePanel =
     editingRack && activeRack ? (
-      <View testID="rack-panel" style={styles.sidePanel}>
+      <View testID="rack-panel" style={[styles.sidePanel, { width: panelWidth(screenWidth) }]}>
         <View style={styles.panelHead}>
           <Text style={styles.panelTitle} numberOfLines={1}>
             {activeRack.name}
@@ -429,7 +430,10 @@ export function RackEditorScreen({
         ) : null}
 
         {roomForBothPanels && !sidePanel && !selected && activeRack ? (
-          <View testID="summary-panel" style={styles.sidePanel}>
+          <View
+            testID="summary-panel"
+            style={[styles.sidePanel, { width: panelWidth(screenWidth) }]}
+          >
             <View style={styles.panelHead}>
               <Text style={styles.panelTitle} numberOfLines={1}>
                 {activeRack.name}
@@ -473,7 +477,6 @@ const styles = StyleSheet.create({
   canvasColumn: { flex: 1 },
   libraryPanel: { width: 300, borderRightWidth: 1, borderRightColor: colour.borderSoft },
   sidePanel: {
-    width: 330,
     padding: 18,
     gap: 12,
     backgroundColor: colour.surface,

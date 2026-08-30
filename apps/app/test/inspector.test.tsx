@@ -9,7 +9,7 @@ jest.mock('react-native-safe-area-context', () => ({
 import { addDevice, newDevice, newLayout, newRack, updateDevice } from '@planmyrack/core'
 import { createMemoryStore } from '@planmyrack/storage'
 import { Inspector } from '../src/ui/Inspector'
-import { InspectorHost } from '../src/ui/InspectorHost'
+import { InspectorHost, panelWidth } from '../src/ui/InspectorHost'
 import { useLayoutEditor } from '../src/state/useLayoutEditor'
 import type { Device, DeviceType, Layout } from '@planmyrack/core'
 
@@ -26,6 +26,22 @@ const setWidth = (width: number) =>
 
 describe('TestInspectorLayoutByBreakpoint', () => {
   afterEach(() => jest.restoreAllMocks())
+
+  it('is a side panel on a phone in landscape, where a sheet would cover everything', () => {
+    // 667x375 is an iPhone SE on its side, and the app is locked to landscape: the sheet took
+    // the whole screen and pushed the tab bar off the bottom
+    setWidth(667)
+    render(
+      <InspectorHost visible device={device('switch')} onChange={jest.fn()} onClose={jest.fn()} />,
+    )
+    expect(screen.getByTestId('inspector-panel')).toBeTruthy()
+  })
+
+  it('takes a share of a small screen rather than a fixed third of it', () => {
+    expect(panelWidth(1440)).toBe(330)
+    expect(panelWidth(667)).toBe(267)
+    expect(panelWidth(400)).toBe(240)
+  })
 
   it('is a bottom sheet at phone width', () => {
     setWidth(390)

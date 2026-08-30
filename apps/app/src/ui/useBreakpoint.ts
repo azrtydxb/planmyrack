@@ -1,6 +1,11 @@
 import { useWindowDimensions } from 'react-native'
 
-export const PHONE_MAX_WIDTH = 700
+/**
+ * The app is locked to landscape, so the narrowest real screen is a small phone on its side —
+ * 667pt. That gets the rail and a side panel, not the bottom sheet: at 375pt tall the sheet
+ * covered the entire canvas and pushed the tab bar off the screen.
+ */
+export const PHONE_MAX_WIDTH = 600
 export const TABLET_MAX_WIDTH = 1180
 
 export type Breakpoint = 'phone' | 'tablet' | 'desktop'
