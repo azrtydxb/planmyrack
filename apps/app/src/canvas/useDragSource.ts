@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useRef } from 'react'
 import { Gesture } from 'react-native-gesture-handler'
 import type { Point } from './useDragPlacement'
 
@@ -21,14 +21,28 @@ export const SLOP = 6
  * built app. `runOnJS` because the handlers touch React state, not shared values.
  */
 export function useDragSource<T>(subject: T, drag?: DragSource<T>, testId?: string) {
-  return useMemo(
+  /**
+   * Set the moment the pan activates, cleared at the start of every press. Web fires a click
+   * after the pointer comes up even when the gesture was a drag, so without this a library row
+   * dragged onto a rack placed the device twice: once where it was dropped, once wherever the
+   * tap handler puts it.
+   */
+  const dragged = useRef(false)
+
+  const gesture = useMemo(
     () =>
       Gesture.Pan()
         .withTestId(testId ?? 'drag')
         .enabled(Boolean(drag))
         .minDistance(SLOP)
         .runOnJS(true)
-        .onStart((event) => drag?.onStart(subject, { x: event.absoluteX, y: event.absoluteY }))
+        .onBegin(() => {
+          dragged.current = false
+        })
+        .onStart((event) => {
+          dragged.current = true
+          drag?.onStart(subject, { x: event.absoluteX, y: event.absoluteY })
+        })
         .onUpdate((event) => drag?.onMove({ x: event.absoluteX, y: event.absoluteY }))
         .onEnd(() => drag?.onEnd())
         .onFinalize((_event, success) => {
@@ -36,4 +50,9 @@ export function useDragSource<T>(subject: T, drag?: DragSource<T>, testId?: stri
         }),
     [drag, subject, testId],
   )
+
+  /** True when the press that just landed is the tail of a drag and should be ignored. */
+  const pressWasDrag = () => dragged.current
+
+  return { gesture, pressWasDrag }
 }

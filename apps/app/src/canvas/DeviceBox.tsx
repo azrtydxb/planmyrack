@@ -92,7 +92,7 @@ export const DeviceBox = memo(function DeviceBox({
   onLongPress?: (device: Device) => void
   drag?: DragSource<Device>
 }) {
-  const dragGesture = useDragSource(device, drag, `drag-device-${device.id}`)
+  const { gesture: dragGesture } = useDragSource(device, drag, `drag-device-${device.id}`)
   const rect = deviceRect(rack, device)
   const flat = FLAT[device.type]
   const shelf = device.type === 'shelf'

@@ -6,6 +6,7 @@ import { RackEditorScreen } from '../src/screens/RackEditorScreen'
 import { addDevice, newDevice, newLayout, newRack } from '@planmyrack/core'
 import { U_PX } from '../src/canvas/metrics'
 import { positionFromPoint, useDragPlacement } from '../src/canvas/useDragPlacement'
+import { useDragSource } from '../src/canvas/useDragSource'
 import type { Layout, Rack } from '@planmyrack/core'
 import type { RackHit } from '../src/canvas/useDragPlacement'
 
@@ -115,6 +116,38 @@ describe('TestMoveDeviceAcrossRackAndFaceKeepsLinks — dragged', () => {
     act(() => result.current.drop())
 
     expect(onCommit.mock.calls[0][0].devices[0]).toMatchObject({ face: 'rear' })
+  })
+})
+
+describe('TestDragDoesNotAlsoTap', () => {
+  it('ignores the press that follows a drag, and keeps a plain press working', () => {
+    // web fires a click after the pointer comes up even when the gesture was a drag: a row
+    // dragged onto a rack placed the device twice, once at the drop and once at the first slot
+    const onPress = jest.fn()
+    const { result } = renderHook(() =>
+      useDragSource('choice', {
+        onStart: jest.fn(),
+        onMove: jest.fn(),
+        onEnd: jest.fn(),
+        onCancel: jest.fn(),
+      }),
+    )
+
+    expect(result.current.pressWasDrag()).toBe(false)
+    onPress()
+
+    // the gesture callbacks the handler would fire, in order
+    const config = result.current.gesture as unknown as {
+      handlers: { onBegin: () => void; onStart: (e: unknown) => void }
+    }
+    act(() => {
+      config.handlers.onBegin()
+      config.handlers.onStart({ absoluteX: 10, absoluteY: 10 })
+    })
+    expect(result.current.pressWasDrag()).toBe(true)
+
+    act(() => config.handlers.onBegin())
+    expect(result.current.pressWasDrag()).toBe(false)
   })
 })
 

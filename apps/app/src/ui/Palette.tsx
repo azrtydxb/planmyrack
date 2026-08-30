@@ -103,14 +103,20 @@ function SizeChip({
   drag?: DragSource<PaletteChoice>
   onPress: () => void
 }) {
-  const gesture = useDragSource(choice, drag, `drag-palette-${choice.type}-${choice.heightU}`)
+  const { gesture, pressWasDrag } = useDragSource(
+    choice,
+    drag,
+    `drag-palette-${choice.type}-${choice.heightU}`,
+  )
   return (
     <GestureDetector gesture={gesture}>
       <Pressable
         testID={`palette-${choice.type}-${choice.heightU}`}
         accessibilityRole="button"
         accessibilityLabel={`${label} ${sizeLabel(choice.heightU)}`}
-        onPress={onPress}
+        onPress={() => {
+          if (!pressWasDrag()) onPress()
+        }}
         style={[styles.sizeChip, { borderLeftColor: accent }]}
       >
         <Mono size={7} tone={colour.icon}>
@@ -145,7 +151,7 @@ function Row({
   choice: PaletteChoice
   drag?: DragSource<PaletteChoice>
 }) {
-  const gesture = useDragSource(choice, drag, `drag-${testID}`)
+  const { gesture, pressWasDrag } = useDragSource(choice, drag, `drag-${testID}`)
   return (
     <GestureDetector gesture={gesture}>
       <View style={styles.row}>
@@ -163,7 +169,9 @@ function Row({
           testID={testID}
           accessibilityRole="button"
           accessibilityLabel={name}
-          onPress={onPress}
+          onPress={() => {
+            if (!pressWasDrag()) onPress()
+          }}
           style={[styles.add, { borderColor: accent }]}
         >
           <Text style={[styles.addGlyph, { color: accent }]}>+</Text>
