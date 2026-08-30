@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native'
-import { newLayout } from '@planmyrack/core'
+import { exportJson, importJson, newLayout } from '@planmyrack/core'
 import { Button } from '../ui/Button'
 import { theme } from '../ui/theme'
 import type { LayoutStore, LayoutSummary } from '@planmyrack/storage'
@@ -14,13 +14,19 @@ export function LayoutsScreen({
   store,
   onOpen,
   onOpenSettings,
+  onExport,
+  pickJson,
 }: {
   store: LayoutStore | null
   onOpen?: (id: string) => void
   onOpenSettings?: () => void
+  onExport?: (filename: string, text: string) => void
+  /** Supplied by the caller so the file picker stays out of this screen's tests. */
+  pickJson?: () => Promise<string | null>
 }) {
   const [rows, setRows] = useState<LayoutSummary[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [importError, setImportError] = useState<string | null>(null)
 
   const refresh = useCallback(async () => {
     if (!store) return
@@ -43,14 +49,44 @@ export function LayoutsScreen({
     onOpen?.(made.id!)
   }
 
+  const importLayout = async (text: string) => {
+    if (!store) return
+    try {
+      const imported = importJson(text)
+      await store.create(imported)
+      setImportError(null)
+      await refresh()
+    } catch (err) {
+      // A refused import must leave the library exactly as it was.
+      setImportError((err as Error).message)
+    }
+  }
+
+  const exportLayout = async (id: string) => {
+    if (!store || !onExport) return
+    const layout = await store.get(id)
+    onExport(`${layout.name.replace(/[^\w.-]+/g, '-')}.json`, exportJson(layout))
+  }
+
   return (
     <View style={styles.page}>
       <View style={styles.toolbar}>
         <Button label="New layout" tone="primary" onPress={() => void create()} />
+        {pickJson ? (
+          <Button
+            label="Import JSON"
+            onPress={() => void pickJson().then((text) => (text ? importLayout(text) : undefined))}
+          />
+        ) : null}
         {onOpenSettings ? <Button label="Settings" onPress={onOpenSettings} /> : null}
       </View>
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
+      {importError ? (
+        <Text testID="import-error" style={styles.error}>
+          {importError}
+        </Text>
+      ) : null}
 
       <FlatList
         data={rows}
@@ -67,6 +103,9 @@ export function LayoutsScreen({
           >
             <Text style={styles.rowName}>{item.name}</Text>
             <Text style={styles.rowMeta}>Updated {when(item.updatedAt)}</Text>
+            {onExport ? (
+              <Button label="Export JSON" onPress={() => void exportLayout(item.id)} />
+            ) : null}
           </Pressable>
         )}
       />
