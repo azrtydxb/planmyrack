@@ -1,4 +1,4 @@
-import type { DeviceType } from '@planmyrack/core'
+import type { DeviceType, Faceplate } from '@planmyrack/core'
 
 export interface CatalogEntry {
   id: string
@@ -16,4 +16,10 @@ export interface CatalogEntry {
   colour: string
   /** Where the numbers came from, so a wrong row can be traced and corrected. */
   source: string
+  /** How the front is drawn: drive bays, a display, SFP cages. Schematic, not a photograph. */
+  faceplate?: Faceplate
+  /** Drive bays, for the models that have them. */
+  bays?: number
+  /** SFP/SFP+ uplink cages, counted separately from the RJ45 ports. */
+  sfp?: number
 }

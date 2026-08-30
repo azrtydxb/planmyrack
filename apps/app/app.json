@@ -35,12 +35,12 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/splash-mark.png",
-          "imageWidth": 220,
+          "image": "./assets/splash-wordmark.png",
+          "imageWidth": 300,
           "resizeMode": "contain",
-          "backgroundColor": "#eef1f5",
+          "backgroundColor": "#0b1020",
           "dark": {
-            "image": "./assets/splash-mark.png",
+            "image": "./assets/splash-wordmark.png",
             "backgroundColor": "#0b1020"
           }
         }

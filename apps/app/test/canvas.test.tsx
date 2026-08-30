@@ -132,3 +132,26 @@ describe('TestPortsStayReachableOnIos', () => {
     expect(screen.getAllByTestId(/^port-d1-network-/)).toHaveLength(4)
   })
 })
+
+describe('TestKnownModelsLookLikeTheirHardware', () => {
+  const draw = (over: Parameters<typeof withDevice>[0]) =>
+    JSON.stringify(render(<RackCanvas layout={withDevice(over)} face="front" />).toJSON())
+
+  it('draws a NAS with drive bays, unlike a plain server', () => {
+    const bays = draw({ type: 'server', faceplate: 'bays', bays: 8, name: 'NAS' })
+    const plain = draw({ type: 'server', name: 'NAS' })
+    expect(bays).not.toBe(plain)
+  })
+
+  it('draws uplink cages for a switch that has them', () => {
+    const withCages = draw({ type: 'switch', ports: 24, sfp: 2, name: 'SW' })
+    const without = draw({ type: 'switch', ports: 24, name: 'SW' })
+    expect(withCages).not.toBe(without)
+  })
+
+  it('draws a gateway display', () => {
+    const display = draw({ type: 'equipment', faceplate: 'display', ports: 8, name: 'UDM' })
+    const plain = draw({ type: 'equipment', ports: 8, name: 'UDM' })
+    expect(display).not.toBe(plain)
+  })
+})

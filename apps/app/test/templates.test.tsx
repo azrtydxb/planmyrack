@@ -70,3 +70,39 @@ describe('TestBundledCatalogueShape — in the palette', () => {
     expect(screen.getByTestId('palette-switch-2')).toBeTruthy()
   })
 })
+
+describe('TestGenericGearIsConfiguredBeforePlacing', () => {
+  it('places a generic switch with the port count dialled in, not a fixed variant', () => {
+    const onPick = jest.fn()
+    render(<Palette templates={[]} onPick={onPick} />)
+
+    // the catalogue ships one generic Switch, not 8/16/24/48-port rows
+    expect(screen.queryByLabelText('Switch 24-port')).toBeNull()
+
+    const more = screen.getByRole('button', { name: 'Switch: one more ports' })
+    fireEvent.press(more)
+    fireEvent.press(more)
+    fireEvent.press(screen.getByTestId('catalog-entry-generic-switch'))
+
+    expect(onPick).toHaveBeenCalledWith(expect.objectContaining({ type: 'switch', ports: 26 }))
+  })
+
+  it('steps outlets for a PDU, which has no network ports', () => {
+    const onPick = jest.fn()
+    render(<Palette templates={[]} onPick={onPick} />)
+
+    fireEvent.press(screen.getByRole('button', { name: 'PDU: one fewer outlets' }))
+    fireEvent.press(screen.getByTestId('catalog-entry-generic-pdu'))
+
+    expect(onPick).toHaveBeenCalledWith(expect.objectContaining({ type: 'pdu', outlets: 7 }))
+  })
+
+  it('offers no stepper on a known model, which is what it is', () => {
+    render(<Palette templates={[]} onPick={jest.fn()} />)
+    const unifi = screen.getByTestId('catalog-entry-unifi-usw-24')
+    expect(unifi).toBeTruthy()
+    // only generic rows carry steppers
+    expect(screen.queryByRole('button', { name: 'Switch 24: one more ports' })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Switch: one more ports' })).toBeTruthy()
+  })
+})

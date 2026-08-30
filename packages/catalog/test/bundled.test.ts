@@ -42,3 +42,28 @@ describe('TestBundledCatalogueShape', () => {
     expect(d.name).toBe('UniFi Switch 24')
   })
 })
+
+describe('TestKnownModelsCarryTheirShape', () => {
+  it('gives a rack NAS its drive bays', () => {
+    const nas = BUNDLED_CATALOG.find((e) => e.id === 'synology-rs1221plus')!
+    expect(nas.faceplate).toBe('bays')
+    expect(nas.bays).toBe(8)
+  })
+
+  it('gives switches their uplink cages, and PoE switches a PoE face', () => {
+    const agg = BUNDLED_CATALOG.find((e) => e.id === 'unifi-usw-aggregation')!
+    expect([agg.faceplate, agg.sfp]).toEqual(['sfp', 8])
+    expect(BUNDLED_CATALOG.find((e) => e.id === 'unifi-usw-24-poe')!.faceplate).toBe('poe')
+  })
+
+  it('carries the shape onto the placed device', () => {
+    const source = BUNDLED_CATALOG.find((e) => e.id === 'synology-rs2423plus')!
+    const placed = deviceFromCatalog(source, { rackId: 'r1', face: 'front', posU: 0 })
+    expect([placed.faceplate, placed.bays]).toEqual(['bays', 12])
+  })
+
+  it('leaves generic gear plain, since a generic switch has no particular front', () => {
+    const generic = BUNDLED_CATALOG.find((e) => e.id === 'generic-switch')!
+    expect(generic.faceplate).toBeUndefined()
+  })
+})

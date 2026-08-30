@@ -77,13 +77,15 @@ describe('TestSplashShowsTheBrand', () => {
       (plugin) => Array.isArray(plugin) && plugin[0] === 'expo-splash-screen',
     ) as [string, { image: string; backgroundColor: string }] | undefined
     expect(splash).toBeDefined()
-    expect(splash![1].image).toBe('./assets/splash-mark.png')
+    // the splash carries the wordmark logo, not just the square app mark
+    expect(splash![1].image).toBe('./assets/splash-wordmark.png')
   })
 
-  it('ships the splash artwork it names', () => {
-    const mark = readAsset('splash-mark.png')
-    expect(mark.width).toBeGreaterThanOrEqual(256)
-    expect(mark.width).toBe(mark.height)
+  it('ships the splash artwork it names, on the dark ground it was drawn for', () => {
+    const mark = readAsset('splash-wordmark.png')
+    expect(mark.width).toBeGreaterThanOrEqual(600)
+    // the wordmark is landscape; a square crop would cut the name off
+    expect(mark.width).toBeGreaterThan(mark.height)
   })
 })
 

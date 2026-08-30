@@ -31,5 +31,8 @@ export function deviceFromCatalog(
     outlets: entry.outlets,
     watts: entry.watts,
     colour: entry.colour,
+    ...(entry.faceplate ? { faceplate: entry.faceplate } : {}),
+    ...(entry.bays === undefined ? {} : { bays: entry.bays }),
+    ...(entry.sfp === undefined ? {} : { sfp: entry.sfp }),
   })
 }

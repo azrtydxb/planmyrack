@@ -1,24 +1,15 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { ScrollView, StyleSheet, View } from 'react-native'
 import { RackFrame } from './RackFrame'
 import { CableOverlay } from './CableOverlay'
 import { DotGrid } from './DotGrid'
-import { RACK_INNER_PX, RAIL_PX, SCALE_PX, CAP_PX, rackHeightPx } from './metrics'
+import { CAP_PX, RACK_INNER_PX, RAIL_PX, SCALE_PX, rackHeightPx } from './metrics'
+import { bodyOrigins } from './origins'
+import type { Origin } from './origins'
 import { colour } from '../ui/theme'
 import type { Device, Face, Layout } from '@planmyrack/core'
 
 const GAP = 28
-
-/** Left offset of each rack's inner area inside the canvas, so cables can be drawn over it. */
-function rackOffsets(layout: Layout): Record<string, { x: number; y: number }> {
-  const offsets: Record<string, { x: number; y: number }> = {}
-  let x = 16
-  for (const rack of layout.racks) {
-    offsets[rack.id] = { x: x + SCALE_PX + RAIL_PX, y: 16 + CAP_PX }
-    x += SCALE_PX + RAIL_PX * 2 + RACK_INNER_PX[rack.width] + GAP
-  }
-  return offsets
-}
 
 export function RackCanvas({
   layout,
@@ -40,7 +31,24 @@ export function RackCanvas({
   onDeviceLongPress?: (device: Device) => void
 }) {
   const [viewport, setViewport] = useState({ width: 0, height: 0 })
-  const offsets = rackOffsets(layout)
+  /**
+   * Where each rack body actually sits, measured rather than computed. Deriving it from padding
+   * and rail widths drifted whenever the surrounding layout changed — a rack caption wider than
+   * its rack was enough to shift the frame and leave every cable ending beside its port.
+   */
+  const [frames, setFrames] = useState<Record<string, Origin>>({})
+  const [bodies, setBodies] = useState<Record<string, Origin>>({})
+
+  const note = (set: typeof setFrames) => (rackId: string, origin: Origin) => {
+    set((current) => {
+      const known = current[rackId]
+      if (known && known.x === origin.x && known.y === origin.y) return current
+      return { ...current, [rackId]: origin }
+    })
+  }
+  const noteFrame = useCallback(note(setFrames), [])
+  const noteBody = useCallback(note(setBodies), [])
+  const offsets = bodyOrigins(frames, bodies)
   const contentHeight = 32 + CAP_PX * 2 + Math.max(0, ...layout.racks.map(rackHeightPx))
   const contentWidth =
     32 +
@@ -69,18 +77,20 @@ export function RackCanvas({
         <DotGrid width={width} height={height} />
         <View style={styles.row}>
           {layout.racks.map((rack) => (
-            <RackFrame
-              key={rack.id}
-              rack={rack}
-              layout={layout}
-              face={face}
-              devices={layout.devices.filter((d) => d.rackId === rack.id && d.face === face)}
-              selectedId={selectedId}
-              dropHint={dropHint?.rackId === rack.id ? dropHint : null}
-              onSelect={onSelect}
-              onPortPress={onPortPress}
-              onDeviceLongPress={onDeviceLongPress}
-            />
+            <View key={rack.id} onLayout={(event) => noteFrame(rack.id, event.nativeEvent.layout)}>
+              <RackFrame
+                rack={rack}
+                layout={layout}
+                face={face}
+                devices={layout.devices.filter((d) => d.rackId === rack.id && d.face === face)}
+                selectedId={selectedId}
+                dropHint={dropHint?.rackId === rack.id ? dropHint : null}
+                onSelect={onSelect}
+                onPortPress={onPortPress}
+                onDeviceLongPress={onDeviceLongPress}
+                onBodyLayout={noteBody}
+              />
+            </View>
           ))}
         </View>
         {showCables ? (

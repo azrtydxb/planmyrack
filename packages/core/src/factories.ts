@@ -54,5 +54,8 @@ export function newDevice(input: NewDeviceInput): Device {
     weightKg: input.weightKg ?? 0,
     depthMm: input.depthMm ?? 0,
     notes: input.notes ?? '',
+    ...(input.faceplate ? { faceplate: input.faceplate } : {}),
+    ...(input.bays === undefined ? {} : { bays: input.bays }),
+    ...(input.sfp === undefined ? {} : { sfp: input.sfp }),
   }
 }

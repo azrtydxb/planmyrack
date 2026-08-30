@@ -25,6 +25,40 @@ function Hooks({ width, height }: { width: number; height: number }) {
   )
 }
 
+/** Drive bays, drawn as the vertical carriers a rack NAS actually shows. */
+function Bays({ count, height }: { count: number; height: number }) {
+  return (
+    <View style={[styles.bays, { height }]} pointerEvents="none">
+      {Array.from({ length: Math.min(count, 16) }, (_, i) => (
+        <View key={i} style={styles.bay}>
+          <View style={styles.bayHandle} />
+        </View>
+      ))}
+    </View>
+  )
+}
+
+/** SFP/SFP+ cages: wider than an RJ45 port and set apart from the copper strip. */
+function Cages({ count }: { count: number }) {
+  return (
+    <View style={styles.cages} pointerEvents="none">
+      {Array.from({ length: Math.min(count, 12) }, (_, i) => (
+        <View key={i} style={styles.cage} />
+      ))}
+    </View>
+  )
+}
+
+/** The small status display a gateway carries instead of a bare plate. */
+function Display() {
+  return (
+    <View style={styles.display} pointerEvents="none">
+      <View style={styles.displayLine} />
+      <View style={[styles.displayLine, styles.displayLineShort]} />
+    </View>
+  )
+}
+
 function Brush({ width }: { width: number }) {
   const count = Math.max(20, Math.floor(width / 5))
   return (
@@ -68,6 +102,11 @@ export const DeviceBox = memo(function DeviceBox({
     <>
       {device.type === 'hooks' ? <Hooks width={rect.width} height={rect.height} /> : null}
       {device.type === 'brush' ? <Brush width={rect.width} /> : null}
+      {device.faceplate === 'bays' && device.bays ? (
+        <Bays count={device.bays} height={rect.height} />
+      ) : null}
+      {device.faceplate === 'display' ? <Display /> : null}
+      {device.sfp ? <Cages count={device.sfp} /> : null}
 
       <Pressable
         accessible
@@ -178,4 +217,57 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   bristle: { width: 1, height: 12, backgroundColor: '#4a5462' },
+  bays: {
+    position: 'absolute',
+    left: 96,
+    right: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  bay: {
+    flex: 1,
+    maxWidth: 16,
+    height: '62%',
+    borderRadius: 1,
+    backgroundColor: '#171d24',
+    borderWidth: 0.5,
+    borderColor: '#39424d',
+    justifyContent: 'center',
+    paddingLeft: 1.5,
+  },
+  bayHandle: { width: 2, height: '58%', borderRadius: 1, backgroundColor: '#59657a' },
+  cages: {
+    position: 'absolute',
+    right: 6,
+    top: 0,
+    bottom: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  cage: {
+    width: 11,
+    height: 9,
+    borderRadius: 1,
+    backgroundColor: '#0a0f14',
+    borderWidth: 0.5,
+    borderColor: '#4a5462',
+  },
+  display: {
+    position: 'absolute',
+    left: 98,
+    width: 34,
+    top: 6,
+    bottom: 6,
+    borderRadius: 2,
+    backgroundColor: '#0a0f14',
+    borderWidth: 0.5,
+    borderColor: '#39424d',
+    justifyContent: 'center',
+    gap: 2,
+    paddingHorizontal: 4,
+  },
+  displayLine: { height: 1.5, borderRadius: 1, backgroundColor: '#22c55e' },
+  displayLineShort: { width: '55%' },
 })

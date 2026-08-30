@@ -19,6 +19,13 @@ export type DeviceType =
 
 export type CableType = 'cat5e' | 'cat6' | 'cat6a' | 'fibre' | 'dac' | 'power'
 
+/**
+ * How a device's front is drawn, beyond its port strip. Known models set this from the catalogue
+ * so a NAS reads as drive bays and a router as a display, rather than every device looking like
+ * the same blank plate. It is a schematic hint, not a photograph.
+ */
+export type Faceplate = 'plain' | 'bays' | 'display' | 'sfp' | 'poe' | 'outlets'
+
 export interface Rack {
   id: string
   name: string
@@ -46,6 +53,12 @@ export interface Device {
   weightKg: number
   depthMm: number
   notes: string
+  /** Drawing hint from the catalogue; absent means a plain faceplate. */
+  faceplate?: Faceplate
+  /** Drive bays to draw when faceplate is 'bays'. */
+  bays?: number
+  /** Uplink cages to draw when faceplate is 'sfp'. */
+  sfp?: number
 }
 
 export interface LinkEnd {

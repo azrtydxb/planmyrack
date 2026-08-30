@@ -42,6 +42,9 @@ export const deviceSchema = z.object({
   weightKg: z.number().nonnegative(),
   depthMm: z.number().nonnegative(),
   notes: z.string(),
+  faceplate: z.enum(['plain', 'bays', 'display', 'sfp', 'poe', 'outlets']).optional(),
+  bays: z.number().int().nonnegative().optional(),
+  sfp: z.number().int().nonnegative().optional(),
 })
 
 const linkEnd = z.object({ deviceId: z.string().min(1), port: z.number().int().nonnegative() })

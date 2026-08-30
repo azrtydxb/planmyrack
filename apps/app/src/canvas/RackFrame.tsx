@@ -31,6 +31,7 @@ export function RackFrame({
   onSelect,
   onPortPress,
   onDeviceLongPress,
+  onBodyLayout,
 }: {
   rack: Rack
   devices: Device[]
@@ -41,6 +42,8 @@ export function RackFrame({
   onSelect?: (id: string) => void
   onPortPress?: (device: Device, port: number, kind: 'network' | 'power') => void
   onDeviceLongPress?: (device: Device) => void
+  /** Reports where the rack body actually landed, so cables can be drawn from measured ports. */
+  onBodyLayout?: (rackId: string, origin: { x: number; y: number }) => void
 }) {
   const height = rackHeightPx(rack)
 
@@ -54,6 +57,10 @@ export function RackFrame({
             <Rail units={rack.units} />
             <View
               testID={`rack-${rack.id}`}
+              onLayout={(event) => {
+                const { x, y } = event.nativeEvent.layout
+                onBodyLayout?.(rack.id, { x, y })
+              }}
               style={[styles.inner, { width: RACK_INNER_PX[rack.width], height }]}
             >
               {dropHint ? (

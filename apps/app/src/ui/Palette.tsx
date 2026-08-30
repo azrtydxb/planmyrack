@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import type { ReactNode } from 'react'
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 import { DEVICE_TYPES, sizeLabel } from '@planmyrack/core'
 import { BUNDLED_CATALOG, catalogByVendor } from '@planmyrack/catalog'
@@ -34,6 +35,57 @@ function Thumb({ ports }: { ports: number }) {
   )
 }
 
+/** −  N  +  for setting how many ports (or outlets) a generic device is placed with. */
+function Stepper({
+  label,
+  owner,
+  value,
+  min,
+  max,
+  onChange,
+}: {
+  label: string
+  /** Named in the button labels: several rows have a stepper, and "one more ports" alone is
+   *  ambiguous to anyone navigating by voice. */
+  owner: string
+  value: number
+  min: number
+  max: number
+  onChange: (value: number) => void
+}) {
+  const step = (delta: number) => onChange(Math.min(max, Math.max(min, value + delta)))
+  return (
+    <View style={styles.stepper}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`${owner}: one fewer ${label}`}
+        accessibilityState={{ disabled: value <= min }}
+        disabled={value <= min}
+        onPress={() => step(-1)}
+        style={[styles.stepButton, value <= min && styles.stepButtonOff]}
+      >
+        <Text style={styles.stepGlyph}>−</Text>
+      </Pressable>
+      <View style={styles.stepValue}>
+        <Text style={styles.stepNumber}>{value}</Text>
+        <Mono size={6} tone={colour.icon} weight="medium">
+          {label.toUpperCase()}
+        </Mono>
+      </View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`${owner}: one more ${label}`}
+        accessibilityState={{ disabled: value >= max }}
+        disabled={value >= max}
+        onPress={() => step(1)}
+        style={[styles.stepButton, value >= max && styles.stepButtonOff]}
+      >
+        <Text style={styles.stepGlyph}>+</Text>
+      </Pressable>
+    </View>
+  )
+}
+
 function Row({
   name,
   meta,
@@ -41,6 +93,7 @@ function Row({
   accent,
   testID,
   onPress,
+  stepper,
 }: {
   name: string
   meta: string
@@ -48,15 +101,10 @@ function Row({
   accent: string
   testID: string
   onPress: () => void
+  stepper?: ReactNode
 }) {
   return (
-    <Pressable
-      testID={testID}
-      accessibilityRole="button"
-      accessibilityLabel={name}
-      onPress={onPress}
-      style={styles.row}
-    >
+    <View style={styles.row}>
       <Thumb ports={ports} />
       <View style={styles.rowText}>
         <Text numberOfLines={1} style={styles.rowName}>
@@ -65,11 +113,18 @@ function Row({
         <Mono size={7.5} tone={colour.muted} weight="medium">
           {meta}
         </Mono>
+        {stepper}
       </View>
-      <View style={[styles.add, { borderColor: accent }]}>
+      <Pressable
+        testID={testID}
+        accessibilityRole="button"
+        accessibilityLabel={name}
+        onPress={onPress}
+        style={[styles.add, { borderColor: accent }]}
+      >
         <Text style={[styles.addGlyph, { color: accent }]}>+</Text>
-      </View>
-    </Pressable>
+      </Pressable>
+    </View>
   )
 }
 
@@ -83,6 +138,8 @@ export function Palette({
 }) {
   const [tab, setTab] = useState<'catalogue' | 'saved'>('catalogue')
   const [query, setQuery] = useState('')
+  /** Port or outlet counts the user has dialled in for generic gear, keyed by catalogue id. */
+  const [counts, setCounts] = useState<Record<string, number>>({})
   const vendors = useMemo(() => [...catalogByVendor(BUNDLED_CATALOG).entries()], [])
   const match = (text: string) => text.toLowerCase().includes(query.trim().toLowerCase())
 
@@ -199,24 +256,52 @@ export function Palette({
                   <Mono size={7.5} tone={colour.icon}>
                     {vendor.toUpperCase()}
                   </Mono>
-                  {shown.map((entry) => (
-                    <Row
-                      key={entry.id}
-                      testID={`catalog-entry-${entry.id}`}
-                      name={`${entry.vendor === 'Generic' ? '' : `${entry.vendor} `}${entry.model}`.trim()}
-                      ports={entry.ports}
-                      accent={entry.colour}
-                      meta={[
-                        sizeLabel(entry.heightU),
-                        entry.ports ? `${entry.ports}P` : null,
-                        entry.outlets ? `${entry.outlets} OUT` : null,
-                        entry.watts ? `${entry.watts}W` : null,
-                      ]
-                        .filter(Boolean)
-                        .join(' · ')}
-                      onPress={() => onPick(entryChoice(entry))}
-                    />
-                  ))}
+                  {shown.map((entry) => {
+                    const spec = DEVICE_TYPES[entry.type]
+                    // Generic gear is configured before it is placed; a known model is what it is.
+                    const countable =
+                      entry.vendor === 'Generic' && (spec.maxPorts > 0 || spec.maxOutlets > 0)
+                    // A PDU has a couple of network ports but is defined by its outlets; step
+                    // whichever count the device is really described by.
+                    const isOutlets = spec.maxOutlets > spec.maxPorts
+                    const count = counts[entry.id] ?? (isOutlets ? entry.outlets : entry.ports)
+                    const chosen = countable
+                      ? { ...entry, [isOutlets ? 'outlets' : 'ports']: count }
+                      : entry
+
+                    return (
+                      <Row
+                        key={entry.id}
+                        testID={`catalog-entry-${entry.id}`}
+                        name={`${entry.vendor === 'Generic' ? '' : `${entry.vendor} `}${entry.model}`.trim()}
+                        ports={countable ? count : entry.ports}
+                        accent={entry.colour}
+                        meta={[
+                          sizeLabel(entry.heightU),
+                          !countable && entry.ports ? `${entry.ports}P` : null,
+                          !countable && entry.outlets ? `${entry.outlets} OUT` : null,
+                          entry.watts ? `${entry.watts}W` : null,
+                        ]
+                          .filter(Boolean)
+                          .join(' · ')}
+                        stepper={
+                          countable ? (
+                            <Stepper
+                              owner={entry.model}
+                              label={isOutlets ? 'outlets' : 'ports'}
+                              value={count}
+                              min={0}
+                              max={isOutlets ? spec.maxOutlets : spec.maxPorts}
+                              onChange={(next) =>
+                                setCounts((current) => ({ ...current, [entry.id]: next }))
+                              }
+                            />
+                          ) : undefined
+                        }
+                        onPress={() => onPick(entryChoice(chosen))}
+                      />
+                    )
+                  })}
                 </View>
               )
             })}
@@ -246,6 +331,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     minHeight: TOUCH + 8,
+    paddingVertical: 8,
     paddingHorizontal: 10,
     borderRadius: radius.button,
     borderWidth: 1,
@@ -255,13 +341,28 @@ const styles = StyleSheet.create({
   rowText: { flex: 1, gap: 2 },
   rowName: { fontFamily: font.uiBold, fontSize: 13, color: colour.text },
   add: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+    width: TOUCH,
+    height: TOUCH,
+    borderRadius: TOUCH / 2,
     borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  stepper: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 },
+  stepButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colour.borderInput,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colour.surface,
+  },
+  stepButtonOff: { opacity: 0.35 },
+  stepGlyph: { fontFamily: font.uiBold, fontSize: 15, color: colour.textSecondary, lineHeight: 17 },
+  stepValue: { minWidth: 42, alignItems: 'center' },
+  stepNumber: { fontFamily: font.uiBold, fontSize: 13, color: colour.text },
   addGlyph: { fontFamily: font.uiBold, fontSize: 15, lineHeight: 17 },
   thumb: {
     width: 46,
