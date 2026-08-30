@@ -387,7 +387,7 @@ expect(() => connect(wired, 'network', { deviceId: sw.id, port: 0 }, { deviceId:
 })
 it('refuses a port index the device does not have', () => {
 expect(() => connect(base, 'network', { deviceId: nas.id, port: 99 }, { deviceId: sw.id, port: 2 }))
-  .toThrow(/no-such-port/)
+  .toThrow(PlacementError)   // assert err.code === 'no-such-port'; the message is for humans
 })
 })
 describe('TestDisconnectClearsBothEnds', () => {
