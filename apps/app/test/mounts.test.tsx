@@ -37,6 +37,8 @@ describe('TestMountShowsItsCutOutsAndWhatIsInThem', () => {
     render(<RackCanvas layout={withTray} face="front" />)
     expect(screen.getByTestId('mount-slot-tray-0')).toBeTruthy()
     expect(screen.getByTestId('mount-slot-tray-1')).toBeTruthy()
+    // iOS announced the cut-out as its "+" glyph until it carried its own label
+    expect(screen.getByLabelText(/Pi tray slot 1, empty/)).toBeTruthy()
 
     const loaded = addToMount(withTray, tray, 0, board('pi'))
     screen.rerender(<RackCanvas layout={loaded} face="front" />)

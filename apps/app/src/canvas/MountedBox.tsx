@@ -40,10 +40,13 @@ export function MountedBox({
 
         if (!guest) {
           return (
+            // accessible, so the cut-out is announced as an empty slot rather than as "+", and
+            // pointerEvents none, so a board dragged over it still reaches the canvas beneath
             <View
               key={slot}
               testID={`mount-slot-${mount.id}-${slot}`}
-              accessibilityLabel={`${mount.name} slot ${slot + 1}, empty`}
+              accessible
+              accessibilityLabel={`${mount.name} slot ${slot + 1}, empty — drag a board here`}
               style={[styles.empty, frame]}
               pointerEvents="none"
             >
