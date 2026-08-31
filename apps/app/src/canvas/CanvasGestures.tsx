@@ -14,6 +14,11 @@ const MAX_SCALE = 3
  * Deliberately RN's own Animated rather than Reanimated: the transform is one node, the native
  * driver handles it, and Reanimated 4 cannot initialise under jest, which would have made the
  * pinch-versus-drag rule untestable.
+ *
+ * Which is exactly why both gestures declare `runOnJS`. With Reanimated installed, Gesture
+ * Handler runs a callback as a worklet on the UI thread by default, and these callbacks touch an
+ * Animated.Value and React state — both of which live on the JS thread. Without it the app died
+ * the moment a second finger landed on the canvas.
  */
 export function CanvasGestures({
   children,
@@ -44,6 +49,7 @@ export function CanvasGestures({
   const gesture = useMemo(() => {
     const pinch = Gesture.Pinch()
       .withTestId('pinch')
+      .runOnJS(true)
       .onUpdate((event) => {
         const next = Math.min(MAX_SCALE, Math.max(MIN_SCALE, current.current.scale * event.scale))
         scale.setValue(next)
@@ -56,6 +62,7 @@ export function CanvasGestures({
 
     const pan = Gesture.Pan()
       .withTestId('canvas-pan')
+      .runOnJS(true)
       .minPointers(2)
       .onUpdate((event) => {
         translateX.setValue(current.current.x + event.translationX)

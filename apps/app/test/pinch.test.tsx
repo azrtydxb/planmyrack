@@ -34,6 +34,23 @@ describe('TestPinchOverDeviceZoomsNotDrags', () => {
   })
 })
 
+describe('TestCanvasGesturesRunWhereTheirStateLives', () => {
+  it('declares runOnJS on every gesture that touches Animated or React state', () => {
+    // the app died the moment a second finger landed on the canvas: with Reanimated installed,
+    // a gesture callback is a worklet on the UI thread, and these touch an Animated.Value
+    render(
+      <CanvasGestures>
+        <RackCanvas layout={seeded} face="front" />
+      </CanvasGestures>,
+    )
+
+    for (const id of ['pinch', 'canvas-pan']) {
+      const gesture = getByGestureTestId(id) as unknown as { config: { runOnJS?: boolean } }
+      expect([id, gesture.config.runOnJS]).toEqual([id, true])
+    }
+  })
+})
+
 describe('TestZoomControlsAndDropsAgree', () => {
   it('shows the zoom, resets it, and fits the racks on screen', () => {
     render(<RackCanvas layout={seeded} face="front" />)

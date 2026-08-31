@@ -175,10 +175,14 @@ describe('TestDragIsWiredToTheConsole', () => {
     expect(getByGestureTestId('drag-device-d1')).toBeTruthy()
   })
 
-  it('runs the drag on the JS thread, where the layout lives', () => {
+  it('runs every gesture in the console on the JS thread, where its state lives', () => {
+    // a worklet handler cannot touch React state or an Animated.Value: the drop would do
+    // nothing, and a pinch killed the app outright
     mountConsole()
-    // a worklet handler would be a no-op against React state, and the drop would do nothing
-    expect(getByGestureTestId('drag-device-d1').config.runOnJS).toBe(true)
+    for (const id of ['drag-device-d1', 'drag-palette-switch-1', 'pinch', 'canvas-pan']) {
+      const gesture = getByGestureTestId(id) as unknown as { config: { runOnJS?: boolean } }
+      expect([id, gesture.config.runOnJS]).toEqual([id, true])
+    }
   })
 })
 
