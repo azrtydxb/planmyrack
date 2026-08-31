@@ -4,7 +4,7 @@ import { RackEditorScreen } from '../src/screens/RackEditorScreen'
 
 jest.mock('react-native-safe-area-context', () => ({
   ...jest.requireActual('react-native-safe-area-context'),
-  useSafeAreaInsets: () => ({ top: 59, bottom: 34, left: 0, right: 0 }),
+  useSafeAreaInsets: () => ({ top: 59, bottom: 34, left: 21, right: 7 }),
 }))
 import { addDevice, newDevice, newLayout, newRack, updateDevice } from '@planmyrack/core'
 import { createMemoryStore } from '@planmyrack/storage'
@@ -277,6 +277,17 @@ describe('TestRefusedEditSaysWhy', () => {
 })
 
 describe('TestEditorClearsTheStatusBar', () => {
+  it('pads the screen by the side insets, where a landscape island sits', () => {
+    // the app is landscape only, so the Dynamic Island runs down the left edge — over the icon
+    // rail, whose second button could not be tapped at all
+    const store = createMemoryStore()
+    render(<RackEditorScreen store={store} initial={seeded} />)
+    const padded = screen.UNSAFE_getByType(View as never)
+    const style = JSON.stringify(padded.props.style)
+    expect(style).toContain('"paddingLeft":21')
+    expect(style).toContain('"paddingRight":7')
+  })
+
   it('pads the screen by the top safe-area inset', () => {
     // seen on the simulator: the layout name ran under the Dynamic Island, because this screen
     // hides the navigation header and nothing else applied the inset

@@ -74,8 +74,12 @@ export function RackEditorScreen({
   const { templates, save: saveTemplate } = useTemplates(store)
   const breakpoint = useBreakpoint()
   const { width: screenWidth } = useWindowDimensions()
-  // This screen hides the navigation header, so nothing else pads for the status bar and the
-  // Dynamic Island — without this the layout name is cut in half on an iPhone.
+  /**
+   * This screen hides the navigation header, so nothing else pads for the status bar and the
+   * Dynamic Island. In landscape — the only orientation this app runs in — the island is down
+   * the LEFT edge, right where the icon rail is: on an iPhone it covered the rail's second
+   * button and swallowed every tap aimed at it.
+   */
   const insets = useSafeAreaInsets()
 
   const [tab, setTab] = useState<TabKey>('racks')
@@ -354,7 +358,12 @@ export function RackEditorScreen({
   }
 
   return (
-    <View style={[styles.screen, { paddingTop: insets.top }]}>
+    <View
+      style={[
+        styles.screen,
+        { paddingTop: insets.top, paddingLeft: insets.left, paddingRight: insets.right },
+      ]}
+    >
       <OfflineBanner
         message={editor.conflict ? null : editor.error}
         onRetry={editor.saveNow}

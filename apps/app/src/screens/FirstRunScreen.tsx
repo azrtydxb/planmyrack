@@ -28,7 +28,16 @@ export function FirstRunScreen({ onChoose }: { onChoose: (mode: Mode) => void | 
   }
 
   return (
-    <ScrollView contentContainerStyle={[styles.page, { paddingTop: 20 + insets.top }]}>
+    <ScrollView
+      contentContainerStyle={[
+        styles.page,
+        {
+          paddingTop: 20 + insets.top,
+          paddingLeft: 20 + insets.left,
+          paddingRight: 20 + insets.right,
+        },
+      ]}
+    >
       <View style={styles.brandRow}>
         <BrandMark size={44} />
         <Text style={styles.brandName}>PlanMyRack</Text>

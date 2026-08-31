@@ -98,7 +98,7 @@ export function LayoutsScreen({
   }
 
   return (
-    <View style={styles.page}>
+    <View style={[styles.page, { paddingLeft: insets.left, paddingRight: insets.right }]}>
       <View style={[styles.head, { paddingTop: 16 + insets.top }]}>
         <BrandMark />
         <View style={styles.headText}>
