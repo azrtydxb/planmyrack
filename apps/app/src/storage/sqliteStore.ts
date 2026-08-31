@@ -1,32 +1,8 @@
 import * as SQLite from 'expo-sqlite'
 import { newId } from '@planmyrack/core'
-import { NotFoundError, StaleRevisionError } from '@planmyrack/storage'
+import { NotFoundError, SCHEMA, SQL, StaleRevisionError } from '@planmyrack/storage'
 import type { Layout } from '@planmyrack/core'
-import type { LayoutStore, LayoutSummary, Template } from '@planmyrack/storage'
-
-const SCHEMA = `
-  CREATE TABLE IF NOT EXISTS layouts (
-    id         TEXT    PRIMARY KEY,
-    name       TEXT    NOT NULL,
-    revision   INTEGER NOT NULL,
-    doc        TEXT    NOT NULL,
-    created_at TEXT    NOT NULL,
-    updated_at TEXT    NOT NULL
-  );
-  CREATE TABLE IF NOT EXISTS templates (
-    id  TEXT PRIMARY KEY,
-    doc TEXT NOT NULL
-  );
-`
-
-interface LayoutRow {
-  id: string
-  name: string
-  revision: number
-  doc: string
-  created_at: string
-  updated_at: string
-}
+import type { LayoutRow, LayoutStore, LayoutSummary, Template } from '@planmyrack/storage'
 
 /**
  * The slice of expo-sqlite this store uses. Declaring it lets the tests drive the very same store
@@ -54,7 +30,7 @@ export async function createStoreOn(
   await db.execAsync(SCHEMA)
 
   const readRow = async (id: string): Promise<LayoutRow> => {
-    const row = await db.getFirstAsync<LayoutRow>('SELECT * FROM layouts WHERE id = ?', id)
+    const row = await db.getFirstAsync<LayoutRow>(SQL.get, id)
     if (!row) throw new NotFoundError(id)
     return row
   }
@@ -69,9 +45,7 @@ export async function createStoreOn(
 
   return {
     async list(): Promise<LayoutSummary[]> {
-      const rows = await db.getAllAsync<Omit<LayoutRow, 'doc'>>(
-        'SELECT id, name, revision, created_at, updated_at FROM layouts ORDER BY updated_at DESC',
-      )
+      const rows = await db.getAllAsync<Omit<LayoutRow, 'doc'>>(SQL.list)
       return rows.map((r) => ({
         id: r.id,
         name: r.name,
@@ -93,7 +67,7 @@ export async function createStoreOn(
         updatedAt: now,
       }
       await db.runAsync(
-        'INSERT INTO layouts (id, name, revision, doc, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
+        SQL.insert,
         stored.id!,
         stored.name,
         1,
@@ -114,7 +88,7 @@ export async function createStoreOn(
         updatedAt: new Date().toISOString(),
       }
       await db.runAsync(
-        'UPDATE layouts SET name = ?, revision = ?, doc = ?, updated_at = ? WHERE id = ?',
+        SQL.update,
         next.name,
         next.revision,
         JSON.stringify(next),
@@ -124,24 +98,20 @@ export async function createStoreOn(
       return next
     },
     async remove(id) {
-      const result = await db.runAsync('DELETE FROM layouts WHERE id = ?', id)
+      const result = await db.runAsync(SQL.remove, id)
       if (result.changes === 0) throw new NotFoundError(id)
     },
     async listTemplates() {
-      const rows = await db.getAllAsync<{ doc: string }>('SELECT doc FROM templates')
+      const rows = await db.getAllAsync<{ doc: string }>(SQL.templates)
       return rows.map((r) => JSON.parse(r.doc) as Template)
     },
     async saveTemplate(template) {
       const stored = { ...template, id: template.id || newId() }
-      await db.runAsync(
-        'INSERT OR REPLACE INTO templates (id, doc) VALUES (?, ?)',
-        stored.id,
-        JSON.stringify(stored),
-      )
+      await db.runAsync(SQL.saveTemplate, stored.id, JSON.stringify(stored))
       return stored
     },
     async removeTemplate(id) {
-      await db.runAsync('DELETE FROM templates WHERE id = ?', id)
+      await db.runAsync(SQL.removeTemplate, id)
     },
     async close() {
       await db.closeAsync()

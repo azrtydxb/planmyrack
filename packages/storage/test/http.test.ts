@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { newLayout } from '@planmyrack/core'
 import { startServer } from '@planmyrack/server'
 import { runStoreContract } from '../src/contract.ts'
 import { StoreUnavailableError, createHttpStore, probeServer } from '../src/index.ts'
@@ -12,6 +13,27 @@ const DEAD = 'http://127.0.0.1:1'
 runStoreContract('http store', async () => {
   const server = await startServer({ port: 0, dbPath: tmpDb() })
   return { store: createHttpStore(server.url), dispose: () => server.close() }
+})
+
+describe('TestServerAnsweringNonsenseIsUnavailable', () => {
+  it('names a reply that is not a layout instead of handing it on', async () => {
+    // a misbehaving server used to crash the app later, somewhere with an undefined field
+    const nonsense = async () =>
+      new Response(JSON.stringify({ name: 'no racks here' }), { status: 200 })
+    const store = createHttpStore('http://example.test', nonsense as unknown as typeof fetch)
+
+    await expect(store.get('anything')).rejects.toBeInstanceOf(StoreUnavailableError)
+    await expect(store.get('anything')).rejects.toThrow(/not a layout/)
+  })
+
+  it('accepts a well-formed layout', async () => {
+    const doc = newLayout('Fine')
+    const good = async () =>
+      new Response(JSON.stringify({ ...doc, id: 'x', revision: 1 }), { status: 200 })
+    const store = createHttpStore('http://example.test', good as unknown as typeof fetch)
+
+    expect((await store.get('x')).name).toBe('Fine')
+  })
 })
 
 describe('TestModeChooserAndHealthProbe', () => {

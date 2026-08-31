@@ -1,3 +1,4 @@
+import { layoutSchema } from '@planmyrack/core'
 import { NotFoundError, StaleRevisionError, StoreUnavailableError } from './types.ts'
 import type { Layout } from '@planmyrack/core'
 import type { LayoutStore, LayoutSummary, Template } from './types.ts'
@@ -62,18 +63,34 @@ export function createHttpStore(baseUrl: string, fetchImpl: typeof fetch = fetch
     return body as T
   }
 
+  /**
+   * A server that answers with something that is not a layout is a broken server, and saying so
+   * here is the difference between a typed StoreUnavailableError and a crash somewhere later
+   * with a field that turned out to be undefined.
+   */
+  function asLayout(body: Layout | undefined): Layout {
+    const parsed = layoutSchema.safeParse(body)
+    if (!parsed.success) {
+      const issue = parsed.error.issues[0]!
+      throw new StoreUnavailableError(
+        `${root} answered with something that is not a layout: ${
+          issue.path.join('.') || 'the document'
+        } ${issue.message.toLowerCase()}.`,
+      )
+    }
+    return body as Layout
+  }
+
   return {
     list: () => call<LayoutSummary[]>('/api/layouts').then((v) => v ?? []),
-    get: (id) => call<Layout>(`/api/layouts/${id}`).then((v) => v!),
+    get: (id) => call<Layout>(`/api/layouts/${id}`).then(asLayout),
     create: (layout) =>
-      call<Layout>('/api/layouts', { method: 'POST', body: JSON.stringify(layout) }).then(
-        (v) => v!,
-      ),
+      call<Layout>('/api/layouts', { method: 'POST', body: JSON.stringify(layout) }).then(asLayout),
     update: (layout) =>
       call<Layout>(`/api/layouts/${layout.id}`, {
         method: 'PUT',
         body: JSON.stringify(layout),
-      }).then((v) => v!),
+      }).then(asLayout),
     remove: async (id) => {
       await call(`/api/layouts/${id}`, { method: 'DELETE' })
     },

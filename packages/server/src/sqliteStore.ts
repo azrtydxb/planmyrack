@@ -2,59 +2,25 @@ import { DatabaseSync } from 'node:sqlite'
 import { mkdirSync } from 'node:fs'
 import { dirname } from 'node:path'
 import { newId } from '@planmyrack/core'
-import { NotFoundError, StaleRevisionError } from '@planmyrack/storage'
+import { NotFoundError, SCHEMA, SQL, StaleRevisionError } from '@planmyrack/storage'
 import type { Layout } from '@planmyrack/core'
-import type { LayoutStore, LayoutSummary, Template } from '@planmyrack/storage'
+import type { LayoutRow, LayoutStore, LayoutSummary, Template } from '@planmyrack/storage'
 
-const SCHEMA = `
-  CREATE TABLE IF NOT EXISTS layouts (
-    id         TEXT    PRIMARY KEY,
-    name       TEXT    NOT NULL,
-    revision   INTEGER NOT NULL,
-    doc        TEXT    NOT NULL,
-    created_at TEXT    NOT NULL,
-    updated_at TEXT    NOT NULL
-  );
-  CREATE TABLE IF NOT EXISTS templates (
-    id  TEXT PRIMARY KEY,
-    doc TEXT NOT NULL
-  );
-`
-
-interface LayoutRow {
-  id: string
-  name: string
-  revision: number
-  doc: string
-  created_at: string
-  updated_at: string
-}
-
-/**
- * The layout document is stored whole in `doc`; name and revision are mirrored into columns so
- * listing never has to parse JSON. Racks, devices and cables are always read, written and undone
- * together, so splitting them into tables would buy a join and nothing else.
- */
+/** The server's store: the shared schema and statements, run through node:sqlite. */
 export function createSqliteStore(dbPath: string): LayoutStore & { close(): void } {
   if (dbPath !== ':memory:') mkdirSync(dirname(dbPath), { recursive: true })
   const db = new DatabaseSync(dbPath)
   db.exec(SCHEMA)
 
   const q = {
-    list: db.prepare(
-      'SELECT id, name, revision, created_at, updated_at FROM layouts ORDER BY updated_at DESC',
-    ),
-    get: db.prepare('SELECT * FROM layouts WHERE id = ?'),
-    insert: db.prepare(
-      'INSERT INTO layouts (id, name, revision, doc, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
-    ),
-    update: db.prepare(
-      'UPDATE layouts SET name = ?, revision = ?, doc = ?, updated_at = ? WHERE id = ?',
-    ),
-    remove: db.prepare('DELETE FROM layouts WHERE id = ?'),
-    templates: db.prepare('SELECT doc FROM templates'),
-    saveTemplate: db.prepare('INSERT OR REPLACE INTO templates (id, doc) VALUES (?, ?)'),
-    removeTemplate: db.prepare('DELETE FROM templates WHERE id = ?'),
+    list: db.prepare(SQL.list),
+    get: db.prepare(SQL.get),
+    insert: db.prepare(SQL.insert),
+    update: db.prepare(SQL.update),
+    remove: db.prepare(SQL.remove),
+    templates: db.prepare(SQL.templates),
+    saveTemplate: db.prepare(SQL.saveTemplate),
+    removeTemplate: db.prepare(SQL.removeTemplate),
   }
 
   const readRow = (id: string): LayoutRow => {

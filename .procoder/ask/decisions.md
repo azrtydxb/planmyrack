@@ -6,7 +6,8 @@ path: rail, canvas, side panel.
 
 - Take the band as covered — the iPhone landscape screenshots already exercise it.
 - Shoot a named Android size as well (892x412, or another the user names).
-- Run it on a real Android emulator rather than a browser viewport.
+- **Decided (2026-08-31): run it on a real Android emulator** — then superseded by the disk-space
+  decision below, which skipped it.
 
 ## The disk has 11 GiB free — how should the Android emulator run proceed?
 
