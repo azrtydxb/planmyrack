@@ -8,4 +8,5 @@ EAS reports the free plan's iOS builds exhausted, resetting in ~14 hours (1 Sep)
 - Build locally with `eas build --local`, which uses this Mac's Xcode and no cloud
   quota. It writes several GB into DerivedData on a volume with ~12 GB free, and the
   .ipa has to reach the iPad over a cable rather than a link.
-- Upgrade the EAS plan, which lifts the limit immediately.
+- **Decided (2026-08-31): upgrade the EAS plan**, which lifts the limit immediately and keeps
+  every build on the same route.
