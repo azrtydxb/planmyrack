@@ -5,6 +5,9 @@ const GENERIC = 'generic rack sizes; nothing vendor-specific to verify'
 const STRUCTURAL =
   'height and port count are the published structural specification; watts left at 0 (unknown) — set it from your own unit'
 
+/** Every vendor row in this file is rack-mount gear built to the 19" standard. */
+const NINETEEN = { width: 19 } as const
+
 const entry = (
   id: string,
   vendor: string,
@@ -16,7 +19,7 @@ const entry = (
   watts = 0,
   colour = COLOURS[0]!,
   source = STRUCTURAL,
-  face: Pick<CatalogEntry, 'faceplate' | 'bays' | 'sfp' | 'slots'> = {},
+  face: Pick<CatalogEntry, 'faceplate' | 'bays' | 'sfp' | 'slots' | 'width'> = {},
 ): CatalogEntry => ({
   id,
   vendor,
@@ -71,7 +74,7 @@ export const BUNDLED_CATALOG: CatalogEntry[] = [
     0,
     COLOURS[0]!,
     STRUCTURAL,
-    { faceplate: 'display', bays: 1, sfp: 2 },
+    { ...NINETEEN, faceplate: 'display', bays: 1, sfp: 2 },
   ),
   entry(
     'unifi-udm-se',
@@ -84,9 +87,10 @@ export const BUNDLED_CATALOG: CatalogEntry[] = [
     0,
     COLOURS[0]!,
     STRUCTURAL,
-    { faceplate: 'display', bays: 1, sfp: 2 },
+    { ...NINETEEN, faceplate: 'display', bays: 1, sfp: 2 },
   ),
   entry('unifi-usw-24', 'UniFi', 'Switch 24', 'switch', 1, 26, 0, 0, COLOURS[0]!, STRUCTURAL, {
+    ...NINETEEN,
     faceplate: 'sfp',
     sfp: 2,
   }),
@@ -101,9 +105,10 @@ export const BUNDLED_CATALOG: CatalogEntry[] = [
     0,
     COLOURS[0]!,
     STRUCTURAL,
-    { faceplate: 'poe', sfp: 2 },
+    { ...NINETEEN, faceplate: 'poe', sfp: 2 },
   ),
   entry('unifi-usw-48', 'UniFi', 'Switch 48', 'switch', 1, 52, 0, 0, COLOURS[0]!, STRUCTURAL, {
+    ...NINETEEN,
     faceplate: 'sfp',
     sfp: 4,
   }),
@@ -118,7 +123,7 @@ export const BUNDLED_CATALOG: CatalogEntry[] = [
     0,
     COLOURS[0]!,
     STRUCTURAL,
-    { faceplate: 'sfp', sfp: 8 },
+    { ...NINETEEN, faceplate: 'sfp', sfp: 8 },
   ),
 
   // MikroTik
@@ -133,7 +138,7 @@ export const BUNDLED_CATALOG: CatalogEntry[] = [
     0,
     COLOURS[0]!,
     STRUCTURAL,
-    { faceplate: 'sfp', sfp: 2 },
+    { ...NINETEEN, faceplate: 'sfp', sfp: 2 },
   ),
   entry(
     'mikrotik-crs328-24p',
@@ -146,7 +151,7 @@ export const BUNDLED_CATALOG: CatalogEntry[] = [
     0,
     COLOURS[0]!,
     STRUCTURAL,
-    { faceplate: 'poe', sfp: 4 },
+    { ...NINETEEN, faceplate: 'poe', sfp: 4 },
   ),
   entry(
     'mikrotik-crs309',
@@ -159,7 +164,7 @@ export const BUNDLED_CATALOG: CatalogEntry[] = [
     0,
     COLOURS[0]!,
     STRUCTURAL,
-    { faceplate: 'sfp', sfp: 8 },
+    { ...NINETEEN, faceplate: 'sfp', sfp: 8 },
   ),
   entry(
     'mikrotik-ccr2004',
@@ -172,7 +177,7 @@ export const BUNDLED_CATALOG: CatalogEntry[] = [
     0,
     COLOURS[0]!,
     STRUCTURAL,
-    { faceplate: 'sfp', sfp: 14 },
+    { ...NINETEEN, faceplate: 'sfp', sfp: 14 },
   ),
   entry(
     'mikrotik-rb5009',
@@ -192,10 +197,58 @@ export const BUNDLED_CATALOG: CatalogEntry[] = [
   ),
 
   // TP-Link
-  entry('tplink-tl-sg1024', 'TP-Link', 'TL-SG1024', 'switch', 1, 24),
-  entry('tplink-tl-sg1016', 'TP-Link', 'TL-SG1016', 'switch', 1, 16),
-  entry('tplink-tl-sg3428', 'TP-Link', 'TL-SG3428', 'switch', 1, 24),
-  entry('tplink-omada-oc200', 'TP-Link', 'Omada OC200', 'gateway', 1, 2),
+  entry(
+    'tplink-tl-sg1024',
+    'TP-Link',
+    'TL-SG1024',
+    'switch',
+    1,
+    24,
+    0,
+    0,
+    COLOURS[0]!,
+    STRUCTURAL,
+    NINETEEN,
+  ),
+  entry(
+    'tplink-tl-sg1016',
+    'TP-Link',
+    'TL-SG1016',
+    'switch',
+    1,
+    16,
+    0,
+    0,
+    COLOURS[0]!,
+    STRUCTURAL,
+    NINETEEN,
+  ),
+  entry(
+    'tplink-tl-sg3428',
+    'TP-Link',
+    'TL-SG3428',
+    'switch',
+    1,
+    24,
+    0,
+    0,
+    COLOURS[0]!,
+    STRUCTURAL,
+    NINETEEN,
+  ),
+  entry(
+    'tplink-omada-oc200',
+    'TP-Link',
+    'Omada OC200',
+    'gateway',
+    1,
+    2,
+    0,
+    0,
+    COLOURS[0]!,
+    STRUCTURAL,
+    NINETEEN,
+  ),
 
   // Synology
   entry(
@@ -209,9 +262,10 @@ export const BUNDLED_CATALOG: CatalogEntry[] = [
     0,
     COLOURS[0]!,
     STRUCTURAL,
-    { faceplate: 'bays', bays: 8 },
+    { ...NINETEEN, faceplate: 'bays', bays: 8 },
   ),
   entry('synology-rs822plus', 'Synology', 'RS822+', 'server', 1, 2, 0, 0, COLOURS[0]!, STRUCTURAL, {
+    ...NINETEEN,
     faceplate: 'bays',
     bays: 4,
   }),
@@ -226,15 +280,17 @@ export const BUNDLED_CATALOG: CatalogEntry[] = [
     0,
     COLOURS[0]!,
     STRUCTURAL,
-    { faceplate: 'bays', bays: 12 },
+    { ...NINETEEN, faceplate: 'bays', bays: 12 },
   ),
 
   // QNAP
   entry('qnap-ts-464u', 'QNAP', 'TS-464U', 'server', 1, 2, 0, 0, COLOURS[0]!, STRUCTURAL, {
+    ...NINETEEN,
     faceplate: 'bays',
     bays: 4,
   }),
   entry('qnap-ts-873au', 'QNAP', 'TS-873AU', 'server', 2, 2, 0, 0, COLOURS[0]!, STRUCTURAL, {
+    ...NINETEEN,
     faceplate: 'bays',
     bays: 8,
   }),
@@ -246,7 +302,43 @@ export const BUNDLED_CATALOG: CatalogEntry[] = [
   entry('orangepi-5-plus', 'Orange Pi', '5 Plus', 'sbc', 1, 2, 0, 0, COLOURS[3]!, STRUCTURAL),
 
   // Cisco
-  entry('cisco-sg350-28', 'Cisco', 'SG350-28', 'switch', 1, 28),
-  entry('cisco-sg250-26', 'Cisco', 'SG250-26', 'switch', 1, 26),
-  entry('cisco-sg550x-24', 'Cisco', 'SG550X-24', 'switch', 1, 24),
+  entry(
+    'cisco-sg350-28',
+    'Cisco',
+    'SG350-28',
+    'switch',
+    1,
+    28,
+    0,
+    0,
+    COLOURS[0]!,
+    STRUCTURAL,
+    NINETEEN,
+  ),
+  entry(
+    'cisco-sg250-26',
+    'Cisco',
+    'SG250-26',
+    'switch',
+    1,
+    26,
+    0,
+    0,
+    COLOURS[0]!,
+    STRUCTURAL,
+    NINETEEN,
+  ),
+  entry(
+    'cisco-sg550x-24',
+    'Cisco',
+    'SG550X-24',
+    'switch',
+    1,
+    24,
+    0,
+    0,
+    COLOURS[0]!,
+    STRUCTURAL,
+    NINETEEN,
+  ),
 ]

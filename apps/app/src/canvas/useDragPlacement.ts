@@ -8,8 +8,16 @@ import {
   newDevice,
   snapHalfU,
 } from '@planmyrack/core'
-import { U_PX } from './metrics'
-import type { Device, DeviceType, Face, Layout, NewDeviceInput, Rack } from '@planmyrack/core'
+import { RACK_INNER_PX, U_PX } from './metrics'
+import type {
+  Device,
+  DeviceType,
+  Face,
+  Layout,
+  NewDeviceInput,
+  Rack,
+  RackWidth,
+} from '@planmyrack/core'
 
 export interface Point {
   x: number
@@ -21,6 +29,8 @@ export interface RackHit {
   rack: Rack
   face: Face
   topY: number
+  /** Left edge of the rack body in canvas space, for deciding which half a drop is over. */
+  leftX: number
 }
 
 export interface DragTarget {
@@ -29,6 +39,8 @@ export interface DragTarget {
   posU: number
   heightU: number
   valid: boolean
+  /** Which half of a wide rack narrow gear lands in. */
+  column?: 0 | 1
   /** Set when the target is a cut-out on a mount rather than a place on the rails. */
   slot?: { mountId: string; index: number }
 }
@@ -37,6 +49,8 @@ export interface DragState {
   kind: 'new' | 'move'
   heightU: number
   type: DeviceType
+  /** The standard the dragged gear is built for, when it declares one. */
+  width?: RackWidth
   deviceId?: string
   /** Name, ports, colour and the rest of the library row being dragged. */
   template?: Partial<NewDeviceInput>
@@ -96,11 +110,19 @@ export function useDragPlacement({
       const hit = resolve(point)
       if (!hit) return null
       const wanted = positionFromPoint(hit.rack, hit.topY, point.y, state.heightU)
+      // narrow gear in a wide rack takes the half the pointer is over; two fit across one unit
+      const column =
+        state.width !== undefined && state.width < hit.rack.width
+          ? point.x - hit.leftX < RACK_INNER_PX[hit.rack.width] / 2
+            ? (0 as const)
+            : (1 as const)
+          : undefined
       const free = findFreeSlot(layout.devices, hit.rack, {
         id: state.deviceId,
         face: hit.face,
         posU: wanted,
         heightU: state.heightU,
+        ...(column === undefined ? {} : { column }),
       })
       return {
         rackId: hit.rack.id,
@@ -108,6 +130,7 @@ export function useDragPlacement({
         posU: free ?? wanted,
         heightU: state.heightU,
         valid: free !== null,
+        ...(column === undefined ? {} : { column }),
       }
     },
     [layout.devices, resolve, resolveSlot],
@@ -122,6 +145,8 @@ export function useDragPlacement({
         at,
         target: null,
         ...(template ? { template } : {}),
+        // the standard the gear is built for decides whether it takes half a wide rack
+        ...(template?.width === undefined ? {} : { width: template.width }),
       }
       set({ ...state, target: targetFor(state, at) })
     },
@@ -135,6 +160,7 @@ export function useDragPlacement({
         type: device.type,
         heightU: device.heightU,
         deviceId: device.id,
+        ...(device.width === undefined ? {} : { width: device.width }),
         at,
         target: null,
       }
@@ -158,7 +184,7 @@ export function useDragPlacement({
     set(null)
     if (!current?.target?.valid) return
 
-    const { rackId, face, posU } = current.target
+    const { rackId, face, posU, column } = current.target
     try {
       const landing = current.target.slot
       if (landing) {
@@ -182,7 +208,14 @@ export function useDragPlacement({
         return
       }
       if (current.kind === 'move' && current.deviceId) {
-        onCommit(moveDevice(layout, current.deviceId, { rackId, face, posU }))
+        onCommit(
+          moveDevice(layout, current.deviceId, {
+            rackId,
+            face,
+            posU,
+            ...(column === undefined ? {} : { column }),
+          }),
+        )
       } else {
         onCommit(
           addDevice(
@@ -194,6 +227,7 @@ export function useDragPlacement({
               posU,
               heightU: current.heightU,
               type: current.type,
+              ...(column === undefined ? {} : { column }),
             }),
           ),
         )

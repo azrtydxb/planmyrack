@@ -9,6 +9,7 @@ import { Mono, Segmented } from './primitives'
 import { TOUCH, colour, font, radius, rack as hw } from './theme'
 import type { DeviceType } from '@planmyrack/core'
 import type { CatalogEntry } from '@planmyrack/catalog'
+import type { RackWidth } from '@planmyrack/core'
 import type { DragSource } from '../canvas/useDragSource'
 import type { Template } from '@planmyrack/storage'
 
@@ -22,6 +23,8 @@ export interface PaletteChoice {
   colour?: string
   /** Cut-outs, for a mount tray. */
   slots?: number
+  /** The rack standard the gear is built for. */
+  width?: RackWidth
 }
 
 /** Miniature faceplate, so a library row reads as the hardware it will place. */
@@ -171,9 +174,12 @@ function Row({
  */
 export function Palette({
   templates = [],
+  rackWidth,
   drag,
 }: {
   templates?: Template[]
+  /** The standard of the rack being worked on: 19" gear is not offered for a 10" rack. */
+  rackWidth?: RackWidth
   drag?: DragSource<PaletteChoice>
 }) {
   const [tab, setTab] = useState<'catalogue' | 'saved'>('catalogue')
@@ -182,6 +188,10 @@ export function Palette({
   const [counts, setCounts] = useState<Record<string, number>>({})
   const vendors = useMemo(() => [...catalogByVendor(BUNDLED_CATALOG).entries()], [])
   const match = (text: string) => text.toLowerCase().includes(query.trim().toLowerCase())
+  // 19" gear has nowhere for its ears to land in a 10" rack, so it is not offered at all. The
+  // other way round is fine: 10" gear goes in a 19" rack on extended mounts.
+  const fits = (entry: CatalogEntry) =>
+    rackWidth === undefined || entry.width === undefined || entry.width <= rackWidth
 
   const templateChoice = (template: Template): PaletteChoice => ({
     type: template.type,
@@ -205,6 +215,7 @@ export function Palette({
     watts: entry.watts,
     colour: entry.colour,
     ...(entry.slots === undefined ? {} : { slots: entry.slots }),
+    ...(entry.width === undefined ? {} : { width: entry.width }),
   })
 
   return (
@@ -288,7 +299,7 @@ export function Palette({
             </View>
 
             {vendors.map(([vendor, entries]) => {
-              const shown = entries.filter((e) => match(`${e.vendor} ${e.model}`))
+              const shown = entries.filter((e) => fits(e) && match(`${e.vendor} ${e.model}`))
               if (shown.length === 0) return null
               return (
                 <View key={vendor} style={styles.group}>

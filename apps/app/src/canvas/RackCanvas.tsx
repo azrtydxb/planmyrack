@@ -98,7 +98,7 @@ export function RackCanvas({
   const resolve = useCallback(
     (local: Point): RackHit | null => {
       const hit = rackUnder(layout.racks, offsets, local)
-      return hit ? { rack: hit.rack, face, topY: hit.topY } : null
+      return hit ? { rack: hit.rack, face, topY: hit.topY, leftX: hit.leftX } : null
     },
     [face, layout.racks, offsets],
   )

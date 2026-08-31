@@ -72,6 +72,16 @@ export interface Device {
    * position of its own: `posU`, `heightU` and `face` are the host's.
    */
   host?: { deviceId: string; slot: number }
+  /**
+   * The rack standard the device is built for. 10" gear fits a 19" rack on extended mounts —
+   * often two of them across one unit — but 19" gear never fits a 10" rack.
+   */
+  width?: RackWidth
+  /**
+   * Which half of a 19" rack a 10" device sits in. Undefined means the device spans the rack,
+   * which is what everything did before narrow gear could be placed beside itself.
+   */
+  column?: 0 | 1
 }
 
 export interface LinkEnd {

@@ -36,14 +36,14 @@ export function rackUnder<T extends { id: string; width: RackWidth; units: numbe
   racks: T[],
   origins: Record<string, Origin>,
   point: Origin,
-): { rack: T; topY: number } | null {
+): { rack: T; topY: number; leftX: number } | null {
   for (const rack of racks) {
     const origin = origins[rack.id]
     if (!origin) continue
     const right = origin.x + RACK_INNER_PX[rack.width]
     const bottom = origin.y + rack.units * U_PX
     if (point.x >= origin.x && point.x <= right && point.y >= origin.y && point.y <= bottom) {
-      return { rack, topY: origin.y }
+      return { rack, topY: origin.y, leftX: origin.x }
     }
   }
   return null

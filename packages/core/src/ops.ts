@@ -1,6 +1,6 @@
 import { PlacementError } from './errors.ts'
 import { DEVICE_TYPES } from './deviceTypes.ts'
-import { findFreeSlot } from './geometry.ts'
+import { findFreeSlot, fitsRack } from './geometry.ts'
 import { pruneLinks } from './links.ts'
 import type { Device, Face, Layout, Rack } from './types.ts'
 
@@ -14,6 +14,19 @@ const deviceOf = (layout: Layout, deviceId: string): Device => {
   const device = layout.devices.find((d) => d.id === deviceId)
   if (!device) throw new PlacementError('no-such-device', `no device ${deviceId} in this layout`)
   return device
+}
+
+/**
+ * 19" gear does not go in a 10" rack — there is nowhere for the ears to land. The other way round
+ * is fine: 10" gear sits in a 19" rack on extended mounts, often two across one unit.
+ */
+function refuseWrongWidth(device: Device, rack: Rack): void {
+  if (!fitsRack(device.width, rack)) {
+    throw new PlacementError(
+      'wrong-width',
+      `${device.name} is ${device.width}" gear and ${rack.name} is a ${rack.width}" rack`,
+    )
+  }
 }
 
 const touched = (layout: Layout, patch: Partial<Layout>): Layout => ({
@@ -62,6 +75,7 @@ export function freeSlot(layout: Layout, host: Device): number | null {
 /** Places a device at the nearest free slot, or throws when the face cannot hold it. */
 export function addDevice(layout: Layout, device: Device): Layout {
   const rack = rackOf(layout, device.rackId)
+  refuseWrongWidth(device, rack)
   const posU = findFreeSlot(layout.devices, rack, device)
   if (posU === null) {
     throw new PlacementError(
@@ -75,10 +89,11 @@ export function addDevice(layout: Layout, device: Device): Layout {
 export function moveDevice(
   layout: Layout,
   deviceId: string,
-  target: { rackId: string; face: Face; posU: number },
+  target: { rackId: string; face: Face; posU: number; column?: 0 | 1 },
 ): Layout {
   const device = deviceOf(layout, deviceId)
   const rack = rackOf(layout, target.rackId)
+  refuseWrongWidth(device, rack)
   const posU = findFreeSlot(layout.devices, rack, { ...device, ...target })
   if (posU === null) {
     throw new PlacementError(

@@ -135,3 +135,38 @@ describe('TestUplinkCagesDoNotSitOnThePorts', () => {
     expect(Math.max(...rects.map((r) => r.x + r.width))).toBeGreaterThan(box.width - 2 * CAGE_PITCH)
   })
 })
+
+describe('TestNarrowGearTakesHalfOfAWideRack', () => {
+  const wide = newRack({ id: 'W', units: 12, width: 19 })
+  const narrowRack = newRack({ id: 'N', units: 12, width: 10 })
+  const small = (column?: 0 | 1) =>
+    newDevice({
+      rackId: 'W',
+      face: 'front',
+      posU: 0,
+      heightU: 1,
+      type: 'switch',
+      width: 10,
+      ...(column === undefined ? {} : { column }),
+    })
+
+  it('halves the width and offsets the right-hand one', () => {
+    const left = deviceRect(wide, small(0))
+    const right = deviceRect(wide, small(1))
+    expect(left.width).toBe(Math.floor(RACK_INNER_PX[19] / 2))
+    expect(left.left).toBe(0)
+    expect(right.left).toBe(RACK_INNER_PX[19] - right.width)
+    // the two halves do not overlap
+    expect(left.left + left.width).toBeLessThanOrEqual(right.left)
+  })
+
+  it('spans the rack when no half is named', () => {
+    expect(deviceRect(wide, small()).width).toBe(RACK_INNER_PX[19])
+  })
+
+  it('spans a 10-inch rack, where 10-inch gear is simply the width of the rack', () => {
+    const inNarrow = { ...small(0), rackId: 'N' }
+    expect(deviceRect(narrowRack, inNarrow).width).toBe(RACK_INNER_PX[10])
+    expect(deviceRect(narrowRack, inNarrow).left).toBe(0)
+  })
+})

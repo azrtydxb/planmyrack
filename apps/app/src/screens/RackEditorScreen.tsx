@@ -135,6 +135,7 @@ export function RackEditorScreen({
           ...(choice.watts === undefined ? {} : { watts: choice.watts }),
           ...(choice.colour ? { colour: choice.colour } : {}),
           ...(choice.slots === undefined ? {} : { slots: choice.slots }),
+          ...(choice.width === undefined ? {} : { width: choice.width }),
         })
       },
       onMove: (screen: { x: number; y: number }) => placement.moveTo(toLocal(screen)),
@@ -360,7 +361,9 @@ export function RackEditorScreen({
       case 'cables':
         return cableSchedule
       case 'library':
-        return <Palette templates={templates} drag={dragFromLibrary} />
+        return (
+          <Palette templates={templates} rackWidth={activeRack?.width} drag={dragFromLibrary} />
+        )
       case 'stats':
         return stats
       case 'settings':
@@ -407,7 +410,7 @@ export function RackEditorScreen({
 
         {wide && (roomForBothPanels || tab === 'library') && !(sidePanel && !roomForBothPanels) ? (
           <View testID="library-panel" style={styles.libraryPanel}>
-            <Palette templates={templates} drag={dragFromLibrary} />
+            <Palette templates={templates} rackWidth={activeRack?.width} drag={dragFromLibrary} />
           </View>
         ) : null}
 

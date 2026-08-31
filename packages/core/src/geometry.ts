@@ -1,4 +1,4 @@
-import type { Device, Face, Layout, Rack } from './types.ts'
+import type { Device, Face, Layout, Rack, RackWidth } from './types.ts'
 
 /** Positions live on a half-unit grid; everything that comes from a pointer goes through here. */
 export const snapHalfU = (u: number): number => Math.round(u * 2) / 2
@@ -10,7 +10,17 @@ export interface Probe {
   face: Face
   posU: number
   heightU: number
+  /** Which half of a 19" rack this occupies; undefined spans the whole width. */
+  column?: 0 | 1
 }
+
+/** Two devices are in each other's way across the rack unless they sit in different halves. */
+export const columnsOverlap = (a?: 0 | 1, b?: 0 | 1): boolean =>
+  a === undefined || b === undefined || a === b
+
+/** Whether a device built for one standard can be mounted in a rack of another. */
+export const fitsRack = (deviceWidth: RackWidth | undefined, rack: Rack): boolean =>
+  deviceWidth === undefined || deviceWidth <= rack.width
 
 /** A device that rides in another device's slot, rather than on the rails. */
 export const isHosted = (device: Device): boolean => device.host !== undefined
@@ -29,7 +39,8 @@ export function collides(devices: Device[], probe: Probe): boolean {
       d.rackId === probe.rackId &&
       d.face === probe.face &&
       probe.posU < d.posU + d.heightU &&
-      d.posU < probe.posU + probe.heightU,
+      d.posU < probe.posU + probe.heightU &&
+      columnsOverlap(d.column, probe.column),
   )
 }
 

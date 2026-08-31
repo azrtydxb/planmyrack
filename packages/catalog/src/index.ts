@@ -35,5 +35,6 @@ export function deviceFromCatalog(
     ...(entry.bays === undefined ? {} : { bays: entry.bays }),
     ...(entry.sfp === undefined ? {} : { sfp: entry.sfp }),
     ...(entry.slots === undefined ? {} : { slots: entry.slots }),
+    ...(entry.width === undefined ? {} : { width: entry.width }),
   })
 }

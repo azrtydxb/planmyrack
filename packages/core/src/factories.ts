@@ -59,5 +59,7 @@ export function newDevice(input: NewDeviceInput): Device {
     ...(input.sfp === undefined ? {} : { sfp: input.sfp }),
     ...(input.slots === undefined ? {} : { slots: input.slots }),
     ...(input.host ? { host: input.host } : {}),
+    ...(input.width === undefined ? {} : { width: input.width }),
+    ...(input.column === undefined ? {} : { column: input.column }),
   }
 }

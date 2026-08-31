@@ -96,6 +96,10 @@ forced by real data or a missing door rather than preference.
   that width the library opens on its own tab and closes when a side panel does.
 - **Rack settings.** The design never shows where a rack is renamed, resized or removed. The
   active rack chip carries a ⚙ that opens those controls in the side panel.
+- **Narrow gear in a wide rack.** The design draws every device the full width of its rack. 10"
+  gear goes into a 19" rack on extended mounts, often two across one unit, so a device that
+  declares the narrower standard takes half the body and the half its column names. 19" gear is
+  refused by a 10" rack outright and is not even offered in its library.
 - **Mount trays.** The design has no such thing. A 1U tray of cut-outs carrying Raspberry Pi or
   Orange Pi boards is drawn as the tray's faceplate divided into slots; a board in one is a
   device in its own right, with its own name, ports and cables, but no place on the rails.

@@ -133,3 +133,22 @@ describe('TestGenericGearIsConfiguredBeforePlacing', () => {
     expect(screen.getByRole('button', { name: 'Switch: one more ports' })).toBeTruthy()
   })
 })
+
+describe('TestLibraryOffersOnlyWhatTheRackTakes', () => {
+  it('hides 19-inch gear from a 10-inch rack, and keeps generic shapes', () => {
+    render(<Palette templates={[]} rackWidth={10} />)
+
+    // every vendor row in the catalogue is 19" rack gear
+    expect(screen.queryByTestId('catalog-entry-unifi-usw-24')).toBeNull()
+    expect(screen.queryByText('UNIFI')).toBeNull()
+    // a generic shape is not a product and fits whatever it is dropped into
+    expect(screen.getByTestId('catalog-entry-generic-switch')).toBeTruthy()
+    expect(screen.getByTestId('palette-switch-1')).toBeTruthy()
+  })
+
+  it('offers everything to a 19-inch rack', () => {
+    render(<Palette templates={[]} rackWidth={19} />)
+    expect(screen.getByTestId('catalog-entry-unifi-usw-24')).toBeTruthy()
+    expect(screen.getByTestId('catalog-entry-generic-switch')).toBeTruthy()
+  })
+})

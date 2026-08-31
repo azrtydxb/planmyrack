@@ -43,14 +43,25 @@ export interface Rect {
   top: number
   height: number
   width: number
+  left: number
 }
 
-/** Rack units run bottom-up, the canvas runs top-down; this is the one place that flips. */
+/**
+ * Rack units run bottom-up, the canvas runs top-down; this is the one place that flips.
+ *
+ * A 10" device in a 19" rack takes half the width and sits in the half its column names — two of
+ * them fit across one unit on extended mounts.
+ */
 export function deviceRect(rack: Rack, device: Device): Rect {
+  const full = RACK_INNER_PX[rack.width]
+  const half =
+    device.column !== undefined && device.width !== undefined && device.width < rack.width
+  const width = half ? Math.floor(full / 2) : full
   return {
     top: (rack.units - device.posU - device.heightU) * U_PX,
     height: device.heightU * U_PX,
-    width: RACK_INNER_PX[rack.width],
+    width,
+    left: half && device.column === 1 ? full - width : 0,
   }
 }
 

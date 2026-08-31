@@ -4,7 +4,7 @@ import { createMemoryStore } from '@planmyrack/storage'
 import { getByGestureTestId } from 'react-native-gesture-handler/jest-utils'
 import { RackEditorScreen } from '../src/screens/RackEditorScreen'
 import { addDevice, newDevice, newLayout, newRack } from '@planmyrack/core'
-import { U_PX } from '../src/canvas/metrics'
+import { RACK_INNER_PX, U_PX } from '../src/canvas/metrics'
 import { positionFromPoint, useDragPlacement } from '../src/canvas/useDragPlacement'
 import { useDragSource } from '../src/canvas/useDragSource'
 import type { Layout, Rack } from '@planmyrack/core'
@@ -13,7 +13,7 @@ import type { RackHit } from '../src/canvas/useDragPlacement'
 const rack: Rack = newRack({ id: 'R', units: 12 })
 const empty: Layout = newLayout('drag', [rack])
 const resolve = (hit: RackHit | null) => () => hit
-const front: RackHit = { rack, face: 'front', topY: 0 }
+const front: RackHit = { rack, face: 'front', topY: 0, leftX: 0 }
 
 describe('TestDropSnapsToHalfU', () => {
   it('centres a 2U device on the finger, snapped to the half unit', () => {
@@ -53,7 +53,7 @@ describe('TestDropFindsNearestFreeSlotElseRefuses — through the UI', () => {
     const { result } = renderHook(() =>
       useDragPlacement({
         layout: full,
-        resolve: resolve({ rack: small, face: 'front', topY: 0 }),
+        resolve: resolve({ rack: small, face: 'front', topY: 0, leftX: 0 }),
         onCommit,
       }),
     )
@@ -107,7 +107,7 @@ describe('TestMoveDeviceAcrossRackAndFaceKeepsLinks — dragged', () => {
     const { result } = renderHook(() =>
       useDragPlacement({
         layout: seeded,
-        resolve: resolve({ rack, face: 'rear', topY: 0 }),
+        resolve: resolve({ rack, face: 'rear', topY: 0, leftX: 0 }),
         onCommit,
       }),
     )
@@ -179,5 +179,61 @@ describe('TestDragIsWiredToTheConsole', () => {
     mountConsole()
     // a worklet handler would be a no-op against React state, and the drop would do nothing
     expect(getByGestureTestId('drag-device-d1').config.runOnJS).toBe(true)
+  })
+})
+
+describe('TestNarrowGearDropsIntoTheHalfUnderThePointer', () => {
+  const wideRack = newRack({ id: 'W', units: 12, width: 19 })
+  const hit: RackHit = { rack: wideRack, face: 'front', topY: 0, leftX: 0 }
+  const empty: Layout = newLayout('halves', [wideRack])
+
+  it('takes the left half on the left, and the right half on the right', () => {
+    const onCommit = jest.fn()
+    const { result } = renderHook(() =>
+      useDragPlacement({ layout: empty, resolve: resolve(hit), onCommit }),
+    )
+
+    act(() => result.current.startNew('switch', 1, { x: 20, y: 100 }, { width: 10 }))
+    expect(result.current.drag?.target?.column).toBe(0)
+
+    act(() => result.current.moveTo({ x: RACK_INNER_PX[19] - 20, y: 100 }))
+    expect(result.current.drag?.target?.column).toBe(1)
+
+    act(() => result.current.drop())
+    expect(onCommit.mock.calls[0][0].devices[0]).toMatchObject({ column: 1, width: 10 })
+  })
+
+  it('leaves wide gear spanning the rack, with no half of its own', () => {
+    const onCommit = jest.fn()
+    const { result } = renderHook(() =>
+      useDragPlacement({ layout: empty, resolve: resolve(hit), onCommit }),
+    )
+
+    act(() => result.current.startNew('switch', 1, { x: 20, y: 100 }, { width: 19 }))
+    expect(result.current.drag?.target?.column).toBeUndefined()
+
+    act(() => result.current.drop())
+    expect(onCommit.mock.calls[0][0].devices[0].column).toBeUndefined()
+  })
+
+  it('lets a second narrow device share the unit, in the other half', () => {
+    const onCommit = jest.fn()
+    const { result, rerender } = renderHook(
+      ({ layout }: { layout: Layout }) =>
+        useDragPlacement({ layout, resolve: resolve(hit), onCommit }),
+      { initialProps: { layout: empty } },
+    )
+
+    act(() => result.current.startNew('switch', 1, { x: 20, y: 100 }, { width: 10 }))
+    act(() => result.current.drop())
+    const withLeft = onCommit.mock.calls[0][0] as Layout
+    rerender({ layout: withLeft })
+
+    act(() =>
+      result.current.startNew('switch', 1, { x: RACK_INNER_PX[19] - 20, y: 100 }, { width: 10 }),
+    )
+    const target = result.current.drag?.target
+    expect(target?.valid).toBe(true)
+    expect(target?.posU).toBe(withLeft.devices[0]!.posU)
   })
 })

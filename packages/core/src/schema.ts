@@ -46,6 +46,8 @@ export const deviceSchema = z.object({
   bays: z.number().int().nonnegative().optional(),
   sfp: z.number().int().nonnegative().optional(),
   slots: z.number().int().nonnegative().optional(),
+  width: z.union([z.literal(19), z.literal(10)]).optional(),
+  column: z.union([z.literal(0), z.literal(1)]).optional(),
   host: z.object({ deviceId: z.string().min(1), slot: z.number().int().nonnegative() }).optional(),
 })
 

@@ -1,4 +1,4 @@
-import type { DeviceType, Faceplate } from '@planmyrack/core'
+import type { DeviceType, Faceplate, RackWidth } from '@planmyrack/core'
 
 export interface CatalogEntry {
   id: string
@@ -24,4 +24,9 @@ export interface CatalogEntry {
   sfp?: number
   /** Cut-outs a mount tray offers to single-board computers. */
   slots?: number
+  /**
+   * The rack standard this is built for. Absent on generic shapes, which are not products and
+   * fit whatever rack they are dropped into.
+   */
+  width?: RackWidth
 }

@@ -165,7 +165,7 @@ export const DeviceBox = memo(function DeviceBox({
         onLongPress={() => onLongPress?.(device)}
         style={[
           styles.box,
-          { top: rect.top, height: rect.height, width: rect.width },
+          { top: rect.top, left: rect.left, height: rect.height, width: rect.width },
           selected && styles.selected,
         ]}
       >
@@ -189,8 +189,8 @@ export const DeviceBox = memo(function DeviceBox({
 
 const styles = StyleSheet.create({
   box: {
+    // `left` comes from the rect: narrow gear sits in one half of a 19" rack
     position: 'absolute',
-    left: 0,
     borderRadius: radius.face,
     borderWidth: 1,
     borderColor: hw.faceBorder,
