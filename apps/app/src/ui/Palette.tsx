@@ -95,28 +95,18 @@ function SizeChip({
   accent,
   choice,
   drag,
-  onPress,
 }: {
   label: string
   accent: string
   choice: PaletteChoice
   drag?: DragSource<PaletteChoice>
-  onPress: () => void
 }) {
-  const { gesture, pressWasDrag } = useDragSource(
-    choice,
-    drag,
-    `drag-palette-${choice.type}-${choice.heightU}`,
-  )
+  const { gesture } = useDragSource(choice, drag, `drag-palette-${choice.type}-${choice.heightU}`)
   return (
     <GestureDetector gesture={gesture}>
-      <Pressable
+      <View
         testID={`palette-${choice.type}-${choice.heightU}`}
-        accessibilityRole="button"
         accessibilityLabel={`${label} ${sizeLabel(choice.heightU)}`}
-        onPress={() => {
-          if (!pressWasDrag()) onPress()
-        }}
         style={[styles.sizeChip, { borderLeftColor: accent }]}
       >
         <Mono size={7} tone={colour.icon}>
@@ -125,7 +115,7 @@ function SizeChip({
         <Text numberOfLines={1} style={styles.sizeName}>
           {label}
         </Text>
-      </Pressable>
+      </View>
     </GestureDetector>
   )
 }
@@ -136,7 +126,6 @@ function Row({
   ports,
   accent,
   testID,
-  onPress,
   stepper,
   choice,
   drag,
@@ -146,15 +135,14 @@ function Row({
   ports: number
   accent: string
   testID: string
-  onPress: () => void
   stepper?: ReactNode
   choice: PaletteChoice
   drag?: DragSource<PaletteChoice>
 }) {
-  const { gesture, pressWasDrag } = useDragSource(choice, drag, `drag-${testID}`)
+  const { gesture } = useDragSource(choice, drag, `drag-${testID}`)
   return (
     <GestureDetector gesture={gesture}>
-      <View style={styles.row}>
+      <View accessibilityLabel={name} style={styles.row}>
         <Thumb ports={ports} />
         <View style={styles.rowText}>
           <Text numberOfLines={1} style={styles.rowName}>
@@ -165,31 +153,25 @@ function Row({
           </Mono>
           {stepper}
         </View>
-        <Pressable
-          testID={testID}
-          accessibilityRole="button"
-          accessibilityLabel={name}
-          onPress={() => {
-            if (!pressWasDrag()) onPress()
-          }}
-          style={[styles.add, { borderColor: accent }]}
-        >
-          <Text style={[styles.addGlyph, { color: accent }]}>+</Text>
-        </Pressable>
+        <View testID={testID} style={[styles.grip, { borderColor: accent }]}>
+          <Text style={[styles.gripGlyph, { color: accent }]}>⠿</Text>
+        </View>
       </View>
     </GestureDetector>
   )
 }
 
 /** Catalogue and saved gear, grouped by vendor as the design lays it out. */
+/**
+ * The library. Nothing here places a device on its own: gear is dragged onto a rack face, which
+ * is the only way to say where it goes. A tap used to drop it into the first free slot, which is
+ * rarely where anyone wanted it.
+ */
 export function Palette({
   templates = [],
-  onPick,
   drag,
 }: {
   templates?: Template[]
-  onPick: (choice: PaletteChoice) => void
-  /** Set by the console so a row can be dragged onto a rack instead of tapped. */
   drag?: DragSource<PaletteChoice>
 }) {
   const [tab, setTab] = useState<'catalogue' | 'saved'>('catalogue')
@@ -273,7 +255,6 @@ export function Palette({
                       .join(' · ')}
                     choice={templateChoice(template)}
                     drag={drag}
-                    onPress={() => onPick(templateChoice(template))}
                   />
                 ))}
             </View>
@@ -297,7 +278,6 @@ export function Palette({
                         accent={spec.defaultColour}
                         choice={{ type: spec.type, heightU: size }}
                         drag={drag}
-                        onPress={() => onPick({ type: spec.type, heightU: size })}
                       />
                     )),
                 )}
@@ -356,7 +336,6 @@ export function Palette({
                         }
                         choice={entryChoice(chosen)}
                         drag={drag}
-                        onPress={() => onPick(entryChoice(chosen))}
                       />
                     )
                   })}
@@ -398,7 +377,7 @@ const styles = StyleSheet.create({
   },
   rowText: { flex: 1, gap: 2 },
   rowName: { fontFamily: font.uiBold, fontSize: 13, color: colour.text },
-  add: {
+  grip: {
     width: TOUCH,
     height: TOUCH,
     borderRadius: TOUCH / 2,
@@ -421,7 +400,7 @@ const styles = StyleSheet.create({
   stepGlyph: { fontFamily: font.uiBold, fontSize: 15, color: colour.textSecondary, lineHeight: 17 },
   stepValue: { minWidth: 42, alignItems: 'center' },
   stepNumber: { fontFamily: font.uiBold, fontSize: 13, color: colour.text },
-  addGlyph: { fontFamily: font.uiBold, fontSize: 15, lineHeight: 17 },
+  gripGlyph: { fontFamily: font.uiBold, fontSize: 13, lineHeight: 15 },
   thumb: {
     width: 46,
     height: 22,

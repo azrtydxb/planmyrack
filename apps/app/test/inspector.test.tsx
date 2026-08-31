@@ -150,6 +150,29 @@ describe('TestRapidEditsDoNotSelfConflict', () => {
   })
 })
 
+describe('TestDeviceCanBeDeletedWithoutHunting', () => {
+  it('puts Delete above the fields, not at the end of a scrolling panel', () => {
+    const onDelete = jest.fn()
+    render(<Inspector device={device('switch')} onChange={jest.fn()} onDelete={onDelete} />)
+
+    const rendered = screen.UNSAFE_root
+    const labels: string[] = []
+    const walk = (node: { props?: Record<string, unknown>; children?: unknown[] }) => {
+      const label = node.props?.accessibilityLabel
+      if (typeof label === 'string') labels.push(label)
+      for (const child of (node.children ?? []) as typeof labels) {
+        if (typeof child === 'object' && child !== null) walk(child as never)
+      }
+    }
+    walk(rendered as never)
+
+    expect(labels).toContain('Delete')
+    expect(labels.indexOf('Delete')).toBeLessThan(labels.indexOf('Notes'))
+    fireEvent.press(screen.getByRole('button', { name: 'Delete' }))
+    expect(onDelete).toHaveBeenCalled()
+  })
+})
+
 describe('TestOneEditWritesOnce', () => {
   it('does not autosave in a loop after the store returns a new revision', async () => {
     // found by watching the running app: revisions climbed about twice a second with nobody

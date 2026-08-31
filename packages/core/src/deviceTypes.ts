@@ -51,6 +51,11 @@ export const DEVICE_TYPES: Record<DeviceType, DeviceTypeSpec> = {
   patch: spec('patch', 'Patch panel', [1, 2], [24, 48], [0, 0], false, '#64748b'),
   pdu: spec('pdu', 'PDU', [1, 2], [0, 2], [8, 24], false, '#ef4444'),
   ups: spec('ups', 'UPS', [2, 3, 4], [1, 2], [0, 8], true, '#f97316'),
+  // A tray of cut-outs that single-board computers bolt into. It has no ports itself; the
+  // boards it carries have their own.
+  mount: spec('mount', 'SBC mount', [1, 2], [0, 0], [0, 0], false, '#8b5cf6'),
+  // What goes in a mount: a Pi-sized board, one or more network ports of its own.
+  sbc: spec('sbc', 'Single-board computer', [1], [1, 4], [0, 0], true, '#14b8a6'),
   shelf: spec('shelf', 'Shelf', [1, 2], [0, 0], [0, 0], false, '#78716c'),
   blank: spec('blank', 'Blank panel', [0.5, 1, 2], [0, 0], [0, 0], false, '#3f3f46'),
   hooks: spec('hooks', 'Cable mgmt (hooks)', [0.5, 1], [0, 0], [0, 0], false, '#0ea5e9'),

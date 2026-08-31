@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
@@ -108,32 +108,6 @@ export function RackEditorScreen({
 
   // Phones page through one rack at a time; wider screens show them side by side.
   const visible: Layout = wide ? layout : { ...layout, racks: activeRack ? [activeRack] : [] }
-
-  const place = useCallback(
-    (choice: PaletteChoice) => {
-      const target = activeRack ?? layout.racks[0]
-      if (!target) return
-      editor.apply((current) =>
-        addDevice(
-          current,
-          newDevice({
-            rackId: target.id,
-            face,
-            posU: 0,
-            heightU: choice.heightU,
-            type: choice.type,
-            ...(choice.name ? { name: choice.name } : {}),
-            ...(choice.ports === undefined ? {} : { ports: choice.ports }),
-            ...(choice.outlets === undefined ? {} : { outlets: choice.outlets }),
-            ...(choice.watts === undefined ? {} : { watts: choice.watts }),
-            ...(choice.colour ? { colour: choice.colour } : {}),
-          }),
-        ),
-      )
-      if (!wide) setTab('racks')
-    },
-    [activeRack, editor, face, layout.racks, wide],
-  )
 
   /**
    * Dragging is the way the spec asks for equipment to be placed: pick a row up, drop it on a
@@ -347,7 +321,7 @@ export function RackEditorScreen({
       case 'cables':
         return cableSchedule
       case 'library':
-        return <Palette templates={templates} onPick={place} drag={dragFromLibrary} />
+        return <Palette templates={templates} drag={dragFromLibrary} />
       case 'stats':
         return stats
       case 'settings':
@@ -394,7 +368,7 @@ export function RackEditorScreen({
 
         {wide && (roomForBothPanels || tab === 'library') && !(sidePanel && !roomForBothPanels) ? (
           <View testID="library-panel" style={styles.libraryPanel}>
-            <Palette templates={templates} onPick={place} drag={dragFromLibrary} />
+            <Palette templates={templates} drag={dragFromLibrary} />
           </View>
         ) : null}
 

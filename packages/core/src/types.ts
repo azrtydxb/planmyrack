@@ -10,6 +10,8 @@ export type DeviceType =
   | 'server'
   | 'gateway'
   | 'switch'
+  | 'mount'
+  | 'sbc'
   | 'patch'
   | 'pdu'
   | 'ups'
@@ -60,6 +62,16 @@ export interface Device {
   bays?: number
   /** Uplink cages to draw when faceplate is 'sfp'. */
   sfp?: number
+  /**
+   * How many single-board computers this device carries. A rack mount tray is a plate with one
+   * or more cut-outs; what goes in them is a device in its own right, with its own ports.
+   */
+  slots?: number
+  /**
+   * Set when this device rides in another device's slot rather than on the rails. It has no
+   * position of its own: `posU`, `heightU` and `face` are the host's.
+   */
+  host?: { deviceId: string; slot: number }
 }
 
 export interface LinkEnd {

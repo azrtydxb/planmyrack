@@ -1,6 +1,13 @@
 /** A device cannot go where it was asked to go — the caller refuses the drop rather than overlapping. */
 export class PlacementError extends Error {
-  readonly code: 'no-room' | 'no-such-device' | 'no-such-rack' | 'no-such-port' | 'would-strand'
+  readonly code:
+    | 'no-room'
+    | 'no-such-device'
+    | 'no-such-rack'
+    | 'no-such-port'
+    | 'would-strand'
+    | 'no-such-slot'
+    | 'slot-taken'
 
   constructor(code: PlacementError['code'], message: string) {
     super(message)

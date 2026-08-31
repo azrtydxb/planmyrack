@@ -12,9 +12,18 @@ export interface Probe {
   heightU: number
 }
 
-/** Two devices clash when they share a rack face and their unit ranges overlap. */
+/** A device that rides in another device's slot, rather than on the rails. */
+export const isHosted = (device: Device): boolean => device.host !== undefined
+
+/** Devices mounted on the rails: the ones a unit range can clash with. */
+export const railMounted = (devices: Device[]): Device[] => devices.filter((d) => !isHosted(d))
+
+/**
+ * Two devices clash when they share a rack face and their unit ranges overlap. A board bolted to
+ * a mount has no unit range of its own — it sits in the mount's — so it is never in the way.
+ */
 export function collides(devices: Device[], probe: Probe): boolean {
-  return devices.some(
+  return railMounted(devices).some(
     (d) =>
       d.id !== probe.id &&
       d.rackId === probe.rackId &&
@@ -61,8 +70,11 @@ export interface RackStats {
 export function rackStats(layout: Layout, rackId: string): RackStats {
   const rack = layout.racks.find((r) => r.id === rackId)
   const devices = layout.devices.filter((d) => d.rackId === rackId)
+  // A board on a mount takes no units of its own, but its watts and its weight are real.
   const used = (face: Face) =>
-    devices.filter((d) => d.face === face).reduce((sum, d) => sum + d.heightU, 0)
+    railMounted(devices)
+      .filter((d) => d.face === face)
+      .reduce((sum, d) => sum + d.heightU, 0)
   const ids = new Set(devices.map((d) => d.id))
 
   const unitsUsedFront = used('front')

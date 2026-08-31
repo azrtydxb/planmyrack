@@ -22,6 +22,14 @@ export const SLOP = 6
  */
 export function useDragSource<T>(subject: T, drag?: DragSource<T>, testId?: string) {
   /**
+   * Read at gesture time, not captured when the gesture was built. A library row's subject
+   * changes as its stepper is turned: capturing it dragged the port count the row had when it
+   * first rendered.
+   */
+  const latest = useRef(subject)
+  latest.current = subject
+
+  /**
    * Set the moment the pan activates, cleared at the start of every press. Web fires a click
    * after the pointer comes up even when the gesture was a drag, so without this a library row
    * dragged onto a rack placed the device twice: once where it was dropped, once wherever the
@@ -41,14 +49,14 @@ export function useDragSource<T>(subject: T, drag?: DragSource<T>, testId?: stri
         })
         .onStart((event) => {
           dragged.current = true
-          drag?.onStart(subject, { x: event.absoluteX, y: event.absoluteY })
+          drag?.onStart(latest.current, { x: event.absoluteX, y: event.absoluteY })
         })
         .onUpdate((event) => drag?.onMove({ x: event.absoluteX, y: event.absoluteY }))
         .onEnd(() => drag?.onEnd())
         .onFinalize((_event, success) => {
           if (!success) drag?.onCancel()
         }),
-    [drag, subject, testId],
+    [drag, testId],
   )
 
   /** True when the press that just landed is the tail of a drag and should be ignored. */

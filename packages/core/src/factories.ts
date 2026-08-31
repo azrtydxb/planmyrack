@@ -57,5 +57,7 @@ export function newDevice(input: NewDeviceInput): Device {
     ...(input.faceplate ? { faceplate: input.faceplate } : {}),
     ...(input.bays === undefined ? {} : { bays: input.bays }),
     ...(input.sfp === undefined ? {} : { sfp: input.sfp }),
+    ...(input.slots === undefined ? {} : { slots: input.slots }),
+    ...(input.host ? { host: input.host } : {}),
   }
 }

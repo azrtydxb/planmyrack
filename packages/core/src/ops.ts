@@ -22,6 +22,43 @@ const touched = (layout: Layout, patch: Partial<Layout>): Layout => ({
   updatedAt: new Date().toISOString(),
 })
 
+/**
+ * Bolts a board into one of a mount's cut-outs. The board takes no rack units of its own — it
+ * rides in the mount's — so it is placed by slot rather than by position.
+ */
+export function addToMount(layout: Layout, host: Device, slot: number, device: Device): Layout {
+  const slots = host.slots ?? 0
+  if (!Number.isInteger(slot) || slot < 0 || slot >= slots) {
+    throw new PlacementError('no-such-slot', `${host.name} has no slot ${slot + 1}`)
+  }
+  const taken = layout.devices.find((d) => d.host?.deviceId === host.id && d.host.slot === slot)
+  if (taken) {
+    throw new PlacementError('slot-taken', `${taken.name} is already in slot ${slot + 1}`)
+  }
+  const guest: Device = {
+    ...device,
+    rackId: host.rackId,
+    face: host.face,
+    posU: host.posU,
+    heightU: host.heightU,
+    host: { deviceId: host.id, slot },
+  }
+  return touched(layout, { devices: [...layout.devices, guest] })
+}
+
+/** The boards riding in a mount, in slot order. */
+export const guestsOf = (layout: Layout, hostId: string): Device[] =>
+  layout.devices
+    .filter((d) => d.host?.deviceId === hostId)
+    .sort((a, b) => (a.host?.slot ?? 0) - (b.host?.slot ?? 0))
+
+/** The first cut-out with nothing in it, or null when the mount is full. */
+export function freeSlot(layout: Layout, host: Device): number | null {
+  const taken = new Set(guestsOf(layout, host.id).map((d) => d.host!.slot))
+  for (let slot = 0; slot < (host.slots ?? 0); slot++) if (!taken.has(slot)) return slot
+  return null
+}
+
 /** Places a device at the nearest free slot, or throws when the face cannot hold it. */
 export function addDevice(layout: Layout, device: Device): Layout {
   const rack = rackOf(layout, device.rackId)
@@ -50,7 +87,14 @@ export function moveDevice(
     )
   }
   return touched(layout, {
-    devices: layout.devices.map((d) => (d.id === deviceId ? { ...d, ...target, posU } : d)),
+    devices: layout.devices.map((d) =>
+      d.id === deviceId
+        ? { ...d, ...target, posU }
+        : // the boards ride along: they have no position apart from their mount's
+          d.host?.deviceId === deviceId
+          ? { ...d, ...target, posU }
+          : d,
+    ),
   })
 }
 
@@ -82,8 +126,13 @@ export function updateDevice(layout: Layout, deviceId: string, patch: Partial<De
   )
 }
 
+/** Removing a mount takes the boards bolted to it: they have nowhere to be without it. */
 export function removeDevice(layout: Layout, deviceId: string): Layout {
-  return pruneLinks(touched(layout, { devices: layout.devices.filter((d) => d.id !== deviceId) }))
+  return pruneLinks(
+    touched(layout, {
+      devices: layout.devices.filter((d) => d.id !== deviceId && d.host?.deviceId !== deviceId),
+    }),
+  )
 }
 
 export function addRack(layout: Layout, rack: Rack): Layout {

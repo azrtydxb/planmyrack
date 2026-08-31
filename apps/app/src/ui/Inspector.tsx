@@ -55,6 +55,14 @@ export function Inspector({
         ].join(' · ')}
       </Mono>
 
+      {/* Duplicate, Template and Delete sit here rather than at the end: on a phone in landscape
+          the panel scrolls, and Delete was below the fold of a long inspector. */}
+      <View style={styles.actions}>
+        {onDuplicate ? <Button label="Duplicate" tone="soft" onPress={onDuplicate} /> : null}
+        {onSaveTemplate ? <Button label="Template" onPress={onSaveTemplate} /> : null}
+        {onDelete ? <Button label="Delete" tone="danger" onPress={onDelete} /> : null}
+      </View>
+
       <TextField label="Name" value={device.name} onChange={(name) => onChange({ name })} />
 
       <View style={styles.row}>
@@ -187,12 +195,6 @@ export function Inspector({
           })}
         </View>
       ) : null}
-
-      <View style={styles.actions}>
-        {onDuplicate ? <Button label="Duplicate" tone="soft" onPress={onDuplicate} /> : null}
-        {onSaveTemplate ? <Button label="Template" onPress={onSaveTemplate} /> : null}
-        {onDelete ? <Button label="Delete" tone="danger" onPress={onDelete} /> : null}
-      </View>
     </View>
   )
 }
