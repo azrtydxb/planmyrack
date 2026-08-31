@@ -5,12 +5,13 @@ import { CableOverlay } from './CableOverlay'
 import { DotGrid } from './DotGrid'
 import { CAP_PX, RACK_INNER_PX, RAIL_PX, SCALE_PX, rackHeightPx } from './metrics'
 import { CanvasGestures } from './CanvasGestures'
-import { bodyOrigins, canvasPoint, rackUnder } from './origins'
-import type { Origin } from './origins'
+import { bodyOrigins, canvasPoint, rackUnder, slotUnder } from './origins'
+import type { Origin, SlotHit } from './origins'
 import { Mono } from '../ui/primitives'
 import { TOUCH, colour, font, radius } from '../ui/theme'
 import type { DragSource } from './useDragSource'
 import type { Point, RackHit } from './useDragPlacement'
+import { isHosted } from '@planmyrack/core'
 import type { Device, Face, Layout } from '@planmyrack/core'
 
 /**
@@ -21,6 +22,8 @@ import type { Device, Face, Layout } from '@planmyrack/core'
 export interface CanvasGeometry {
   toLocal(screen: Point): Point
   resolve(local: Point): RackHit | null
+  /** The mount cut-out under the point, when the pointer is over one. */
+  resolveSlot(local: Point): SlotHit | null
 }
 
 const GAP = 28
@@ -100,9 +103,14 @@ export function RackCanvas({
     [face, layout.racks, offsets],
   )
 
+  const resolveSlot = useCallback(
+    (local: Point): SlotHit | null => slotUnder(layout, face, offsets, local),
+    [face, layout, offsets],
+  )
+
   useEffect(() => {
-    onGeometry?.({ toLocal, resolve })
-  }, [onGeometry, resolve, toLocal])
+    onGeometry?.({ toLocal, resolve, resolveSlot })
+  }, [onGeometry, resolve, resolveSlot, toLocal])
   const contentHeight = 32 + CAP_PX * 2 + Math.max(0, ...layout.racks.map(rackHeightPx))
   const contentWidth =
     32 +
@@ -170,8 +178,9 @@ export function RackCanvas({
                       rack={rack}
                       layout={layout}
                       face={face}
+                      // a board bolted to a mount is drawn by its mount, not on the rails
                       devices={layout.devices.filter(
-                        (d) => d.rackId === rack.id && d.face === face,
+                        (d) => d.rackId === rack.id && d.face === face && !isHosted(d),
                       )}
                       selectedId={selectedId}
                       dropHint={dropHint?.rackId === rack.id ? dropHint : null}

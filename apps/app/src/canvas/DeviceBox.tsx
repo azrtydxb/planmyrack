@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { GestureDetector } from 'react-native-gesture-handler'
 import { LinearGradient } from 'expo-linear-gradient'
 import { sizeLabel } from '@planmyrack/core'
+import { MountedBox } from './MountedBox'
 import { PortStrip } from './PortStrip'
 import { deviceRect, labelGutter } from './metrics'
 import { useDragSource } from './useDragSource'
@@ -67,6 +68,8 @@ export const DeviceBox = memo(function DeviceBox({
   rack,
   layout,
   selected,
+  guests = [],
+  selectedId,
   onPress,
   onPortPress,
   onLongPress,
@@ -79,6 +82,9 @@ export const DeviceBox = memo(function DeviceBox({
   onPress?: (id: string) => void
   onPortPress?: (device: Device, port: number, kind: 'network' | 'power') => void
   onLongPress?: (device: Device) => void
+  /** The boards bolted into this device, when it is a mount. */
+  guests?: Device[]
+  selectedId?: string | null
   drag?: DragSource<Device>
 }) {
   const { gesture: dragGesture } = useDragSource(device, drag, `drag-device-${device.id}`)
@@ -128,6 +134,19 @@ export const DeviceBox = memo(function DeviceBox({
         boxHeight={rect.height}
         onPortPress={onPortPress}
       />
+
+      {device.slots ? (
+        <MountedBox
+          mount={device}
+          guests={guests}
+          layout={layout}
+          boxWidth={rect.width}
+          boxHeight={rect.height}
+          selectedId={selectedId}
+          onSelect={onPress}
+          onPortPress={onPortPress}
+        />
+      ) : null}
     </>
   )
 

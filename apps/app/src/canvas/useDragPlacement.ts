@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from 'react'
 import {
   PlacementError,
   addDevice,
+  addToMount,
   findFreeSlot,
   moveDevice,
   newDevice,
@@ -28,6 +29,8 @@ export interface DragTarget {
   posU: number
   heightU: number
   valid: boolean
+  /** Set when the target is a cut-out on a mount rather than a place on the rails. */
+  slot?: { mountId: string; index: number }
 }
 
 export interface DragState {
@@ -59,10 +62,13 @@ export function positionFromPoint(
 export function useDragPlacement({
   layout,
   resolve,
+  resolveSlot,
   onCommit,
 }: {
   layout: Layout
   resolve: (point: Point) => RackHit | null
+  /** A mount cut-out under the pointer: a board dropped there is bolted in rather than racked. */
+  resolveSlot?: (point: Point) => { mount: Device; slot: number; taken: boolean } | null
   onCommit: (next: Layout) => void
 }) {
   const [drag, setDrag] = useState<DragState | null>(null)
@@ -75,6 +81,18 @@ export function useDragPlacement({
 
   const targetFor = useCallback(
     (state: DragState, point: Point): DragTarget | null => {
+      // a board over an empty cut-out lands there; everything else lands on the rails
+      const slot = state.type === 'sbc' ? resolveSlot?.(point) : null
+      if (slot) {
+        return {
+          rackId: slot.mount.rackId,
+          face: slot.mount.face,
+          posU: slot.mount.posU,
+          heightU: slot.mount.heightU,
+          valid: !slot.taken,
+          slot: { mountId: slot.mount.id, index: slot.slot },
+        }
+      }
       const hit = resolve(point)
       if (!hit) return null
       const wanted = positionFromPoint(hit.rack, hit.topY, point.y, state.heightU)
@@ -92,7 +110,7 @@ export function useDragPlacement({
         valid: free !== null,
       }
     },
-    [layout.devices, resolve],
+    [layout.devices, resolve, resolveSlot],
   )
 
   const startNew = useCallback(
@@ -142,6 +160,27 @@ export function useDragPlacement({
 
     const { rackId, face, posU } = current.target
     try {
+      const landing = current.target.slot
+      if (landing) {
+        const mount = layout.devices.find((d) => d.id === landing.mountId)
+        if (!mount) return
+        onCommit(
+          addToMount(
+            layout,
+            mount,
+            landing.index,
+            newDevice({
+              ...current.template,
+              rackId: mount.rackId,
+              face: mount.face,
+              posU: mount.posU,
+              heightU: mount.heightU,
+              type: current.type,
+            }),
+          ),
+        )
+        return
+      }
       if (current.kind === 'move' && current.deviceId) {
         onCommit(moveDevice(layout, current.deviceId, { rackId, face, posU }))
       } else {

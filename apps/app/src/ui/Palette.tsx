@@ -20,6 +20,8 @@ export interface PaletteChoice {
   outlets?: number
   watts?: number
   colour?: string
+  /** Cut-outs, for a mount tray. */
+  slots?: number
 }
 
 /** Miniature faceplate, so a library row reads as the hardware it will place. */
@@ -202,6 +204,7 @@ export function Palette({
     outlets: entry.outlets,
     watts: entry.watts,
     colour: entry.colour,
+    ...(entry.slots === undefined ? {} : { slots: entry.slots }),
   })
 
   return (
@@ -295,15 +298,27 @@ export function Palette({
                   {shown.map((entry) => {
                     const spec = DEVICE_TYPES[entry.type]
                     // Generic gear is configured before it is placed; a known model is what it is.
+                    // A mount tray is defined by its cut-outs; a PDU by its outlets; everything
+                    // else by its ports. Step whichever count the device is really described by.
+                    const field =
+                      entry.type === 'mount'
+                        ? 'slots'
+                        : spec.maxOutlets > spec.maxPorts
+                          ? 'outlets'
+                          : 'ports'
                     const countable =
-                      entry.vendor === 'Generic' && (spec.maxPorts > 0 || spec.maxOutlets > 0)
-                    // A PDU has a couple of network ports but is defined by its outlets; step
-                    // whichever count the device is really described by.
-                    const isOutlets = spec.maxOutlets > spec.maxPorts
-                    const count = counts[entry.id] ?? (isOutlets ? entry.outlets : entry.ports)
-                    const chosen = countable
-                      ? { ...entry, [isOutlets ? 'outlets' : 'ports']: count }
-                      : entry
+                      entry.vendor === 'Generic' &&
+                      (field === 'slots' || spec.maxPorts > 0 || spec.maxOutlets > 0)
+                    const isOutlets = field === 'outlets'
+                    const max = field === 'slots' ? 4 : isOutlets ? spec.maxOutlets : spec.maxPorts
+                    const count =
+                      counts[entry.id] ??
+                      (field === 'slots'
+                        ? (entry.slots ?? 1)
+                        : isOutlets
+                          ? entry.outlets
+                          : entry.ports)
+                    const chosen = countable ? { ...entry, [field]: count } : entry
 
                     return (
                       <Row
@@ -324,10 +339,10 @@ export function Palette({
                           countable ? (
                             <Stepper
                               owner={entry.model}
-                              label={isOutlets ? 'outlets' : 'ports'}
+                              label={field === 'slots' ? 'slots' : isOutlets ? 'outlets' : 'ports'}
                               value={count}
-                              min={0}
-                              max={isOutlets ? spec.maxOutlets : spec.maxPorts}
+                              min={field === 'slots' ? 1 : 0}
+                              max={max}
                               onChange={(next) =>
                                 setCounts((current) => ({ ...current, [entry.id]: next }))
                               }

@@ -152,4 +152,22 @@ export function portRects(device: Device, boxWidth: number, boxHeight: number): 
   return rects
 }
 
+/**
+ * The cut-outs across a mount tray, left to right. A board bolted into one is drawn inside its
+ * rectangle, with its own name and its own ports.
+ */
+export function slotRects(device: Device, boxWidth: number, boxHeight: number): PortRect[] {
+  const count = device.slots ?? 0
+  if (count <= 0) return []
+  const gap = 4
+  const width = Math.floor((boxWidth - FACE_PAD * 2 - gap * (count - 1)) / count)
+  const height = Math.max(0, boxHeight - FACE_PAD * 2)
+  return Array.from({ length: count }, (_, i) => ({
+    x: FACE_PAD + i * (width + gap),
+    y: FACE_PAD,
+    width,
+    height,
+  }))
+}
+
 export const rackHeightPx = (rack: Rack): number => rack.units * U_PX

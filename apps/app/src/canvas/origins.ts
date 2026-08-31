@@ -1,5 +1,5 @@
-import { RACK_INNER_PX, U_PX } from './metrics'
-import type { RackWidth } from '@planmyrack/core'
+import { RACK_INNER_PX, U_PX, deviceRect, slotRects } from './metrics'
+import type { Device, Face, Layout, RackWidth } from '@planmyrack/core'
 
 export interface Origin {
   x: number
@@ -67,4 +67,50 @@ export function canvasPoint(screen: Origin, view: CanvasView): Origin {
     x: (screen.x + view.scroll.x - view.origin.x - view.translate.x) / view.scale,
     y: (screen.y + view.scroll.y - view.origin.y - view.translate.y) / view.scale,
   }
+}
+
+/** A tray cut-out under the pointer, and whether anything is already bolted into it. */
+export interface SlotHit {
+  mount: Device
+  slot: number
+  taken: boolean
+}
+
+/**
+ * The cut-out under a point in canvas space. Mount trays are drawn inside a rack, so their slots
+ * live at the rack's origin plus the device's own rectangle.
+ */
+export function slotUnder(
+  layout: Layout,
+  face: Face,
+  origins: Record<string, Origin>,
+  point: Origin,
+): SlotHit | null {
+  for (const rack of layout.racks) {
+    const origin = origins[rack.id]
+    if (!origin) continue
+    const mounts = layout.devices.filter(
+      (d) => d.rackId === rack.id && d.face === face && !d.host && (d.slots ?? 0) > 0,
+    )
+    for (const mount of mounts) {
+      const box = deviceRect(rack, mount)
+      const local = { x: point.x - origin.x, y: point.y - origin.y - box.top }
+      if (local.x < 0 || local.x > box.width || local.y < 0 || local.y > box.height) continue
+      const slots = slotRects(mount, box.width, box.height)
+      for (const [index, rect] of slots.entries()) {
+        if (
+          local.x >= rect.x &&
+          local.x <= rect.x + rect.width &&
+          local.y >= rect.y &&
+          local.y <= rect.y + rect.height
+        ) {
+          const taken = layout.devices.some(
+            (d) => d.host?.deviceId === mount.id && d.host.slot === index,
+          )
+          return { mount, slot: index, taken }
+        }
+      }
+    }
+  }
+  return null
 }

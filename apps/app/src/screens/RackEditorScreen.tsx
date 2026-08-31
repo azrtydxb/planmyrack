@@ -118,6 +118,7 @@ export function RackEditorScreen({
   const placement = useDragPlacement({
     layout,
     resolve: (point) => geometry.current?.resolve(point) ?? null,
+    resolveSlot: (point) => geometry.current?.resolveSlot(point) ?? null,
     onCommit: (next) => editor.apply(() => next),
   })
 
@@ -133,6 +134,7 @@ export function RackEditorScreen({
           ...(choice.outlets === undefined ? {} : { outlets: choice.outlets }),
           ...(choice.watts === undefined ? {} : { watts: choice.watts }),
           ...(choice.colour ? { colour: choice.colour } : {}),
+          ...(choice.slots === undefined ? {} : { slots: choice.slots }),
         })
       },
       onMove: (screen: { x: number; y: number }) => placement.moveTo(toLocal(screen)),

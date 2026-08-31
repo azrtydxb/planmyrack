@@ -16,7 +16,7 @@ const entry = (
   watts = 0,
   colour = COLOURS[0]!,
   source = STRUCTURAL,
-  face: Pick<CatalogEntry, 'faceplate' | 'bays' | 'sfp'> = {},
+  face: Pick<CatalogEntry, 'faceplate' | 'bays' | 'sfp' | 'slots'> = {},
 ): CatalogEntry => ({
   id,
   vendor,
@@ -50,6 +50,11 @@ export const BUNDLED_CATALOG: CatalogEntry[] = [
   entry('generic-ups', 'Generic', 'UPS', 'ups', 2, 1, 4, 0, COLOURS[3]!, GENERIC),
   entry('generic-equipment', 'Generic', 'Equipment', 'equipment', 1, 0, 0, 0, COLOURS[0]!, GENERIC),
   entry('generic-shelf', 'Generic', 'Shelf', 'shelf', 1, 0, 0, 0, COLOURS[8]!, GENERIC),
+  // A tray of cut-outs for single-board computers. They come in many shapes; the number of
+  // cut-outs is dialled in with the stepper rather than shipped as a row per variant.
+  entry('generic-mount', 'Generic', 'SBC mount', 'mount', 1, 0, 0, 0, COLOURS[6]!, GENERIC, {
+    slots: 2,
+  }),
   entry('generic-blank', 'Generic', 'Blank panel', 'blank', 1, 0, 0, 0, COLOURS[8]!, GENERIC),
   entry('generic-hooks', 'Generic', 'Cable hooks', 'hooks', 1, 0, 0, 0, COLOURS[7]!, GENERIC),
   entry('generic-brush', 'Generic', 'Cable brush', 'brush', 1, 0, 0, 0, COLOURS[7]!, GENERIC),
@@ -233,6 +238,12 @@ export const BUNDLED_CATALOG: CatalogEntry[] = [
     faceplate: 'bays',
     bays: 8,
   }),
+
+  // Single-board computers, for the mounts. Port counts are what the boards carry on the board
+  // itself: an Orange Pi 5 Plus has two 2.5GbE, a Raspberry Pi one gigabit.
+  entry('rpi-5', 'Raspberry Pi', 'Pi 5', 'sbc', 1, 1, 0, 0, COLOURS[2]!, STRUCTURAL),
+  entry('rpi-4b', 'Raspberry Pi', 'Pi 4 Model B', 'sbc', 1, 1, 0, 0, COLOURS[2]!, STRUCTURAL),
+  entry('orangepi-5-plus', 'Orange Pi', '5 Plus', 'sbc', 1, 2, 0, 0, COLOURS[3]!, STRUCTURAL),
 
   // Cisco
   entry('cisco-sg350-28', 'Cisco', 'SG350-28', 'switch', 1, 28),

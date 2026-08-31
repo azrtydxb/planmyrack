@@ -96,6 +96,9 @@ forced by real data or a missing door rather than preference.
   that width the library opens on its own tab and closes when a side panel does.
 - **Rack settings.** The design never shows where a rack is renamed, resized or removed. The
   active rack chip carries a ⚙ that opens those controls in the side panel.
+- **Mount trays.** The design has no such thing. A 1U tray of cut-outs carrying Raspberry Pi or
+  Orange Pi boards is drawn as the tray's faceplate divided into slots; a board in one is a
+  device in its own right, with its own name, ports and cables, but no place on the rails.
 - **The workspace scrolls both ways.** The design draws racks that fit. A 12U rack is 408px and
   a phone in landscape is about 390px tall, so the canvas scrolls vertically as well as
   horizontally — and both offsets feed the drop position.

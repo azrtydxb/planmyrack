@@ -20,6 +20,8 @@ export interface CatalogEntry {
   faceplate?: Faceplate
   /** Drive bays, for the models that have them. */
   bays?: number
-  /** SFP/SFP+ uplink cages, counted separately from the RJ45 ports. */
+  /** How many of this device's ports are SFP/SFP+ cages, drawn at the right of the strip. */
   sfp?: number
+  /** Cut-outs a mount tray offers to single-board computers. */
+  slots?: number
 }

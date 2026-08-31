@@ -86,7 +86,9 @@ export function RackFrame({
                   device={device}
                   rack={rack}
                   layout={layout}
+                  guests={layout?.devices.filter((d) => d.host?.deviceId === device.id) ?? []}
                   selected={device.id === selectedId}
+                  selectedId={selectedId}
                   onPress={onSelect}
                   onPortPress={onPortPress}
                   onLongPress={onDeviceLongPress}
