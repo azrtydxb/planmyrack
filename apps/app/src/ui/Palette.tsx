@@ -43,6 +43,51 @@ function Thumb({ ports }: { ports: number }) {
   )
 }
 
+/** −  1U  +  for choosing the height a generic device is placed at. */
+function SizeStepper({
+  owner,
+  sizes,
+  value,
+  onChange,
+}: {
+  owner: string
+  sizes: number[]
+  value: number
+  onChange: (heightU: number) => void
+}) {
+  const at = Math.max(0, sizes.indexOf(value))
+  const step = (delta: number) =>
+    onChange(sizes[Math.min(sizes.length - 1, Math.max(0, at + delta))]!)
+  return (
+    <View style={styles.stepper}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`${owner}: one size smaller`}
+        disabled={at === 0}
+        onPress={() => step(-1)}
+        style={[styles.stepButton, at === 0 && styles.stepButtonOff]}
+      >
+        <Text style={styles.stepGlyph}>−</Text>
+      </Pressable>
+      <View style={styles.stepValue}>
+        <Text style={styles.stepNumber}>{sizeLabel(value)}</Text>
+        <Mono size={6.5} tone={colour.icon}>
+          SIZE
+        </Mono>
+      </View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`${owner}: one size larger`}
+        disabled={at === sizes.length - 1}
+        onPress={() => step(1)}
+        style={[styles.stepButton, at === sizes.length - 1 && styles.stepButtonOff]}
+      >
+        <Text style={styles.stepGlyph}>+</Text>
+      </Pressable>
+    </View>
+  )
+}
+
 /** −  N  +  for setting how many ports (or outlets) a generic device is placed with. */
 function Stepper({
   label,
@@ -94,37 +139,6 @@ function Stepper({
   )
 }
 
-/** One of the plain size chips — the same drag source as a catalogue row. */
-function SizeChip({
-  label,
-  accent,
-  choice,
-  drag,
-}: {
-  label: string
-  accent: string
-  choice: PaletteChoice
-  drag?: DragSource<PaletteChoice>
-}) {
-  const { gesture } = useDragSource(choice, drag, `drag-palette-${choice.type}-${choice.heightU}`)
-  return (
-    <GestureDetector gesture={gesture}>
-      <View
-        testID={`palette-${choice.type}-${choice.heightU}`}
-        accessibilityLabel={`${label} ${sizeLabel(choice.heightU)}`}
-        style={[styles.sizeChip, { borderLeftColor: accent }]}
-      >
-        <Mono size={7} tone={colour.icon}>
-          {sizeLabel(choice.heightU)}
-        </Mono>
-        <Text numberOfLines={1} style={styles.sizeName}>
-          {label}
-        </Text>
-      </View>
-    </GestureDetector>
-  )
-}
-
 function Row({
   name,
   meta,
@@ -144,7 +158,7 @@ function Row({
   choice: PaletteChoice
   drag?: DragSource<PaletteChoice>
 }) {
-  const { gesture } = useDragSource(choice, drag, `drag-${testID}`)
+  const { gesture } = useDragSource(choice, drag, `drag-${testID}`, 'list')
   return (
     <GestureDetector gesture={gesture}>
       <View accessibilityLabel={name} style={styles.row}>
@@ -186,6 +200,8 @@ export function Palette({
   const [query, setQuery] = useState('')
   /** Port or outlet counts the user has dialled in for generic gear, keyed by catalogue id. */
   const [counts, setCounts] = useState<Record<string, number>>({})
+  /** Heights dialled in for generic gear, keyed by catalogue id. */
+  const [heights, setHeights] = useState<Record<string, number>>({})
   const vendors = useMemo(() => [...catalogByVendor(BUNDLED_CATALOG).entries()], [])
   const match = (text: string) => text.toLowerCase().includes(query.trim().toLowerCase())
   // 19" gear has nowhere for its ears to land in a 10" rack, so it is not offered at all. The
@@ -202,9 +218,6 @@ export function Palette({
     watts: template.watts,
     colour: template.colour,
   })
-
-  /** A search that matches no size chip must not leave its heading standing alone. */
-  const sizeChips = Object.values(DEVICE_TYPES).filter((spec) => match(spec.label))
 
   const entryChoice = (entry: CatalogEntry): PaletteChoice => ({
     type: entry.type,
@@ -275,29 +288,6 @@ export function Palette({
           )
         ) : (
           <>
-            <View style={styles.group}>
-              {sizeChips.length > 0 ? (
-                <Mono size={7.5} tone={colour.icon}>
-                  SIZES
-                </Mono>
-              ) : null}
-              <View style={styles.sizes}>
-                {Object.values(DEVICE_TYPES).flatMap((spec) =>
-                  spec.sizes
-                    .filter(() => match(spec.label))
-                    .map((size) => (
-                      <SizeChip
-                        key={`${spec.type}-${size}`}
-                        label={spec.label}
-                        accent={spec.defaultColour}
-                        choice={{ type: spec.type, heightU: size }}
-                        drag={drag}
-                      />
-                    )),
-                )}
-              </View>
-            </View>
-
             {vendors.map(([vendor, entries]) => {
               const shown = entries.filter((e) => fits(e) && match(`${e.vendor} ${e.model}`))
               if (shown.length === 0) return null
@@ -329,7 +319,15 @@ export function Palette({
                         : isOutlets
                           ? entry.outlets
                           : entry.ports)
-                    const chosen = countable ? { ...entry, [field]: count } : entry
+                    // generic gear is a shape: its height is chosen here, which is what the old
+                    // SIZES block of one chip per type and size was for
+                    const sizeable = entry.vendor === 'Generic' && spec.sizes.length > 1
+                    const heightU = heights[entry.id] ?? entry.heightU
+                    const chosen = {
+                      ...entry,
+                      ...(countable ? { [field]: count } : {}),
+                      ...(sizeable ? { heightU } : {}),
+                    }
 
                     return (
                       <Row
@@ -339,7 +337,7 @@ export function Palette({
                         ports={countable ? count : entry.ports}
                         accent={entry.colour}
                         meta={[
-                          sizeLabel(entry.heightU),
+                          sizeable ? null : sizeLabel(entry.heightU),
                           !countable && entry.ports ? `${entry.ports}P` : null,
                           !countable && entry.outlets ? `${entry.outlets} OUT` : null,
                           entry.watts ? `${entry.watts}W` : null,
@@ -347,17 +345,33 @@ export function Palette({
                           .filter(Boolean)
                           .join(' · ')}
                         stepper={
-                          countable ? (
-                            <Stepper
-                              owner={entry.model}
-                              label={field === 'slots' ? 'slots' : isOutlets ? 'outlets' : 'ports'}
-                              value={count}
-                              min={field === 'slots' ? 1 : 0}
-                              max={max}
-                              onChange={(next) =>
-                                setCounts((current) => ({ ...current, [entry.id]: next }))
-                              }
-                            />
+                          countable || sizeable ? (
+                            <View style={styles.steppers}>
+                              {sizeable ? (
+                                <SizeStepper
+                                  owner={entry.model}
+                                  sizes={spec.sizes}
+                                  value={heightU}
+                                  onChange={(next) =>
+                                    setHeights((current) => ({ ...current, [entry.id]: next }))
+                                  }
+                                />
+                              ) : null}
+                              {countable ? (
+                                <Stepper
+                                  owner={entry.model}
+                                  label={
+                                    field === 'slots' ? 'slots' : isOutlets ? 'outlets' : 'ports'
+                                  }
+                                  value={count}
+                                  min={field === 'slots' ? 1 : 0}
+                                  max={max}
+                                  onChange={(next) =>
+                                    setCounts((current) => ({ ...current, [entry.id]: next }))
+                                  }
+                                />
+                              ) : null}
+                            </View>
                           ) : undefined
                         }
                         choice={entryChoice(chosen)}
@@ -437,7 +451,7 @@ const styles = StyleSheet.create({
   },
   thumbPorts: { flexDirection: 'row', gap: 1.5, justifyContent: 'flex-end' },
   thumbPort: { width: 2.5, height: 8, borderRadius: 0.5, backgroundColor: hw.portFree },
-  sizes: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  steppers: { flexDirection: 'row', gap: 10, flexWrap: 'wrap' },
   sizeChip: {
     minHeight: TOUCH,
     justifyContent: 'center',

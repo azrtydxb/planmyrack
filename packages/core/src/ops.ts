@@ -166,6 +166,12 @@ export function removeDevice(layout: Layout, deviceId: string): Layout {
   )
 }
 
+/** The layout's own name. Nothing points at it — devices and cables key off ids. */
+export function renameLayout(layout: Layout, name: string): Layout {
+  const trimmed = name.trim()
+  return trimmed.length === 0 ? layout : touched(layout, { name: trimmed })
+}
+
 export function addRack(layout: Layout, rack: Rack): Layout {
   return touched(layout, { racks: [...layout.racks, rack] })
 }

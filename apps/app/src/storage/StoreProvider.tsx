@@ -21,10 +21,15 @@ interface StoreContextValue {
 const StoreContext = createContext<StoreContextValue | null>(null)
 
 /** How long one attempt at opening the on-device database may take. */
-export const LOCAL_OPEN_TIMEOUT_MS = 2000
+export const LOCAL_OPEN_TIMEOUT_MS = 1500
 
-/** How many attempts before the app says the database is held by another tab. */
-export const LOCAL_OPEN_ATTEMPTS = 4
+/**
+ * How many attempts before the app says the database is held by another tab. Eight of them, with
+ * a pause between, is about fifteen seconds: reloading a page can leave the handle from the page
+ * being replaced held for most of that, and saying "another tab has it" when nothing else is open
+ * is worse than a few more seconds of waiting.
+ */
+export const LOCAL_OPEN_ATTEMPTS = 8
 
 export function StoreProvider({
   children,

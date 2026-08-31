@@ -29,8 +29,8 @@ export function RackSummary({ layout, rackId }: { layout: Layout; rackId: string
 
   return (
     <View testID={`summary-${rackId}`} style={styles.card}>
+      {/* the panel above already says which rack this is; repeating it here read as a bug */}
       <View style={styles.head}>
-        <Text style={styles.name}>{rack.name}</Text>
         <Mono size={8}>{`${rack.units}U · ${rack.width}" · ${stats.deviceCount} DEVICES`}</Mono>
       </View>
 
@@ -57,7 +57,6 @@ const styles = StyleSheet.create({
     borderColor: colour.borderSoft,
   },
   head: { gap: 3 },
-  name: { fontFamily: font.uiBold, fontSize: 15, color: colour.text },
   usage: { gap: 5 },
   usageHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
   usageLabel: { fontFamily: font.ui, fontSize: 12, color: colour.textSecondary },

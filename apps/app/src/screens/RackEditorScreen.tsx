@@ -14,6 +14,7 @@ import {
   partsCsv,
   removeDevice,
   removeRack,
+  renameLayout,
   updateDevice,
   updateRack,
 } from '@planmyrack/core'
@@ -83,6 +84,12 @@ export function RackEditorScreen({
   const insets = useSafeAreaInsets()
 
   const [tab, setTab] = useState<TabKey>('racks')
+  /**
+   * Whether the library panel is open where it lives beside the canvas. On a desktop it always
+   * was, which made the Racks and Library rail buttons show the identical screen; the button
+   * opens and closes it instead.
+   */
+  const [libraryOpen, setLibraryOpen] = useState(true)
   const [face, setFace] = useState<Face>('front')
   const [showCables, setShowCables] = useState(true)
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -306,7 +313,7 @@ export function RackEditorScreen({
               <Text style={styles.panelTitle} numberOfLines={1}>
                 {activeRack.name}
               </Text>
-              <Button small label="Rename" onPress={() => setRenamingRack(activeRack.name)} />
+              <Button small label="Rename rack" onPress={() => setRenamingRack(activeRack.name)} />
             </>
           ) : (
             <>
@@ -400,15 +407,27 @@ export function RackEditorScreen({
         canUndo={editor.canUndo}
         canRedo={editor.canRedo}
         onMore={onOpenSettings}
+        onRename={(next) => editor.apply((current) => renameLayout(current, next))}
         onExport={wide ? () => setTab('stats') : undefined}
       />
 
       <View style={styles.main}>
         {/* 3a hides the rail; without it the cable schedule, the figures and the exports have no
             door on a desktop, so it stays at every width above a phone. */}
-        {wide ? <TabBar rail active={tab} onChange={setTab} /> : null}
+        {wide ? (
+          <TabBar
+            rail
+            active={roomForBothPanels && libraryOpen ? 'library' : tab}
+            onChange={(next) => {
+              if (next === 'library' && roomForBothPanels) setLibraryOpen((open) => !open)
+              else setTab(next)
+            }}
+          />
+        ) : null}
 
-        {wide && (roomForBothPanels || tab === 'library') && !(sidePanel && !roomForBothPanels) ? (
+        {wide &&
+        (roomForBothPanels ? libraryOpen : tab === 'library') &&
+        !(sidePanel && !roomForBothPanels) ? (
           <View testID="library-panel" style={styles.libraryPanel}>
             <Palette templates={templates} rackWidth={activeRack?.width} drag={dragFromLibrary} />
           </View>
@@ -460,9 +479,30 @@ export function RackEditorScreen({
             style={[styles.sidePanel, { width: panelWidth(screenWidth) }]}
           >
             <View style={styles.panelHead}>
-              <Text style={styles.panelTitle} numberOfLines={1}>
-                {activeRack.name}
-              </Text>
+              {renamingRack === null ? (
+                <>
+                  <Text style={styles.panelTitle} numberOfLines={1}>
+                    {activeRack.name}
+                  </Text>
+                  <Button
+                    small
+                    label="Rename rack"
+                    onPress={() => setRenamingRack(activeRack.name)}
+                  />
+                </>
+              ) : (
+                <>
+                  <TextInput
+                    accessibilityLabel="Rack name"
+                    autoFocus
+                    value={renamingRack}
+                    onChangeText={setRenamingRack}
+                    onSubmitEditing={() => saveRackName()}
+                    style={styles.panelInput}
+                  />
+                  <Button small tone="primary" label="Save" onPress={() => saveRackName()} />
+                </>
+              )}
             </View>
             <RackSummary layout={layout} rackId={activeRack.id} />
           </View>

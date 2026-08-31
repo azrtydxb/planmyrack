@@ -24,7 +24,9 @@ export default function RootLayout() {
           >
             {/* Both screens draw their own branded header; a navigator title would repeat it. */}
             <Stack.Screen name="index" options={{ headerShown: false }} />
-            <Stack.Screen name="settings" options={{ title: 'Settings' }} />
+            {/* the navigator's back button showed the route name — "rack/[id]" — and its title
+                repeated the screen's own heading */}
+            <Stack.Screen name="settings" options={{ headerShown: false }} />
             <Stack.Screen name="rack/[id]" options={{ headerShown: false }} />
           </Stack>
         ) : (

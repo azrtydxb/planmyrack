@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react-native'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react-native'
 import { Dimensions } from 'react-native'
 import { addDevice, addRack, newDevice, newLayout, newRack } from '@planmyrack/core'
 import { createMemoryStore } from '@planmyrack/storage'
@@ -43,7 +43,7 @@ describe('TestRackCanBeRenamedResizedAndRemoved', () => {
 
     openRackSettings()
     // the name is shown once, and edited in place behind a Rename button
-    fireEvent.press(screen.getByRole('button', { name: 'Rename' }))
+    fireEvent.press(screen.getByRole('button', { name: 'Rename rack' }))
     fireEvent.changeText(screen.getByLabelText('Rack name'), 'Comms cupboard')
     fireEvent.press(screen.getByRole('button', { name: 'Save' }))
     fireEvent.press(screen.getByLabelText('10" rack'))
@@ -62,7 +62,7 @@ describe('TestRackCanBeRenamedResizedAndRemoved', () => {
 
     // the panel title was the name, and a RACK NAME field under it repeated it
     expect(screen.queryAllByDisplayValue('Rack A')).toHaveLength(0)
-    expect(screen.getByRole('button', { name: 'Rename' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Rename rack' })).toBeTruthy()
   })
 
   it('keeps every device and cable attached when a rack is renamed', async () => {
@@ -71,7 +71,7 @@ describe('TestRackCanBeRenamedResizedAndRemoved', () => {
     render(<RackEditorScreen store={store} initial={seeded} />)
 
     openRackSettings()
-    fireEvent.press(screen.getByRole('button', { name: 'Rename' }))
+    fireEvent.press(screen.getByRole('button', { name: 'Rename rack' }))
     fireEvent.changeText(screen.getByLabelText('Rack name'), 'Loft')
     fireEvent.press(screen.getByRole('button', { name: 'Save' }))
 
@@ -150,5 +150,49 @@ describe('TestWidePanelsLeaveRoomForTheCanvas', () => {
 
     fireEvent.press(screen.getByRole('button', { name: 'Stats' }))
     expect(screen.getByText('Parts CSV')).toBeTruthy()
+  })
+})
+
+describe('TestNamesAreShownOnceAndEditedInPlace', () => {
+  afterEach(() => jest.restoreAllMocks())
+
+  it('renames the layout from the header', async () => {
+    setWidth(1440)
+    render(<RackEditorScreen store={createMemoryStore()} initial={seeded} />)
+
+    fireEvent.press(screen.getByRole('button', { name: 'Rename layout' }))
+    fireEvent.changeText(screen.getByLabelText('Layout name'), 'Home lab')
+    fireEvent.press(screen.getByRole('button', { name: 'Save' }))
+
+    await waitFor(() => expect(screen.getByText('Home lab')).toBeTruthy())
+  })
+
+  it('renames the rack from the summary panel, where its name is shown', async () => {
+    setWidth(1440)
+    render(<RackEditorScreen store={createMemoryStore()} initial={seeded} />)
+
+    // nothing selected: the right panel is the rack summary
+    expect(screen.getByTestId('summary-panel')).toBeTruthy()
+    // the summary card inside the panel used to repeat the panel's own title
+    expect(within(screen.getByTestId('summary-panel')).getAllByText('Rack A')).toHaveLength(1)
+
+    fireEvent.press(screen.getByRole('button', { name: 'Rename rack' }))
+    fireEvent.changeText(screen.getByLabelText('Rack name'), 'Loft')
+    fireEvent.press(screen.getByRole('button', { name: 'Save' }))
+
+    await waitFor(() => expect(screen.getAllByText('Loft').length).toBeGreaterThan(0))
+  })
+
+  it('opens and closes the library from the rail instead of repeating the canvas', () => {
+    // Racks and Library showed the identical screen on a desktop, where the library is always open
+    setWidth(1440)
+    render(<RackEditorScreen store={createMemoryStore()} initial={seeded} />)
+    expect(screen.getByTestId('library-panel')).toBeTruthy()
+
+    fireEvent.press(screen.getByRole('button', { name: 'Library' }))
+    expect(screen.queryByTestId('library-panel')).toBeNull()
+
+    fireEvent.press(screen.getByRole('button', { name: 'Library' }))
+    expect(screen.getByTestId('library-panel')).toBeTruthy()
   })
 })

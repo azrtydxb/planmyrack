@@ -170,7 +170,7 @@ describe('TestDragIsWiredToTheConsole', () => {
     // the placement hook and its tests existed from the start; nothing rendered them, so the app
     // could not place anything by dragging at all
     mountConsole()
-    expect(getByGestureTestId('drag-palette-switch-1')).toBeTruthy()
+    expect(getByGestureTestId('drag-catalog-entry-generic-switch')).toBeTruthy()
     expect(getByGestureTestId('drag-catalog-entry-generic-switch')).toBeTruthy()
     expect(getByGestureTestId('drag-device-d1')).toBeTruthy()
   })
@@ -179,7 +179,12 @@ describe('TestDragIsWiredToTheConsole', () => {
     // a worklet handler cannot touch React state or an Animated.Value: the drop would do
     // nothing, and a pinch killed the app outright
     mountConsole()
-    for (const id of ['drag-device-d1', 'drag-palette-switch-1', 'pinch', 'canvas-pan']) {
+    for (const id of [
+      'drag-device-d1',
+      'drag-catalog-entry-generic-switch',
+      'pinch',
+      'canvas-pan',
+    ]) {
       const gesture = getByGestureTestId(id) as unknown as { config: { runOnJS?: boolean } }
       expect([id, gesture.config.runOnJS]).toEqual([id, true])
     }

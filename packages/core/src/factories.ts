@@ -14,6 +14,20 @@ export function newRack(input: Partial<Rack> = {}): Rack {
   }
 }
 
+/**
+ * A name for a layout nobody has named yet. Every new one used to be "Untitled layout", so a
+ * store full of them was a list of identical rows.
+ */
+export function nextLayoutName(existing: string[], base = 'Untitled layout'): string {
+  const taken = new Set(existing)
+  if (!taken.has(base)) return base
+  for (let n = 2; n < 1000; n += 1) {
+    const candidate = `${base} ${n}`
+    if (!taken.has(candidate)) return candidate
+  }
+  return `${base} ${Date.now()}`
+}
+
 export function newLayout(name = 'Untitled layout', racks?: Rack[]): Layout {
   const now = new Date().toISOString()
   return {

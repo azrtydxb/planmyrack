@@ -13,6 +13,16 @@ export interface DragSource<T> {
 /** How far the finger travels before a press becomes a drag rather than a tap. */
 export const SLOP = 6
 
+/** How long a library row is held before it can be dragged, leaving shorter swipes to scroll. */
+export const HOLD_MS = 220
+
+/**
+ * How the gesture is picked up. `list` waits for a hold: a library row lives in a scroller, and a
+ * gesture that claimed every swipe left the list scrollable only through the gaps between rows.
+ * `canvas` picks up on movement, because dragging a placed device IS the thing you do to it.
+ */
+export type DragPickup = 'list' | 'canvas'
+
 /**
  * A library row or a placed faceplate you can drag onto a rack face.
  *
@@ -20,7 +30,12 @@ export const SLOP = 6
  * these gestures in a browser, so a PanResponder version passed its tests and did nothing in the
  * built app. `runOnJS` because the handlers touch React state, not shared values.
  */
-export function useDragSource<T>(subject: T, drag?: DragSource<T>, testId?: string) {
+export function useDragSource<T>(
+  subject: T,
+  drag?: DragSource<T>,
+  testId?: string,
+  pickup: DragPickup = 'canvas',
+) {
   /**
    * Read at gesture time, not captured when the gesture was built. A library row's subject
    * changes as its stepper is turned: capturing it dragged the port count the row had when it
@@ -37,27 +52,29 @@ export function useDragSource<T>(subject: T, drag?: DragSource<T>, testId?: stri
    */
   const dragged = useRef(false)
 
-  const gesture = useMemo(
-    () =>
-      Gesture.Pan()
-        .withTestId(testId ?? 'drag')
-        .enabled(Boolean(drag))
-        .minDistance(SLOP)
-        .runOnJS(true)
-        .onBegin(() => {
-          dragged.current = false
-        })
-        .onStart((event) => {
-          dragged.current = true
-          drag?.onStart(latest.current, { x: event.absoluteX, y: event.absoluteY })
-        })
-        .onUpdate((event) => drag?.onMove({ x: event.absoluteX, y: event.absoluteY }))
-        .onEnd(() => drag?.onEnd())
-        .onFinalize((_event, success) => {
-          if (!success) drag?.onCancel()
-        }),
-    [drag, testId],
-  )
+  const gesture = useMemo(() => {
+    const pan = Gesture.Pan()
+      .withTestId(testId ?? 'drag')
+      .enabled(Boolean(drag))
+      .runOnJS(true)
+    // a hold in a list, movement on the canvas
+    if (pickup === 'list') pan.activateAfterLongPress(HOLD_MS)
+    else pan.minDistance(SLOP)
+
+    return pan
+      .onBegin(() => {
+        dragged.current = false
+      })
+      .onStart((event) => {
+        dragged.current = true
+        drag?.onStart(latest.current, { x: event.absoluteX, y: event.absoluteY })
+      })
+      .onUpdate((event) => drag?.onMove({ x: event.absoluteX, y: event.absoluteY }))
+      .onEnd(() => drag?.onEnd())
+      .onFinalize((_event, success) => {
+        if (!success) drag?.onCancel()
+      })
+  }, [drag, pickup, testId])
 
   /** True when the press that just landed is the tail of a drag and should be ignored. */
   const pressWasDrag = () => dragged.current

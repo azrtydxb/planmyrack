@@ -66,10 +66,29 @@ describe('TestBundledCatalogueShape — in the palette', () => {
     expect(screen.queryByText('MY GEAR')).toBeNull()
   })
 
-  it('offers every device type and size as a bare shape too', () => {
+  it('offers one generic row per type, sized where it is placed', () => {
+    // there used to be a SIZES block of one chip per type and size, duplicating the generic rows
     render(<Palette templates={[]} />)
-    expect(screen.getByTestId('palette-hooks-0.5')).toBeTruthy()
-    expect(screen.getByTestId('palette-switch-2')).toBeTruthy()
+    expect(screen.queryByText('SIZES')).toBeNull()
+    expect(screen.getByTestId('catalog-entry-generic-switch')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Switch: one size larger' })).toBeTruthy()
+  })
+
+  it('carries the height dialled in on a generic row', () => {
+    const drag = { onStart: jest.fn(), onMove: jest.fn(), onEnd: jest.fn(), onCancel: jest.fn() }
+    render(<Palette templates={[]} drag={drag} />)
+
+    fireEvent.press(screen.getByRole('button', { name: 'Switch: one size larger' }))
+    fireGestureHandler(getByGestureTestId('drag-catalog-entry-generic-switch'), [
+      { state: State.BEGAN, absoluteX: 10, absoluteY: 10 },
+      { state: State.ACTIVE, absoluteX: 40, absoluteY: 40 },
+      { state: State.END, absoluteX: 40, absoluteY: 40 },
+    ])
+
+    expect(drag.onStart).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'switch', heightU: 2 }),
+      expect.anything(),
+    )
   })
 })
 
@@ -119,7 +138,6 @@ describe('TestGenericGearIsConfiguredBeforePlacing', () => {
     render(<Palette templates={[]} drag={drag} />)
 
     fireEvent.press(screen.getByTestId('catalog-entry-generic-switch'))
-    fireEvent.press(screen.getByTestId('palette-switch-2'))
 
     expect(drag.onStart).not.toHaveBeenCalled()
   })
@@ -143,7 +161,6 @@ describe('TestLibraryOffersOnlyWhatTheRackTakes', () => {
     expect(screen.queryByText('UNIFI')).toBeNull()
     // a generic shape is not a product and fits whatever it is dropped into
     expect(screen.getByTestId('catalog-entry-generic-switch')).toBeTruthy()
-    expect(screen.getByTestId('palette-switch-1')).toBeTruthy()
   })
 
   it('offers everything to a 19-inch rack', () => {

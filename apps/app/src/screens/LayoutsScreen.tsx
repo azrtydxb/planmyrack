@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { exportJson, importJson, newLayout } from '@planmyrack/core'
+import { exportJson, importJson, newLayout, nextLayoutName } from '@planmyrack/core'
 import { BrandMark } from '../ui/BrandMark'
 import { Button, Card, Mono } from '../ui/primitives'
 import { TOUCH, colour, font, radius } from '../ui/theme'
@@ -50,7 +50,8 @@ export function LayoutsScreen({
 
   const create = async () => {
     if (!store) return
-    const made = await store.create(newLayout('Untitled layout'))
+    // named from what is already in the store, so a shelf of them is not a wall of one name
+    const made = await store.create(newLayout(nextLayoutName(rows.map((row) => row.name))))
     await refresh()
     onOpen?.(made.id!)
   }

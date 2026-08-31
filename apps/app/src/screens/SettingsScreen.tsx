@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { probeServer } from '@planmyrack/storage'
 import { Button, Card, Mono } from '../ui/primitives'
 import { TOUCH, colour, font, radius } from '../ui/theme'
@@ -12,13 +13,16 @@ export function SettingsScreen({
   mode,
   store,
   onSetMode,
+  onBack,
   storeForPreview,
 }: {
   mode: Mode | null
   store: LayoutStore | null
   onSetMode: (mode: Mode) => void | Promise<void>
+  onBack?: () => void
   storeForPreview?: (mode: Mode) => LayoutStore
 }) {
+  const insets = useSafeAreaInsets()
   const [active, setActive] = useState<Mode | null>(mode)
   const [url, setUrl] = useState(mode?.kind === 'server' ? mode.url : '')
   const [probe, setProbe] = useState<{ ok: boolean; message: string } | null>(null)
@@ -58,8 +62,22 @@ export function SettingsScreen({
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.page}>
-      <Text style={styles.title}>Settings</Text>
+    <ScrollView
+      contentContainerStyle={[
+        styles.page,
+        {
+          paddingTop: 20 + insets.top,
+          paddingLeft: 20 + insets.left,
+          paddingRight: 20 + insets.right,
+        },
+      ]}
+    >
+      {/* this screen draws its own header, so the navigator's is hidden: it showed the route
+          name — "rack/[id]" — as the back button, and repeated the title */}
+      <View style={styles.head}>
+        {onBack ? <Button small label="Back" onPress={onBack} /> : null}
+        <Text style={styles.title}>Settings</Text>
+      </View>
 
       <Card style={styles.card}>
         <Mono size={7.5} tone={colour.icon}>
@@ -128,6 +146,7 @@ export function SettingsScreen({
 
 const styles = StyleSheet.create({
   page: { padding: 16, gap: 12, backgroundColor: colour.appBg, flexGrow: 1 },
+  head: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   title: { fontFamily: font.uiBold, fontSize: 22, color: colour.text },
   card: { padding: 16, gap: 10 },
   body: { fontFamily: font.ui, fontSize: 13, color: colour.muted, lineHeight: 19 },

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { DEVICE_TYPES, UNIT_SIZES, newLayout, newId } from '../src/index.ts'
+import { DEVICE_TYPES, UNIT_SIZES, newId, newLayout, nextLayoutName } from '../src/index.ts'
 
 describe('TestDeviceTypeTableIsConsistent', () => {
   it('gives every type at least one size drawn from UNIT_SIZES', () => {
@@ -70,5 +70,21 @@ describe('TestIdsAreUniqueWithOrWithoutCrypto', () => {
       if (original) Object.defineProperty(globalThis, 'crypto', original)
     }
     expect(randomUUID).toHaveBeenCalled()
+  })
+})
+
+describe('TestANewLayoutGetsANameOfItsOwn', () => {
+  it('numbers past the names already in the store', () => {
+    expect(nextLayoutName([])).toBe('Untitled layout')
+    expect(nextLayoutName(['Untitled layout'])).toBe('Untitled layout 2')
+    expect(nextLayoutName(['Untitled layout', 'Untitled layout 2'])).toBe('Untitled layout 3')
+  })
+
+  it('leaves a gap alone rather than shuffling anything', () => {
+    expect(nextLayoutName(['Untitled layout', 'Untitled layout 3'])).toBe('Untitled layout 2')
+  })
+
+  it('ignores names nobody generated', () => {
+    expect(nextLayoutName(['Home lab', 'Basement'])).toBe('Untitled layout')
   })
 })

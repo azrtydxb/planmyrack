@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from 'react-native'
+import { useState } from 'react'
+import { StyleSheet, Text, TextInput, View } from 'react-native'
 import { BrandMark } from './BrandMark'
 import { Button, IconButton, Mono, Segmented, Toggle } from './primitives'
 import { useBreakpoint } from './useBreakpoint'
@@ -28,6 +29,7 @@ export function AppHeader({
   canRedo,
   onMore,
   onExport,
+  onRename,
 }: {
   name: string
   mode: string
@@ -43,7 +45,15 @@ export function AppHeader({
   canRedo?: boolean
   onMore?: () => void
   onExport?: () => void
+  /** Renames the layout in place; the name is a label, nothing keys off it. */
+  onRename?: (name: string) => void
 }) {
+  const [draft, setDraft] = useState<string | null>(null)
+  const save = () => {
+    const next = (draft ?? '').trim()
+    if (next.length > 0) onRename?.(next)
+    setDraft(null)
+  }
   // 3a puts the whole console on one line; a phone has no room for it and keeps two.
   const oneRow = useBreakpoint() !== 'phone'
   const dot =
@@ -53,9 +63,29 @@ export function AppHeader({
     <>
       <BrandMark />
       <View style={styles.identity}>
-        <Text numberOfLines={1} style={styles.name}>
-          {name}
-        </Text>
+        {draft === null ? (
+          <View style={styles.nameRow}>
+            <Text numberOfLines={1} style={styles.name}>
+              {name}
+            </Text>
+            {onRename ? (
+              <Button small label="Rename layout" onPress={() => setDraft(name)} />
+            ) : null}
+          </View>
+        ) : (
+          <View style={styles.nameRow}>
+            <TextInput
+              accessibilityLabel="Layout name"
+              autoFocus
+              value={draft}
+              onChangeText={setDraft}
+              onSubmitEditing={() => save()}
+              style={styles.nameInput}
+            />
+            <Button small tone="primary" label="Save" onPress={() => save()} />
+            <Button small label="Cancel" onPress={() => setDraft(null)} />
+          </View>
+        )}
         <View style={styles.statusRow}>
           <View style={[styles.dot, { backgroundColor: dot }]} />
           <Mono size={8.5} tone={colour.muted}>
@@ -134,6 +164,20 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   identity: { flex: 1, minWidth: 0 },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  nameInput: {
+    flex: 1,
+    minWidth: 120,
+    minHeight: 34,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colour.borderInput,
+    backgroundColor: colour.surface,
+    fontFamily: font.uiBold,
+    fontSize: 16,
+    color: colour.text,
+  },
   name: { fontFamily: font.uiBold, fontSize: 17, color: colour.text, letterSpacing: -0.2 },
   statusRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 2 },
   dot: { width: 6, height: 6, borderRadius: 3 },
