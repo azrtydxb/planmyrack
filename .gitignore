@@ -12,3 +12,6 @@ apps/app/ios/
 
 # scratch from browser-driven testing
 .s.txt
+
+# the app's Expo config lives in apps/app; one at the root makes EAS create a second project
+/app.json
