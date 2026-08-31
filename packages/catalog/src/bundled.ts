@@ -297,8 +297,8 @@ export const BUNDLED_CATALOG: CatalogEntry[] = [
 
   // Single-board computers, for the mounts. Port counts are what the boards carry on the board
   // itself: an Orange Pi 5 Plus has two 2.5GbE, a Raspberry Pi one gigabit.
-  entry('rpi-5', 'Raspberry Pi', 'Pi 5', 'sbc', 1, 1, 0, 0, COLOURS[2]!, STRUCTURAL),
-  entry('rpi-4b', 'Raspberry Pi', 'Pi 4 Model B', 'sbc', 1, 1, 0, 0, COLOURS[2]!, STRUCTURAL),
+  entry('rpi-5', 'Raspberry Pi', '5', 'sbc', 1, 1, 0, 0, COLOURS[2]!, STRUCTURAL),
+  entry('rpi-4b', 'Raspberry Pi', '4 Model B', 'sbc', 1, 1, 0, 0, COLOURS[2]!, STRUCTURAL),
   entry('orangepi-5-plus', 'Orange Pi', '5 Plus', 'sbc', 1, 2, 0, 0, COLOURS[3]!, STRUCTURAL),
 
   // Cisco

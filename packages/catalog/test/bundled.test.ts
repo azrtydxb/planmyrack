@@ -89,3 +89,14 @@ describe('TestKnownModelsCarryTheirShape', () => {
     expect(generic.faceplate).toBeUndefined()
   })
 })
+
+describe('TestCatalogueNamesReadAsProducts', () => {
+  it('never repeats the vendor inside the model', () => {
+    // "Raspberry Pi" + "Pi 5" placed a device called "Raspberry Pi Pi 5"
+    for (const e of BUNDLED_CATALOG) {
+      if (e.vendor === 'Generic') continue
+      const first = e.vendor.split(' ')[0]!.toLowerCase()
+      expect([e.id, e.model.toLowerCase().startsWith(first)]).toEqual([e.id, false])
+    }
+  })
+})

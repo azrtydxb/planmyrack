@@ -24,7 +24,7 @@ const StoreContext = createContext<StoreContextValue | null>(null)
 export const LOCAL_OPEN_TIMEOUT_MS = 2000
 
 /** How many attempts before the app says the database is held by another tab. */
-export const LOCAL_OPEN_ATTEMPTS = 3
+export const LOCAL_OPEN_ATTEMPTS = 4
 
 export function StoreProvider({
   children,
@@ -70,28 +70,38 @@ export function StoreProvider({
       return
     }
     /**
-     * expo-sqlite's OPFS driver does not reject while another page holds the database: it waits,
-     * and the app sat on a spinner with nothing to say. Waiting for it now has a deadline.
+     * expo-sqlite's OPFS driver refuses to open a database another page still holds, and reloading
+     * the page reliably hits that: the handle from the page being replaced is released a moment
+     * later. So each attempt opens again rather than waiting longer on the first one — waiting is
+     * useless when the answer was already "no".
      *
-     * The attempts wait on the SAME open, they do not start another one. Reloading the page
-     * reliably loses the first few seconds — the handle from the page being replaced has not been
-     * released yet — and the open then succeeds on its own. Opening the database a second time
-     * would hand back the same cached connection, so abandoning or closing one breaks the other:
-     * that mistake surfaced as "Error code 21: bad parameter or other API misuse".
+     * Nothing closes an attempt that lands late. Opening the same database twice hands back the
+     * same cached connection, so closing one breaks the other: that mistake surfaced on screen as
+     * "Error code 21: bad parameter or other API misuse".
      */
-    const opening = makeLocalStore()
-    const waitForIt = (): Promise<LayoutStore> => {
+    const opening: Promise<LayoutStore>[] = []
+    const attemptOpen = (): Promise<LayoutStore> => {
+      // every open still in flight stays in the race: a database that is merely slow is allowed
+      // to finish, while a refusal does not stop a later attempt from succeeding
+      opening.push(makeLocalStore())
       const deadline = new Promise<never>((_resolve, reject) => {
         timeout = setTimeout(() => reject(new Error(STORE_BUSY_MESSAGE)), localOpenTimeoutMs)
       })
-      return Promise.race([opening, deadline]).finally(() => clearTimeout(timeout))
+      return Promise.race([
+        Promise.any(opening).catch((err: AggregateError) => {
+          throw (err.errors?.[0] as Error) ?? new Error(STORE_BUSY_MESSAGE)
+        }),
+        deadline,
+      ]).finally(() => clearTimeout(timeout))
     }
 
     void (async () => {
       let last: Error | null = null
       for (let tries = 0; tries < LOCAL_OPEN_ATTEMPTS && !cancelled; tries += 1) {
+        if (tries > 0) await new Promise((resolve) => setTimeout(resolve, localOpenTimeoutMs / 4))
+        if (cancelled) return
         try {
-          const built = await waitForIt()
+          const built = await attemptOpen()
           if (!cancelled) setStore(built)
           return
         } catch (err) {

@@ -4,7 +4,7 @@ import { addDevice, addToMount, newDevice, newLayout, newRack } from '@planmyrac
 import { createMemoryStore } from '@planmyrack/storage'
 import { RackEditorScreen } from '../src/screens/RackEditorScreen'
 import { RackCanvas } from '../src/canvas/RackCanvas'
-import { slotRects } from '../src/canvas/metrics'
+import { labelGutter, slotRects } from '../src/canvas/metrics'
 import { slotUnder } from '../src/canvas/origins'
 import type { Layout } from '@planmyrack/core'
 
@@ -60,6 +60,9 @@ describe('TestMountShowsItsCutOutsAndWhatIsInThem', () => {
     expect(slotRects({ ...tray, slots: 0 }, 264, 34)).toHaveLength(0)
     const [first, second] = slotRects({ ...tray, slots: 2 }, 264, 34)
     expect(second!.x).toBeGreaterThan(first!.x + first!.width - 1)
+    // the tray's own name is drawn at the left, so the cut-outs start after the gutter
+    expect(first!.x).toBeGreaterThanOrEqual(labelGutter(264))
+    expect(second!.x + second!.width).toBeLessThanOrEqual(264)
   })
 })
 

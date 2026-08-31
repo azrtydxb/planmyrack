@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native'
 import { Text } from 'react-native'
 import { createMemoryStore } from '@planmyrack/storage'
-import { StoreProvider, useStoreContext } from '../src/storage/StoreProvider'
+import { LOCAL_OPEN_ATTEMPTS, StoreProvider, useStoreContext } from '../src/storage/StoreProvider'
 import { STORE_BUSY_MESSAGE, classifyStorageError } from '../src/storage/capabilities'
 import { StorageProblem } from '../src/ui/StorageProblem'
 import { FirstRunScreen } from '../src/screens/FirstRunScreen'
@@ -124,9 +124,12 @@ describe('TestSecondTabSaysWhyInsteadOfSpinning', () => {
   it('opens the store again when the other tab has gone', async () => {
     await saveMode({ kind: 'local' })
     let opens = 0
+    // every attempt of the first mount hangs; the tab holding the database closes before Retry
     const openOnRetry = () => {
       opens += 1
-      return opens === 1 ? new Promise<LayoutStore>(() => {}) : Promise.resolve(createMemoryStore())
+      return opens <= LOCAL_OPEN_ATTEMPTS
+        ? new Promise<LayoutStore>(() => {})
+        : Promise.resolve(createMemoryStore())
     }
 
     render(
@@ -140,31 +143,48 @@ describe('TestSecondTabSaysWhyInsteadOfSpinning', () => {
     await screen.findByText('store ready')
   })
 
-  it('waits on one open rather than starting another', async () => {
-    // opening the database twice hands back the same cached connection, so a second attempt that
-    // abandons or closes its handle breaks the one in use: "Error code 21: bad parameter"
+  it('opens again on each attempt rather than waiting longer on the first', async () => {
+    // the driver refuses a database another page holds; waiting longer on a refusal changes
+    // nothing, so each attempt asks again
     await saveMode({ kind: 'local' })
     let opens = 0
-    let release: ((store: LayoutStore) => void) | null = null
-    const openOnce = () => {
+    const refuseThenOpen = async () => {
       opens += 1
-      return new Promise<LayoutStore>((resolve) => {
-        release = resolve
-      })
+      if (opens < 3) throw new Error('NoModificationAllowedError: another open Access Handle')
+      return createMemoryStore()
     }
 
     render(
-      <StoreProvider makeLocalStore={openOnce} localOpenTimeoutMs={20}>
+      <StoreProvider makeLocalStore={refuseThenOpen} localOpenTimeoutMs={20}>
         <Probe />
       </StoreProvider>,
     )
 
-    await waitFor(() => expect(release).not.toBeNull())
-    // long enough for every attempt to have timed out
-    await new Promise((resolve) => setTimeout(resolve, 120))
-    expect(opens).toBe(1)
+    await screen.findByText('store ready')
+    expect(opens).toBe(3)
+  })
 
-    release!(createMemoryStore())
+  it('closes nothing it opened: the same database twice is the same connection', async () => {
+    // closing an attempt that landed late broke the one in use — "Error code 21: bad parameter"
+    await saveMode({ kind: 'local' })
+    const close = jest.fn()
+    const store = { ...createMemoryStore(), close } as unknown as LayoutStore
+    let opens = 0
+    const slowThenSame = async () => {
+      opens += 1
+      if (opens === 1) await new Promise((resolve) => setTimeout(resolve, 60))
+      return store
+    }
+
+    render(
+      <StoreProvider makeLocalStore={slowThenSame} localOpenTimeoutMs={20}>
+        <Probe />
+      </StoreProvider>,
+    )
+
+    await screen.findByText('store ready')
+    await new Promise((resolve) => setTimeout(resolve, 120))
+    expect(close).not.toHaveBeenCalled()
   })
 })
 

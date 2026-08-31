@@ -171,10 +171,12 @@ export function slotRects(device: Device, boxWidth: number, boxHeight: number): 
   const count = device.slots ?? 0
   if (count <= 0) return []
   const gap = 4
-  const width = Math.floor((boxWidth - FACE_PAD * 2 - gap * (count - 1)) / count)
+  // the tray carries its own name at the left like any other faceplate; the cut-outs start after
+  const left = labelGutter(boxWidth)
+  const width = Math.floor((boxWidth - left - FACE_PAD - gap * (count - 1)) / count)
   const height = Math.max(0, boxHeight - FACE_PAD * 2)
   return Array.from({ length: count }, (_, i) => ({
-    x: FACE_PAD + i * (width + gap),
+    x: left + i * (width + gap),
     y: FACE_PAD,
     width,
     height,
