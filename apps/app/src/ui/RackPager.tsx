@@ -1,4 +1,4 @@
-import { Pressable, ScrollView, StyleSheet, Text } from 'react-native'
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { Mono } from './primitives'
 import { TOUCH, colour, font, radius } from './theme'
 import type { Rack } from '@planmyrack/core'
@@ -29,19 +29,30 @@ export function RackPager({
       {racks.map((rack) => {
         const on = rack.id === activeId
         return (
-          <Pressable
+          /*
+           * accessible={false} on the chip for the same reason the faceplate carries it: iOS
+           * merges an accessible view's children into one element, which swallowed the ⚙ whole.
+           * On an iPad the only route to a rack's name, standard and height could not be reached
+           * by VoiceOver at all.
+           */
+          <View
             key={rack.id}
-            testID={`rack-chip-${rack.id}`}
-            accessibilityRole="button"
-            accessibilityState={{ selected: on }}
-            accessibilityLabel={`${rack.name}, ${rack.units}U`}
-            onPress={() => onSelect(rack.id)}
+            accessible={false}
             style={[styles.chip, on && styles.chipOn]}
+            testID={`rack-chip-${rack.id}`}
           >
-            <Text style={[styles.name, on && styles.nameOn]}>{rack.name}</Text>
-            <Mono size={8} tone={on ? colour.accent : colour.icon}>
-              {`${rack.units}U`}
-            </Mono>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ selected: on }}
+              accessibilityLabel={`${rack.name}, ${rack.units}U`}
+              onPress={() => onSelect(rack.id)}
+              style={styles.chipMain}
+            >
+              <Text style={[styles.name, on && styles.nameOn]}>{rack.name}</Text>
+              <Mono size={8} tone={on ? colour.accent : colour.icon}>
+                {`${rack.units}U`}
+              </Mono>
+            </Pressable>
             {on && onEditRack ? (
               <Pressable
                 testID={`rack-settings-${rack.id}`}
@@ -49,12 +60,12 @@ export function RackPager({
                 accessibilityLabel={`Rack settings for ${rack.name}`}
                 onPress={() => onEditRack(rack.id)}
                 style={styles.gear}
-                hitSlop={8}
+                hitSlop={10}
               >
                 <Text style={styles.gearText}>⚙</Text>
               </Pressable>
             ) : null}
-          </Pressable>
+          </View>
         )
       })}
 
@@ -92,6 +103,7 @@ const styles = StyleSheet.create({
   name: { fontFamily: font.ui, fontSize: 12.5, color: colour.textSecondary },
   nameOn: { fontFamily: font.uiBold, color: colour.text },
   addText: { fontFamily: font.ui, fontSize: 12.5, color: colour.muted },
-  gear: { paddingLeft: 4, alignItems: 'center', justifyContent: 'center' },
+  chipMain: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: TOUCH - 6 },
+  gear: { paddingLeft: 6, alignItems: 'center', justifyContent: 'center' },
   gearText: { fontSize: 13, color: colour.icon },
 })

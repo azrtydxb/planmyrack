@@ -33,6 +33,7 @@ describe('TestModalsDeclareLandscape', () => {
           port={0}
           kind="network"
           onConnect={jest.fn()}
+          onDisconnect={jest.fn()}
           onClose={jest.fn()}
         />
       </>,

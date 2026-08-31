@@ -27,6 +27,15 @@ describe('TestRackNamesAreTellableApart', () => {
 describe('TestRackCanBeRenamedResizedAndRemoved', () => {
   afterEach(() => jest.restoreAllMocks())
 
+  it('exposes the settings gear as its own control, not merged into the chip', () => {
+    // iOS merges an accessible view's children into one element: on an iPad the gear was drawn
+    // but VoiceOver — and every automation — could only see the chip
+    setWidth(1440)
+    render(<RackEditorScreen store={createMemoryStore()} initial={seeded} />)
+    expect(screen.getByLabelText('Rack settings for Rack A')).toBeTruthy()
+    expect(screen.getByLabelText('Rack A, 12U')).toBeTruthy()
+  })
+
   it('renames a rack and switches it to the 10-inch standard', async () => {
     setWidth(1440)
     const store = createMemoryStore()
