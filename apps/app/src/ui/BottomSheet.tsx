@@ -1,5 +1,6 @@
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { TOUCH, colour, font, radius } from './theme'
+import { MODAL_ORIENTATIONS } from './modal'
 import type { ReactNode } from 'react'
 
 /** Phone-shaped panel: a sheet over the canvas with a grab handle, dismissed by tapping outside. */
@@ -17,7 +18,13 @@ export function BottomSheet({
   children: ReactNode
 }) {
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      supportedOrientations={MODAL_ORIENTATIONS}
+      onRequestClose={onClose}
+    >
       <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Close" />
       <View testID="inspector-sheet" style={styles.sheet}>
         <View style={styles.grab} />

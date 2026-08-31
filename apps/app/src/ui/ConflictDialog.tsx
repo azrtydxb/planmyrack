@@ -2,6 +2,7 @@ import { Modal, StyleSheet, Text, View } from 'react-native'
 import { STALE_SAVE_MESSAGE } from '@planmyrack/storage'
 import { Button } from './primitives'
 import { colour, font, radius } from './theme'
+import { MODAL_ORIENTATIONS } from './modal'
 import type { Layout } from '@planmyrack/core'
 
 /**
@@ -20,7 +21,7 @@ export function ConflictDialog({
   if (!current) return null
 
   return (
-    <Modal visible transparent animationType="fade">
+    <Modal visible transparent animationType="fade" supportedOrientations={MODAL_ORIENTATIONS}>
       <View style={styles.backdrop}>
         <View testID="conflict-dialog" style={styles.card}>
           <Text style={styles.title}>{STALE_SAVE_MESSAGE}</Text>

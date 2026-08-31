@@ -3,6 +3,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { DEVICE_TYPES, portCapacity, portLink, otherEnd } from '@planmyrack/core'
 import { Button, Mono, Segmented } from './primitives'
 import { TOUCH, colour, font, radius } from './theme'
+import { MODAL_ORIENTATIONS } from './modal'
 import type { CableType, Device, Layout, LinkEnd, LinkKind } from '@planmyrack/core'
 
 const CABLE_TYPES: CableType[] = ['cat5e', 'cat6', 'cat6a', 'fibre', 'dac']
@@ -47,7 +48,13 @@ export function PortPicker({
     )
 
   return (
-    <Modal visible transparent animationType="slide" onRequestClose={onClose}>
+    <Modal
+      visible
+      transparent
+      animationType="slide"
+      supportedOrientations={MODAL_ORIENTATIONS}
+      onRequestClose={onClose}
+    >
       <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Close" />
       <View testID="port-picker" style={styles.sheet}>
         <View style={styles.grab} />
