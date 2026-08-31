@@ -83,8 +83,10 @@ forced by real data or a missing door rather than preference.
   "UniFi Switch 24", "Patch panel 24-port" — need a wider label, so `labelGutter` takes 36% of the
   faceplate and a dense strip shrinks its slots to fit. Sparse devices still get the design's
   8x12; a 24-port switch trades slot width for a readable name.
-- **48 ports in 1U wrap.** Forty-eight slots cannot be drawn legibly across one 19" 1U faceplate
-  at any label width, so the strip wraps to two rows rather than shrinking to a 2px smudge.
+- **Dense ports wrap rather than shrink.** The design draws 8x12 slots in one row. A 24-port
+  switch on a 19" rack cannot: found on an iPad, one row left each slot 4pt wide, and a fingertip
+  aimed at port 12 hit port 15. The strip adds rows until no slot is narrower than `MIN_PORT_W`
+  (6pt) — two rows for 24 ports, three for 48.
 - **The icon rail stays on a desktop.** 3a drops the rail and shows library, canvas and inspector
   only. Doing that left the cable schedule, the figures and every export with no door at desktop
   width, so the rail from 3b is kept at every width above a phone. The header carries 3a's Export
@@ -116,7 +118,7 @@ forced by real data or a missing door rather than preference.
 | Library (catalogue / saved)                                    | `apps/app/src/ui/Palette.tsx`                                      |
 | Inspector (sheet on phone, panel on tablet/desktop)            | `apps/app/src/ui/Inspector.tsx`, `InspectorHost.tsx`               |
 | Rack settings (name, standard, height, removal)                | `apps/app/src/ui/RackSettings.tsx`                                 |
-| Drag to place and to move                                      | `apps/app/src/canvas/useDragSource.ts`, `useDragPlacement.ts`       |
-| Pinch to zoom, two-finger pan, the 100% / Fit controls         | `apps/app/src/canvas/CanvasGestures.tsx`, `RackCanvas.tsx`          |
+| Drag to place and to move                                      | `apps/app/src/canvas/useDragSource.ts`, `useDragPlacement.ts`      |
+| Pinch to zoom, two-finger pan, the 100% / Fit controls         | `apps/app/src/canvas/CanvasGestures.tsx`, `RackCanvas.tsx`         |
 | Rack summary bars and tiles                                    | `apps/app/src/ui/RackSummary.tsx`                                  |
 | Phone / tablet / desktop split                                 | `apps/app/src/ui/useBreakpoint.ts`, `screens/RackEditorScreen.tsx` |

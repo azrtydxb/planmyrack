@@ -1,6 +1,7 @@
 import { newDevice, newRack } from '@planmyrack/core'
 import {
   CAGE_PITCH,
+  MIN_PORT_W,
   RACK_INNER_PX,
   U_PX,
   deviceRect,
@@ -46,17 +47,35 @@ describe('TestDensePortsStayInsideDevice', () => {
     }
   })
 
-  it('keeps a 24-port 1U switch on a single row, as the design draws it', () => {
+  it('wraps a 24-port 1U switch rather than drawing slots too narrow to tap', () => {
+    // found on an iPad: one row of 24 left each slot 4pt wide, and tapping port 12 selected 15
     const dev = device({ ports: 24, heightU: 1 })
     const box = deviceRect(rack, dev)
-    expect(new Set(portRects(dev, box.width, box.height).map((r) => r.y)).size).toBe(1)
+    const rects = portRects(dev, box.width, box.height)
+    expect(new Set(rects.map((r) => r.y)).size).toBeGreaterThan(1)
+    expect(Math.min(...rects.map((r) => r.width))).toBeGreaterThanOrEqual(MIN_PORT_W)
   })
 
-  it('wraps a 48-port switch rather than shrinking it into a smudge', () => {
-    // 48 slots cannot fit legibly across one 19-inch 1U faceplate, so the strip wraps instead
+  it('wraps a 48-port switch far enough to keep its slots tappable', () => {
     const dev = device({ ports: 48, heightU: 1 })
     const box = deviceRect(rack, dev)
-    expect(new Set(portRects(dev, box.width, box.height).map((r) => r.y)).size).toBe(2)
+    const rects = portRects(dev, box.width, box.height)
+    expect(new Set(rects.map((r) => r.y)).size).toBeGreaterThan(1)
+    expect(Math.min(...rects.map((r) => r.width))).toBeGreaterThanOrEqual(MIN_PORT_W)
+  })
+
+  it('keeps every port count a real device has wide enough to pick out with a finger', () => {
+    // the one exception is 48 ports on a 10" rack, which no product is: it cannot be drawn at a
+    // tappable size at any row count, and degrades rather than overflowing
+    for (const ports of [2, 4, 8, 16, 24, 26, 28, 48]) {
+      for (const width of [19, 10] as const) {
+        if (ports === 48 && width === 10) continue
+        const dev = device({ ports, heightU: 1 })
+        const box = deviceRect(newRack({ id: 'R', units: 12, width }), dev)
+        const narrowest = Math.min(...portRects(dev, box.width, box.height).map((r) => r.width))
+        expect([ports, width, narrowest >= MIN_PORT_W]).toEqual([ports, width, true])
+      }
+    }
   })
 
   it('draws the 8x12 slots the design specifies when the device is sparse enough', () => {

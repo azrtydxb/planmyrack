@@ -23,6 +23,12 @@ export const CAGE_PITCH = 13
 
 const PORT_W = 8
 const PORT_H = 12
+
+/**
+ * The narrowest slot worth drawing. Below this the strip is a smudge and a fingertip cannot pick
+ * one port out of its neighbours, so the strip wraps to another row instead.
+ */
+export const MIN_PORT_W = 6
 const PORT_GAP = 2
 const FACE_PAD = 6
 
@@ -69,14 +75,23 @@ export function portRects(device: Device, boxWidth: number, boxHeight: number): 
   const usableWidth = boxWidth - gutter - FACE_PAD - cages
   const usableHeight = boxHeight - FACE_PAD
 
-  // The design's slot is 8x12. When a device is too dense for that at this rack width, prefer
-  // wrapping to a second row over shrinking the slots into an unreadable smudge — a 48-port
-  // switch on one 19" 1U row would leave 2px per port.
+  /**
+   * The design's slot is 8x12. When a device is too dense for that at this rack width, wrap to
+   * another row rather than shrink: found on an iPad, where a 24-port switch drew 4pt-wide slots
+   * — narrower than the gap between two fingers, so tapping port 12 selected port 15.
+   *
+   * Every attempt that keeps a slot at least MIN_PORT_W wide is tried before any that does not.
+   */
   const attempts: { rows: number; gap: number; minWidth: number }[] = [
-    { rows: 1, gap: PORT_GAP, minWidth: 4 },
-    { rows: 2, gap: PORT_GAP, minWidth: 4 },
-    { rows: 1, gap: 1, minWidth: 3 },
-    { rows: 2, gap: 1, minWidth: 2 },
+    { rows: 1, gap: PORT_GAP, minWidth: PORT_W },
+    { rows: 2, gap: PORT_GAP, minWidth: MIN_PORT_W },
+    { rows: 2, gap: 1, minWidth: MIN_PORT_W },
+    { rows: 3, gap: 1, minWidth: MIN_PORT_W },
+    { rows: 4, gap: 1, minWidth: MIN_PORT_W },
+    // 48 ports on a 10" rack cannot be drawn at a tappable size at any row count, and no such
+    // device exists; it degrades rather than overflowing its box.
+    { rows: 3, gap: 1, minWidth: 4 },
+    { rows: 4, gap: 1, minWidth: 3 },
   ]
 
   let chosen = { rows: 2, gap: 1, width: 2, height: 4 }
