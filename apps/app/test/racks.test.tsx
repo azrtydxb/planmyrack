@@ -42,7 +42,10 @@ describe('TestRackCanBeRenamedResizedAndRemoved', () => {
     render(<RackEditorScreen store={store} initial={seeded} />)
 
     openRackSettings()
+    // the name is shown once, and edited in place behind a Rename button
+    fireEvent.press(screen.getByRole('button', { name: 'Rename' }))
     fireEvent.changeText(screen.getByLabelText('Rack name'), 'Comms cupboard')
+    fireEvent.press(screen.getByRole('button', { name: 'Save' }))
     fireEvent.press(screen.getByLabelText('10" rack'))
 
     await waitFor(() => expect(screen.getAllByText('Comms cupboard').length).toBeGreaterThan(0))
@@ -50,6 +53,31 @@ describe('TestRackCanBeRenamedResizedAndRemoved', () => {
     // 10" bodies are narrower than 19" ones; the canvas must have re-measured
     const style = screen.getByTestId('rack-R').props.style as { width: number }[]
     expect(JSON.stringify(style)).toContain('139')
+  })
+
+  it('shows the rack name once, not twice', () => {
+    setWidth(1440)
+    render(<RackEditorScreen store={createMemoryStore()} initial={seeded} />)
+    openRackSettings()
+
+    // the panel title was the name, and a RACK NAME field under it repeated it
+    expect(screen.queryAllByDisplayValue('Rack A')).toHaveLength(0)
+    expect(screen.getByRole('button', { name: 'Rename' })).toBeTruthy()
+  })
+
+  it('keeps every device and cable attached when a rack is renamed', async () => {
+    setWidth(1440)
+    const store = createMemoryStore()
+    render(<RackEditorScreen store={store} initial={seeded} />)
+
+    openRackSettings()
+    fireEvent.press(screen.getByRole('button', { name: 'Rename' }))
+    fireEvent.changeText(screen.getByLabelText('Rack name'), 'Loft')
+    fireEvent.press(screen.getByRole('button', { name: 'Save' }))
+
+    await waitFor(() => expect(screen.getAllByText('Loft').length).toBeGreaterThan(0))
+    // the device is still in the rack it was in: a rack is referred to by id, never by name
+    expect(screen.getByLabelText(/Server 2U, 2U at U9/)).toBeTruthy()
   })
 
   it('refuses a resize that would strand a device and says why', () => {

@@ -3,10 +3,12 @@ import {
   PlacementError,
   addDevice,
   addRack,
+  connect,
   moveDevice,
   newDevice,
   newLayout,
   newRack,
+  rackStats,
   removeRack,
   updateDevice,
   updateRack,
@@ -181,5 +183,41 @@ describe('TestRackShrinkNeverStrands', () => {
   it('allows a shrink that strands nothing', () => {
     const low = place(base, { rackId: 'A', face: 'front', posU: 0, heightU: 2, type: 'server' })
     expect(updateRack(low, 'A', { units: 6 }).racks.find((r) => r.id === 'A')!.units).toBe(6)
+  })
+})
+
+describe('TestRenamingARackKeepsEverythingAttached', () => {
+  it('moves nothing and drops no cable, however the racks are named', () => {
+    // devices point at rack ids and cables point at device ids: a name is a label, never a key
+    const a = newRack({ id: 'A', name: 'Rack A', units: 12 })
+    const b = newRack({ id: 'B', name: 'Rack B', units: 12 })
+    let layout = addRack(newLayout('two', [a]), b)
+    layout = addDevice(
+      layout,
+      newDevice({ id: 'sw', rackId: 'A', face: 'front', posU: 0, heightU: 1, type: 'switch' }),
+    )
+    layout = addDevice(
+      layout,
+      newDevice({ id: 'nas', rackId: 'B', face: 'front', posU: 0, heightU: 2, type: 'server' }),
+    )
+    layout = connect(
+      layout,
+      'network',
+      { deviceId: 'sw', port: 0 },
+      { deviceId: 'nas', port: 0 },
+      { label: 'cross-rack', colour: '#fff', cableType: 'cat6' },
+    )
+
+    // both racks renamed, one to the other's old name
+    const renamed = updateRack(updateRack(layout, 'A', { name: 'Loft' }), 'B', { name: 'Rack A' })
+
+    expect(renamed.devices.map((d) => [d.id, d.rackId])).toEqual([
+      ['sw', 'A'],
+      ['nas', 'B'],
+    ])
+    expect(renamed.links).toHaveLength(1)
+    expect(renamed.links[0]!.label).toBe('cross-rack')
+    expect(rackStats(renamed, 'A').deviceCount).toBe(1)
+    expect(rackStats(renamed, 'B').deviceCount).toBe(1)
   })
 })

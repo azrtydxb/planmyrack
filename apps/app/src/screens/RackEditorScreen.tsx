@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
-import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native'
+import { ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
   RACK_UNIT_PRESETS,
@@ -37,7 +37,7 @@ import { useTemplates } from '../state/useTemplates'
 import { shareText } from '../export/files'
 import { exportPng } from '../export/png'
 import { printLayout } from '../export/print'
-import { CABLE_COLOURS, colour, font } from '../ui/theme'
+import { CABLE_COLOURS, TOUCH, colour, font, radius } from '../ui/theme'
 import type { CableType, Device, Face, LinkEnd, LinkKind } from '@planmyrack/core'
 import type { Layout } from '@planmyrack/core'
 import type { LayoutStore } from '@planmyrack/storage'
@@ -92,6 +92,8 @@ export function RackEditorScreen({
   )
   const geometry = useRef<CanvasGeometry | null>(null)
   const [editingRack, setEditingRack] = useState(false)
+  /** The name being typed, or null when the rack's name is just being shown. */
+  const [renamingRack, setRenamingRack] = useState<string | null>(null)
   const [rackError, setRackError] = useState<string | null>(null)
 
   const layout = editor.layout
@@ -280,15 +282,50 @@ export function RackEditorScreen({
     editor.apply((current) => updateRack(current, activeRack.id, patch))
   }
 
+  const saveRackName = () => {
+    const name = (renamingRack ?? '').trim()
+    // an empty name would leave a rack chip with nothing on it; keep the old one
+    if (name.length > 0) editRack({ name })
+    setRenamingRack(null)
+  }
+
   /** The right-hand panel of 3a/3b: whatever is being edited, with the rack's figures beneath. */
   const sidePanel =
     editingRack && activeRack ? (
       <View testID="rack-panel" style={[styles.sidePanel, { width: panelWidth(screenWidth) }]}>
+        {/*
+         * The rack's name lives here and nowhere else. A rack is referred to internally by its
+         * id, so renaming one moves no device and drops no cable — the name is a label.
+         */}
         <View style={styles.panelHead}>
-          <Text style={styles.panelTitle} numberOfLines={1}>
-            {activeRack.name}
-          </Text>
-          <Button small label="Close" onPress={() => setEditingRack(false)} />
+          {renamingRack === null ? (
+            <>
+              <Text style={styles.panelTitle} numberOfLines={1}>
+                {activeRack.name}
+              </Text>
+              <Button small label="Rename" onPress={() => setRenamingRack(activeRack.name)} />
+            </>
+          ) : (
+            <>
+              <TextInput
+                accessibilityLabel="Rack name"
+                autoFocus
+                value={renamingRack}
+                onChangeText={setRenamingRack}
+                onSubmitEditing={() => saveRackName()}
+                style={styles.panelInput}
+              />
+              <Button small tone="primary" label="Save" onPress={() => saveRackName()} />
+            </>
+          )}
+          <Button
+            small
+            label="Close"
+            onPress={() => {
+              setRenamingRack(null)
+              setEditingRack(false)
+            }}
+          />
         </View>
         <RackSettings
           rack={activeRack}
@@ -468,6 +505,18 @@ const styles = StyleSheet.create({
   },
   panelHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   panelTitle: { flex: 1, fontFamily: font.uiBold, fontSize: 19, color: colour.text },
+  panelInput: {
+    flex: 1,
+    minHeight: TOUCH - 8,
+    paddingHorizontal: 10,
+    borderRadius: radius.button,
+    borderWidth: 1,
+    borderColor: colour.borderInput,
+    backgroundColor: colour.surface,
+    fontFamily: font.uiBold,
+    fontSize: 17,
+    color: colour.text,
+  },
   pagerHint: { alignSelf: 'center', paddingVertical: 8 },
   stats: { padding: 16, gap: 12 },
   screenTitle: { fontFamily: font.uiBold, fontSize: 22, color: colour.text },

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { MAX_RACK_UNITS, RACK_UNIT_PRESETS, RACK_WIDTHS } from '@planmyrack/core'
-import { NumberField, TextField } from './Field'
+import { NumberField } from './Field'
 import { Button, Mono } from './primitives'
 import { TOUCH, colour, font, radius } from './theme'
 import type { Rack, RackWidth } from '@planmyrack/core'
@@ -25,8 +25,6 @@ export function RackSettings({
 
   return (
     <ScrollView contentContainerStyle={styles.body}>
-      <TextField label="Rack name" value={rack.name} onChange={(name) => onChange({ name })} />
-
       <View style={styles.row}>
         <Text style={styles.rowLabel}>Standard</Text>
         <View style={styles.chips}>
