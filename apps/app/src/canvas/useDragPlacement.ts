@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react'
 import {
+  DEVICE_TYPES,
   PlacementError,
   addDevice,
   addToMount,
@@ -107,8 +108,20 @@ export function useDragPlacement({
           slot: { mountId: slot.mount.id, index: slot.slot },
         }
       }
+      // a board has nowhere to be except a cut-out: over the rails it is an invalid target,
+      // so the hint reads red and the drop is refused rather than screwing it to the rails
+      const needsMount = DEVICE_TYPES[state.type].needsMount
       const hit = resolve(point)
       if (!hit) return null
+      if (needsMount) {
+        return {
+          rackId: hit.rack.id,
+          face: hit.face,
+          posU: positionFromPoint(hit.rack, hit.topY, point.y, state.heightU),
+          heightU: state.heightU,
+          valid: false,
+        }
+      }
       const wanted = positionFromPoint(hit.rack, hit.topY, point.y, state.heightU)
       // narrow gear in a wide rack takes the half the pointer is over; two fit across one unit
       const column =

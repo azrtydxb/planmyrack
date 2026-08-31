@@ -29,6 +29,19 @@ function refuseWrongWidth(device: Device, rack: Rack): void {
   }
 }
 
+/**
+ * A board has no rack ears. It goes into a mount tray's cut-out or nowhere, so a drop anywhere
+ * else is refused rather than quietly screwed to the rails.
+ */
+function refuseUnmounted(device: Device): void {
+  if (DEVICE_TYPES[device.type].needsMount && !device.host) {
+    throw new PlacementError(
+      'needs-mount',
+      `${device.name} bolts into a mount tray — drop it on one of its cut-outs`,
+    )
+  }
+}
+
 const touched = (layout: Layout, patch: Partial<Layout>): Layout => ({
   ...layout,
   ...patch,
@@ -76,6 +89,7 @@ export function freeSlot(layout: Layout, host: Device): number | null {
 export function addDevice(layout: Layout, device: Device): Layout {
   const rack = rackOf(layout, device.rackId)
   refuseWrongWidth(device, rack)
+  refuseUnmounted(device)
   const posU = findFreeSlot(layout.devices, rack, device)
   if (posU === null) {
     throw new PlacementError(
@@ -94,6 +108,8 @@ export function moveDevice(
   const device = deviceOf(layout, deviceId)
   const rack = rackOf(layout, target.rackId)
   refuseWrongWidth(device, rack)
+  // moving a board out of its tray would leave it screwed to nothing
+  refuseUnmounted({ ...device, host: undefined })
   const posU = findFreeSlot(layout.devices, rack, { ...device, ...target })
   if (posU === null) {
     throw new PlacementError(

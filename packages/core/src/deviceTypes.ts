@@ -17,6 +17,11 @@ export interface DeviceTypeSpec {
    */
   drawsPower: boolean
   defaultColour: string
+  /**
+   * Whether this type has to ride in another device's slot. A single-board computer has no rack
+   * ears: it bolts into a mount tray and cannot be screwed to the rails on its own.
+   */
+  needsMount: boolean
 }
 
 const spec = (
@@ -27,6 +32,7 @@ const spec = (
   [defaultOutlets, maxOutlets]: [number, number],
   drawsPower: boolean,
   defaultColour: string,
+  needsMount = false,
 ): DeviceTypeSpec => ({
   type,
   label,
@@ -37,6 +43,7 @@ const spec = (
   maxOutlets,
   drawsPower,
   defaultColour,
+  needsMount,
 })
 
 export const DEVICE_TYPES: Record<DeviceType, DeviceTypeSpec> = {
@@ -55,7 +62,7 @@ export const DEVICE_TYPES: Record<DeviceType, DeviceTypeSpec> = {
   // boards it carries have their own.
   mount: spec('mount', 'SBC mount', [1, 2], [0, 0], [0, 0], false, '#8b5cf6'),
   // What goes in a mount: a Pi-sized board, one or more network ports of its own.
-  sbc: spec('sbc', 'Single-board computer', [1], [1, 4], [0, 0], true, '#14b8a6'),
+  sbc: spec('sbc', 'Single-board computer', [1], [1, 4], [0, 0], true, '#14b8a6', true),
   shelf: spec('shelf', 'Shelf', [1, 2], [0, 0], [0, 0], false, '#78716c'),
   blank: spec('blank', 'Blank panel', [0.5, 1, 2], [0, 0], [0, 0], false, '#3f3f46'),
   hooks: spec('hooks', 'Cable mgmt (hooks)', [0.5, 1], [0, 0], [0, 0], false, '#0ea5e9'),

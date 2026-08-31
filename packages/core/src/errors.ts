@@ -9,6 +9,7 @@ export class PlacementError extends Error {
     | 'no-such-slot'
     | 'slot-taken'
     | 'wrong-width'
+    | 'needs-mount'
 
   constructor(code: PlacementError['code'], message: string) {
     super(message)

@@ -320,3 +320,33 @@ describe('TestEditorClearsTheStatusBar', () => {
     expect(JSON.stringify(padded.props.style)).toContain('59')
   })
 })
+
+describe('TestPortsCanBeSplitIntoCopperAndCages', () => {
+  it('sets how many of a switch’s ports are SFP, and what each group runs at', () => {
+    const onChange = jest.fn()
+    render(<Inspector device={{ ...device('switch'), ports: 10, sfp: 2 }} onChange={onChange} />)
+
+    fireEvent.changeText(screen.getByLabelText('Of which SFP'), '4')
+    expect(onChange).toHaveBeenCalledWith({ sfp: 4 })
+
+    fireEvent.press(screen.getByLabelText('Copper (8) at 2.5G'))
+    expect(onChange).toHaveBeenCalledWith({ portSpeed: '2.5G' })
+
+    fireEvent.press(screen.getByLabelText('SFP (2) at 10G'))
+    expect(onChange).toHaveBeenCalledWith({ sfpSpeed: '10G' })
+  })
+
+  it('never claims more cages than the device has ports', () => {
+    const onChange = jest.fn()
+    render(<Inspector device={{ ...device('switch'), ports: 4, sfp: 0 }} onChange={onChange} />)
+
+    fireEvent.changeText(screen.getByLabelText('Of which SFP'), '99')
+    expect(onChange).toHaveBeenCalledWith({ sfp: 4 })
+  })
+
+  it('offers no speed row for a group with nothing in it', () => {
+    render(<Inspector device={{ ...device('switch'), ports: 4, sfp: 0 }} onChange={jest.fn()} />)
+    expect(screen.queryByLabelText(/^SFP \(/)).toBeNull()
+    expect(screen.getByLabelText('Copper (4) at 1G')).toBeTruthy()
+  })
+})

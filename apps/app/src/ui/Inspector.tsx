@@ -1,5 +1,12 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native'
-import { COLOURS, DEVICE_TYPES, UNIT_SIZES, otherEnd, sizeLabel } from '@planmyrack/core'
+import {
+  COLOURS,
+  DEVICE_TYPES,
+  PORT_SPEEDS,
+  UNIT_SIZES,
+  otherEnd,
+  sizeLabel,
+} from '@planmyrack/core'
 import { Button, Mono, StatTile } from './primitives'
 import { NumberField, TextField } from './Field'
 import { TOUCH, colour, font, radius } from './theme'
@@ -10,6 +17,37 @@ import type { Device, Layout } from '@planmyrack/core'
  * actions. Port and outlet fields exist only for types that can carry them — offering a port
  * count on a shelf would be a lie the model then has to reject.
  */
+/** One row of speed chips for a port group, with the chosen one lit. */
+function SpeedRow({
+  label,
+  value,
+  onChange,
+}: {
+  label: string
+  value?: string
+  onChange: (speed: string) => void
+}) {
+  return (
+    <View style={styles.row}>
+      <Text style={styles.rowLabel}>{label}</Text>
+      <View style={styles.chips}>
+        {PORT_SPEEDS.map((speed) => (
+          <Pressable
+            key={speed}
+            accessibilityRole="button"
+            accessibilityLabel={`${label} at ${speed}`}
+            accessibilityState={{ selected: speed === value }}
+            onPress={() => onChange(speed === value ? '' : speed)}
+            style={[styles.chip, speed === value && styles.chipOn]}
+          >
+            <Text style={[styles.chipText, speed === value && styles.chipTextOn]}>{speed}</Text>
+          </Pressable>
+        ))}
+      </View>
+    </View>
+  )
+}
+
 export function Inspector({
   device,
   layout,
@@ -28,6 +66,7 @@ export function Inspector({
   onPortPress?: (device: Device, port: number) => void
 }) {
   const spec = DEVICE_TYPES[device.type]
+  const copper = Math.max(0, device.ports - (device.sfp ?? 0))
   const rack = layout?.racks.find((r) => r.id === device.rackId)
   const cables = layout?.links.filter(
     (l) => l.a.deviceId === device.id || l.b.deviceId === device.id,
@@ -125,6 +164,13 @@ export function Inspector({
             onChange={(ports) => onChange({ ports: Math.min(spec.maxPorts, Math.max(0, ports)) })}
           />
         ) : null}
+        {spec.maxPorts > 0 ? (
+          <NumberField
+            label="Of which SFP"
+            value={device.sfp ?? 0}
+            onChange={(sfp) => onChange({ sfp: Math.min(device.ports, Math.max(0, sfp)) })}
+          />
+        ) : null}
         {spec.maxOutlets > 0 ? (
           <NumberField
             label="Power outlets"
@@ -145,6 +191,25 @@ export function Inspector({
           onChange={(weightKg) => onChange({ weightKg })}
         />
       </View>
+
+      {/*
+       * A switch is rarely all one speed — eight 2.5G copper and two 10G cages is an ordinary
+       * shape — and a port count alone cannot say that.
+       */}
+      {spec.maxPorts > 0 && copper > 0 ? (
+        <SpeedRow
+          label={`Copper (${copper})`}
+          value={device.portSpeed}
+          onChange={(portSpeed) => onChange({ portSpeed })}
+        />
+      ) : null}
+      {spec.maxPorts > 0 && (device.sfp ?? 0) > 0 ? (
+        <SpeedRow
+          label={`SFP (${device.sfp})`}
+          value={device.sfpSpeed}
+          onChange={(sfpSpeed) => onChange({ sfpSpeed })}
+        />
+      ) : null}
 
       <View style={styles.row}>
         <Text style={styles.rowLabel}>Height</Text>

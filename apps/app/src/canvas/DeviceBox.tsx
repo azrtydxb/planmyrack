@@ -91,9 +91,12 @@ export const DeviceBox = memo(function DeviceBox({
   const rect = deviceRect(rack, device)
   const flat = FLAT[device.type]
   const shelf = device.type === 'shelf'
+  // "8 × 2.5G · 2 SFP 10G" says more than "10P" about what is on the front of a switch
+  const copper = Math.max(0, device.ports - (device.sfp ?? 0))
   const meta = [
     sizeLabel(device.heightU),
-    device.ports > 0 ? `${device.ports}P` : null,
+    copper > 0 ? `${copper}${device.portSpeed ? ` × ${device.portSpeed}` : 'P'}` : null,
+    device.sfp ? `${device.sfp} SFP${device.sfpSpeed ? ` ${device.sfpSpeed}` : ''}` : null,
     device.watts ? `${device.watts}W` : null,
   ]
     .filter(Boolean)

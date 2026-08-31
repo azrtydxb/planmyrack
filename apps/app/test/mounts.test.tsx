@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react-native'
+import { act, fireEvent, render, renderHook, screen } from '@testing-library/react-native'
 import { Dimensions } from 'react-native'
 import { addDevice, addToMount, newDevice, newLayout, newRack } from '@planmyrack/core'
 import { createMemoryStore } from '@planmyrack/storage'
@@ -6,6 +6,7 @@ import { RackEditorScreen } from '../src/screens/RackEditorScreen'
 import { RackCanvas } from '../src/canvas/RackCanvas'
 import { labelGutter, slotRects } from '../src/canvas/metrics'
 import { slotUnder } from '../src/canvas/origins'
+import { useDragPlacement } from '../src/canvas/useDragPlacement'
 import type { Layout } from '@planmyrack/core'
 
 const rack = newRack({ id: 'R', units: 12 })
@@ -115,5 +116,48 @@ describe('TestMountIsPlacedAndFilledFromTheLibrary', () => {
 
     expect(screen.getByTestId('catalog-entry-rpi-5')).toBeTruthy()
     expect(screen.getByTestId('catalog-entry-orangepi-5-plus')).toBeTruthy()
+  })
+})
+
+describe('TestABoardDraggedOntoTheRailsIsRefused', () => {
+  it('marks the drop invalid anywhere but a cut-out, and places nothing', () => {
+    const onCommit = jest.fn()
+    const hit = { rack, face: 'front' as const, topY: 0, leftX: 0 }
+    const { result } = renderHook(() =>
+      useDragPlacement({
+        layout: withTray,
+        resolve: () => hit,
+        resolveSlot: () => null,
+        onCommit,
+      }),
+    )
+
+    act(() => result.current.startNew('sbc', 1, { x: 50, y: 100 }))
+    expect(result.current.drag?.target?.valid).toBe(false)
+
+    act(() => result.current.drop())
+    expect(onCommit).not.toHaveBeenCalled()
+  })
+
+  it('takes the same board when the pointer is over a free cut-out', () => {
+    const onCommit = jest.fn()
+    const hit = { rack, face: 'front' as const, topY: 0, leftX: 0 }
+    const { result } = renderHook(() =>
+      useDragPlacement({
+        layout: withTray,
+        resolve: () => hit,
+        resolveSlot: () => ({ mount: tray, slot: 1, taken: false }),
+        onCommit,
+      }),
+    )
+
+    act(() => result.current.startNew('sbc', 1, { x: 50, y: 100 }))
+    expect(result.current.drag?.target?.valid).toBe(true)
+
+    act(() => result.current.drop())
+    expect(onCommit).toHaveBeenCalledTimes(1)
+    expect(onCommit.mock.calls[0][0].devices[1]).toMatchObject({
+      host: { deviceId: 'tray', slot: 1 },
+    })
   })
 })

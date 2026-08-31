@@ -3,7 +3,7 @@ import { DEVICE_TYPES, addDevice, addRack, newDevice, newLayout, newRack } from 
 import { RackCanvas } from '../src/canvas/RackCanvas'
 import type { CanvasGeometry } from '../src/canvas/RackCanvas'
 import { DeviceBox } from '../src/canvas/DeviceBox'
-import { RACK_INNER_PX } from '../src/canvas/metrics'
+import { RACK_INNER_PX, deviceRect } from '../src/canvas/metrics'
 import type { DeviceType, Layout } from '@planmyrack/core'
 
 const wide = newRack({ id: 'W', units: 12, name: 'Wide', width: 19 })
@@ -175,5 +175,22 @@ describe('TestCanvasReportsWhereTheFingerIs', () => {
 
     expect(after.x - before.x).toBe(60)
     expect(after.y - before.y).toBe(40)
+  })
+})
+
+describe('TestADeviceCanStillBeSelectedThroughItsPorts', () => {
+  it('keeps port hit areas inside the faceplate, so the device takes the rest', () => {
+    // a 24-port switch expanded every 8x12 slot to 44x44: the strip became a wall of port
+    // targets, the picker opened wherever you tapped, and the device could not be selected
+    const layout = withDevice({ ports: 24, heightU: 1 })
+    render(<RackCanvas layout={layout} face="front" />)
+
+    const box = screen.getByTestId('device-d1')
+    const boxHeight = deviceRect(wide, layout.devices[0]!).height
+    for (const port of screen.getAllByLabelText(/port \d+, free/)) {
+      const slop = port.props.hitSlop as { top: number; bottom: number }
+      expect(slop.top + slop.bottom).toBeLessThan(boxHeight)
+    }
+    expect(box).toBeTruthy()
   })
 })

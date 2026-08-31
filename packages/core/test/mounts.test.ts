@@ -135,3 +135,29 @@ describe('TestBoardsFollowTheirMount', () => {
     expect(removeDevice(wired, 'tray').links).toHaveLength(0)
   })
 })
+
+describe('TestABoardGoesInATrayOrNowhere', () => {
+  it('refuses to screw a board straight to the rails', () => {
+    expect(() => addDevice(withTray(), board('pi'))).toThrow(PlacementError)
+    expect(() => addDevice(withTray(), board('pi'))).toThrow(/bolts into a mount tray/)
+  })
+
+  it('refuses to move a board out of its tray onto the rails', () => {
+    const loaded = addToMount(withTray(), mount(), 0, board('pi'))
+    expect(() => moveDevice(loaded, 'pi', { rackId: 'R', face: 'front', posU: 6 })).toThrow(
+      /bolts into a mount tray/,
+    )
+  })
+
+  it('still takes anything with its own ears', () => {
+    const rackable = newDevice({
+      id: 'sw',
+      rackId: 'R',
+      face: 'front',
+      posU: 5,
+      heightU: 1,
+      type: 'switch',
+    })
+    expect(addDevice(withTray(), rackable).devices).toHaveLength(2)
+  })
+})

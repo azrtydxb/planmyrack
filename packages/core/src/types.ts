@@ -60,8 +60,12 @@ export interface Device {
   faceplate?: Faceplate
   /** Drive bays to draw when faceplate is 'bays'. */
   bays?: number
-  /** Uplink cages to draw when faceplate is 'sfp'. */
+  /** How many of this device's ports are SFP/SFP+ cages rather than RJ45. */
   sfp?: number
+  /** What the copper ports run at, e.g. "2.5G". Blank when it has not been said. */
+  portSpeed?: string
+  /** What the cages run at, e.g. "10G". */
+  sfpSpeed?: string
   /**
    * How many single-board computers this device carries. A rack mount tray is a plate with one
    * or more cut-outs; what goes in them is a device in its own right, with its own ports.
@@ -118,6 +122,12 @@ export const UNIT_SIZES: readonly number[] = [0.5, 1, 2, 3, 4, 5, 6, 8]
 export const RACK_UNIT_PRESETS: readonly number[] = [6, 9, 12, 15, 18, 24, 42, 47]
 export const MAX_RACK_UNITS = 48
 export const RACK_WIDTHS: readonly RackWidth[] = [19, 10]
+
+/**
+ * Link speeds worth naming on a port group. A switch is rarely all one speed — eight 2.5G copper
+ * and two 10G cages is an ordinary shape — and the number alone does not say that.
+ */
+export const PORT_SPEEDS: readonly string[] = ['100M', '1G', '2.5G', '5G', '10G', '25G', '40G']
 
 export const COLOURS: readonly string[] = [
   '#3b82f6',

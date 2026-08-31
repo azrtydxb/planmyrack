@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, View } from 'react-native'
 import { portKey } from './portKey'
 import { cageRects, copperPorts, portRects } from './metrics'
-import { TOUCH, rack as hw } from '../ui/theme'
+import { rack as hw } from '../ui/theme'
 import type { Device, Layout, LinkKind } from '@planmyrack/core'
 
 /**
@@ -44,8 +44,15 @@ export function PortStrip({
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
       {rects.map((rect, index) => {
         const link = linkFor(index)
-        const padX = Math.max(0, (TOUCH - rect.width) / 2)
-        const padY = Math.max(0, (TOUCH - rect.height) / 2)
+        /*
+         * A modest margin, not a finger-sized one. Expanding each 8x12 slot to 44x44 turned the
+         * strip into a solid wall of port targets: on a 24-port switch every tap anywhere near
+         * the faceplate opened the port picker, and the device itself could not be selected at
+         * all. The finger-sized targets are the port grid in the inspector; this strip is the
+         * precise one, and the gaps between its slots belong to the device underneath.
+         */
+        const padX = 2
+        const padY = 4
         return (
           <Pressable
             key={index}

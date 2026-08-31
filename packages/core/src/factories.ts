@@ -61,5 +61,7 @@ export function newDevice(input: NewDeviceInput): Device {
     ...(input.host ? { host: input.host } : {}),
     ...(input.width === undefined ? {} : { width: input.width }),
     ...(input.column === undefined ? {} : { column: input.column }),
+    ...(input.portSpeed ? { portSpeed: input.portSpeed } : {}),
+    ...(input.sfpSpeed ? { sfpSpeed: input.sfpSpeed } : {}),
   }
 }
