@@ -62,6 +62,28 @@ describe('TestKnownModelsCarryTheirShape', () => {
     expect([placed.faceplate, placed.bays]).toEqual(['bays', 12])
   })
 
+  it('counts uplink cages among the ports, never beside them', () => {
+    // the cages used to be decoration: the two SFP ports of a UniFi Switch 24 could not be wired
+    // at all, and an aggregation switch drew eight RJ45 sockets it does not have
+    for (const e of BUNDLED_CATALOG) {
+      expect([e.id, (e.sfp ?? 0) <= e.ports]).toEqual([e.id, true])
+    }
+    const agg = BUNDLED_CATALOG.find((e) => e.id === 'unifi-usw-aggregation')!
+    expect([agg.ports, agg.sfp]).toEqual([8, 8])
+    const usw24 = BUNDLED_CATALOG.find((e) => e.id === 'unifi-usw-24')!
+    expect([usw24.ports, usw24.sfp]).toEqual([26, 2])
+  })
+
+  it('reads the layout MikroTik puts in its own model names', () => {
+    // CRS309-1G-8S+ is one gigabit port and eight SFP+, not eight of each
+    const crs309 = BUNDLED_CATALOG.find((e) => e.id === 'mikrotik-crs309')!
+    expect([crs309.ports, crs309.sfp]).toEqual([9, 8])
+    const crs326 = BUNDLED_CATALOG.find((e) => e.id === 'mikrotik-crs326-24g')!
+    expect([crs326.ports, crs326.sfp]).toEqual([26, 2])
+    const ccr = BUNDLED_CATALOG.find((e) => e.id === 'mikrotik-ccr2004')!
+    expect([ccr.ports, ccr.sfp]).toEqual([15, 14])
+  })
+
   it('leaves generic gear plain, since a generic switch has no particular front', () => {
     const generic = BUNDLED_CATALOG.find((e) => e.id === 'generic-switch')!
     expect(generic.faceplate).toBeUndefined()

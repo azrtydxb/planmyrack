@@ -65,8 +65,33 @@ export interface PortRect {
  * Port strip along the right of the faceplate: fixed 8x12 slots as the design draws them,
  * shrinking and wrapping only when a dense device would otherwise overflow its own box.
  */
+export function copperPorts(device: Device): number {
+  return Math.max(0, device.ports - (device.sfp ?? 0))
+}
+
+/**
+ * The SFP/SFP+ cages, drawn at the right edge. They are the LAST ports of the device, not
+ * decoration beside them: an aggregation switch is eight cages and nothing else, and every one of
+ * them takes a cable.
+ */
+export function cageRects(device: Device, boxWidth: number, boxHeight: number): PortRect[] {
+  const count = Math.min(device.sfp ?? 0, device.ports)
+  if (count <= 0) return []
+  const width = CAGE_PITCH - 2
+  const height = 9
+  const top = Math.max(2, (boxHeight - height) / 2)
+  const first = boxWidth - FACE_PAD - count * CAGE_PITCH + 2
+  return Array.from({ length: count }, (_, i) => ({
+    x: first + i * CAGE_PITCH,
+    y: top,
+    width,
+    height,
+  }))
+}
+
 export function portRects(device: Device, boxWidth: number, boxHeight: number): PortRect[] {
-  if (device.ports <= 0) return []
+  const copper = copperPorts(device)
+  if (copper <= 0) return []
 
   const gutter = labelGutter(boxWidth)
   // Uplink cages are drawn at the right edge; the copper strip stops before them rather than
@@ -82,6 +107,7 @@ export function portRects(device: Device, boxWidth: number, boxHeight: number): 
    *
    * Every attempt that keeps a slot at least MIN_PORT_W wide is tried before any that does not.
    */
+  const ports = copper
   const attempts: { rows: number; gap: number; minWidth: number }[] = [
     { rows: 1, gap: PORT_GAP, minWidth: PORT_W },
     { rows: 2, gap: PORT_GAP, minWidth: MIN_PORT_W },
@@ -96,7 +122,7 @@ export function portRects(device: Device, boxWidth: number, boxHeight: number): 
 
   let chosen = { rows: 2, gap: 1, width: 2, height: 4 }
   for (const attempt of attempts) {
-    const cols = Math.ceil(device.ports / attempt.rows)
+    const cols = Math.ceil(ports / attempt.rows)
     const width = Math.min(PORT_W, Math.floor((usableWidth - attempt.gap * (cols - 1)) / cols))
     const height = Math.min(
       PORT_H,
@@ -108,14 +134,14 @@ export function portRects(device: Device, boxWidth: number, boxHeight: number): 
     }
   }
 
-  const cols = Math.ceil(device.ports / chosen.rows)
+  const cols = Math.ceil(ports / chosen.rows)
   const stripWidth = cols * chosen.width + chosen.gap * (cols - 1)
   const stripHeight = chosen.rows * chosen.height + chosen.gap * (chosen.rows - 1)
   const left = Math.max(gutter, boxWidth - FACE_PAD - cages - stripWidth)
   const top = Math.max(2, (boxHeight - stripHeight) / 2)
 
   const rects: PortRect[] = []
-  for (let i = 0; i < device.ports; i++) {
+  for (let i = 0; i < ports; i++) {
     rects.push({
       x: left + (i % cols) * (chosen.width + chosen.gap),
       y: top + Math.floor(i / cols) * (chosen.height + chosen.gap),

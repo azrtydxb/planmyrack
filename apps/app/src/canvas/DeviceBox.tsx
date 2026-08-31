@@ -41,17 +41,6 @@ function Bays({ count, height }: { count: number; height: number }) {
   )
 }
 
-/** SFP/SFP+ cages: wider than an RJ45 port and set apart from the copper strip. */
-function Cages({ count }: { count: number }) {
-  return (
-    <View style={styles.cages} pointerEvents="none">
-      {Array.from({ length: Math.min(count, 12) }, (_, i) => (
-        <View key={i} style={styles.cage} />
-      ))}
-    </View>
-  )
-}
-
 /** The small status display a gateway carries instead of a bare plate. */
 function Display() {
   return (
@@ -112,7 +101,6 @@ export const DeviceBox = memo(function DeviceBox({
         <Bays count={device.bays} height={rect.height} />
       ) : null}
       {device.faceplate === 'display' ? <Display /> : null}
-      {device.sfp ? <Cages count={device.sfp} /> : null}
 
       <Pressable
         accessible
@@ -245,23 +233,6 @@ const styles = StyleSheet.create({
     paddingLeft: 1.5,
   },
   bayHandle: { width: 2, height: '58%', borderRadius: 1, backgroundColor: '#59657a' },
-  cages: {
-    position: 'absolute',
-    right: 6,
-    top: 0,
-    bottom: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  cage: {
-    width: 11,
-    height: 9,
-    borderRadius: 1,
-    backgroundColor: '#0a0f14',
-    borderWidth: 0.5,
-    borderColor: '#4a5462',
-  },
   display: {
     position: 'absolute',
     left: 98,

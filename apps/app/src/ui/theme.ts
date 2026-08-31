@@ -42,6 +42,8 @@ export const rack = {
   faceText: '#f2f5f9',
   faceMeta: '#98a4b3',
   portFree: '#05070a',
+  /** The bright edge of an SFP cage, which is deeper and wider than an RJ45 slot. */
+  cage: '#4a5462',
   portFreeShine: 'inset 0 1px 0 rgba(255,255,255,.12)',
 } as const
 

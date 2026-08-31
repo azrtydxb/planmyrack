@@ -42,7 +42,12 @@ const spec = (
 export const DEVICE_TYPES: Record<DeviceType, DeviceTypeSpec> = {
   equipment: spec('equipment', 'Equipment', [...UNIT_SIZES], [0, 8], [0, 0], true, '#3b82f6'),
   server: spec('server', 'Server', [1, 2, 4], [2, 8], [0, 0], true, '#22c55e'),
-  switch: spec('switch', 'Switch', [1, 2], [24, 48], [0, 0], true, '#a855f7'),
+  // A router or gateway carries a switch's worth of ports on the front, which is more than the
+  // eight a piece of generic equipment is allowed.
+  gateway: spec('gateway', 'Gateway', [1, 2], [8, 32], [0, 0], true, '#6366f1'),
+  // 52 rather than 48: a 48-port switch carries its uplink cages on top of the copper, and those
+  // cages are ports like any other.
+  switch: spec('switch', 'Switch', [1, 2], [24, 52], [0, 0], true, '#a855f7'),
   patch: spec('patch', 'Patch panel', [1, 2], [24, 48], [0, 0], false, '#64748b'),
   pdu: spec('pdu', 'PDU', [1, 2], [0, 2], [8, 24], false, '#ef4444'),
   ups: spec('ups', 'UPS', [2, 3, 4], [1, 2], [0, 8], true, '#f97316'),

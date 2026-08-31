@@ -1,13 +1,16 @@
 import { Pressable, StyleSheet, View } from 'react-native'
 import { portKey } from './portKey'
-import { portRects } from './metrics'
+import { cageRects, copperPorts, portRects } from './metrics'
 import { TOUCH, rack as hw } from '../ui/theme'
 import type { Device, Layout, LinkKind } from '@planmyrack/core'
 
 /**
- * The port strip on a faceplate. A free port is near-black with a hairline of shine along its
- * top; a connected one takes the cable's colour and glows. Slots are small by design, so each
- * carries a finger-sized hit area rather than being enlarged.
+ * The ports on a faceplate: the copper strip, then any SFP cages at the right edge. A free port
+ * is near-black with a hairline of shine along its top; a connected one takes the cable's colour
+ * and glows. Slots are small by design, so each carries a finger-sized hit area.
+ *
+ * The cages are ports, not decoration. An aggregation switch is eight cages and nothing else, and
+ * every one of them takes a cable.
  */
 export function PortStrip({
   device,
@@ -22,7 +25,11 @@ export function PortStrip({
   boxHeight: number
   onPortPress?: (device: Device, port: number, kind: LinkKind) => void
 }) {
-  const rects = portRects(device, boxWidth, boxHeight)
+  const copper = copperPorts(device)
+  const rects = [
+    ...portRects(device, boxWidth, boxHeight),
+    ...cageRects(device, boxWidth, boxHeight),
+  ]
   if (rects.length === 0) return null
 
   const linkFor = (port: number) =>
@@ -48,7 +55,7 @@ export function PortStrip({
             hitSlop={{ top: padY, bottom: padY, left: padX, right: padX }}
             onPress={() => onPortPress?.(device, index, 'network')}
             style={[
-              styles.port,
+              index >= copper ? styles.cage : styles.port,
               {
                 left: rect.x,
                 top: rect.y,
@@ -70,4 +77,5 @@ export function PortStrip({
 
 const styles = StyleSheet.create({
   port: { position: 'absolute', borderRadius: 1 },
+  cage: { position: 'absolute', borderRadius: 1, borderWidth: 0.5, borderColor: hw.cage },
 })

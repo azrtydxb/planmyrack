@@ -8,6 +8,7 @@ export type LinkKind = 'network' | 'power'
 export type DeviceType =
   | 'equipment'
   | 'server'
+  | 'gateway'
   | 'switch'
   | 'patch'
   | 'pdu'
