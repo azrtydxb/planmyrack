@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import type { ComponentRef } from 'react'
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { RackFrame } from './RackFrame'
 import { CableOverlay } from './CableOverlay'
@@ -52,7 +53,7 @@ export function RackCanvas({
   drag?: DragSource<Device>
 }) {
   const [viewport, setViewport] = useState({ width: 0, height: 0 })
-  const stage = useRef<View | null>(null)
+  const stage = useRef<ComponentRef<typeof View> | null>(null)
   // Where the stage sits on screen, and how far the canvas is scrolled: together they turn a
   // finger position anywhere on screen into a point in canvas space.
   const stageOrigin = useRef<Point>({ x: 0, y: 0 })
