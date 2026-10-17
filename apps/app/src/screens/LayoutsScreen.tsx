@@ -131,7 +131,7 @@ export function LayoutsScreen({
         data={rows}
         keyExtractor={(row) => row.id}
         ListEmptyComponent={
-          error ? null : <Text style={styles.empty}>No layouts yet. Start with a new one.</Text>
+          error ? undefined : <Text style={styles.empty}>No layouts yet. Start with a new one.</Text>
         }
         renderItem={({ item }) => (
           <Card style={styles.row}>
