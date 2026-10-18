@@ -3,7 +3,14 @@ name: CI
 on:
   push:
     branches: [main]
+    tags: ["v*"]
   pull_request:
+  # Three-tier test model (azrtydxb/.github docs/ci-standard.md §Test tiers):
+  # PR = fast unit/static tier; nightly + v* tag re-run the same suite as a
+  # slower safety net (the repo has no service-backed integration job in CI yet).
+  schedule:
+    - cron: "17 2 * * *"
+  workflow_dispatch: {}
 
 concurrency:
   group: ci-${{ github.ref }}
